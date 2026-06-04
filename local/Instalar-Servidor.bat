@@ -11,14 +11,14 @@ if %errorLevel% == 0 (
 )
 
 :admin
-:: 2. Entrar no diretorio do script e rodar o painel de manutencao
+:: 2. Entrar no diretorio do script e rodar o PowerShell com tratamento de caminhos com espaco
 cd /d "%~dp0"
-title Painel de Manutencao - Radio Itaimbe
+title Instalador Servidor - Radio Itaimbe
 echo ==========================================================
-echo   Iniciando Painel de Manutencao (Modo Administrador)
+echo   Iniciando Instalador Local (Modo Administrador)
 echo ==========================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -NoExit -File "%~dp0maintenance-panel.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -NoExit -File "%~dp0install.ps1"
 echo.
-echo Painel encerrado ou interrompido.
+echo Processo concluido ou interrompido.
 pause
