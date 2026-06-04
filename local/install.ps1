@@ -24,7 +24,8 @@ $baseDir = "C:\RadioItaimbeServer"
 $binDir = "$baseDir\bin"
 $logsDir = "$baseDir\logs"
 $tempDir = "$baseDir\temp"
-$projectLocalDir = "d:\Projeto Radio Itaimbé\local"
+# Usar a variavel nativa do PowerShell para obter a pasta onde o script esta rodando
+$projectLocalDir = $PSScriptRoot
 
 # Criar estrutura de diretorios locais de logs e configs
 Write-Host "`n[1/6] Criando diretorios do sistema..." -ForegroundColor Yellow
