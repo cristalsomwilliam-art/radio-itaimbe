@@ -1,0 +1,23 @@
+# Next.js build output
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Dependency directories
+node_modules/
+frontend/node_modules/
+
+# Local env files
+.env*.local
+*.env
+frontend/.env*.local
+
+# Logs and databases
+local/owncast-data/
+local/temp/
+*.log
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini

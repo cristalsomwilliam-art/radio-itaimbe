@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  owncast:
+    image: owncast/owncast:latest
+    container_name: owncast_itaimbe
+    restart: unless-stopped
+    ports:
+      - "8080:8080" # Porta da Web UI e Player HLS
+      - "1935:1935" # Porta de Ingest RTMP para o OBS Studio
+    volumes:
+      - ./owncast-data:/app/data # Montagem de volume para persistência de dados
+    environment:
+      - TZ=America/Sao_Paulo
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
