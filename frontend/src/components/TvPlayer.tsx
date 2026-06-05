@@ -181,6 +181,26 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
     }
   }, [volume, isMuted]);
 
+  // Unmute automático no primeiro clique em qualquer lugar da página
+  useEffect(() => {
+    if (!isPlaying || !isMuted) return;
+
+    const handleDocumentClick = () => {
+      console.log("Interação do usuário detectada no documento. Ativando áudio da TV...");
+      setIsMuted(false);
+    };
+
+    // Pequeno atraso para não capturar o mesmo clique que iniciou a transição (se houver)
+    const timeout = setTimeout(() => {
+      document.addEventListener("click", handleDocumentClick, { once: true });
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener("click", handleDocumentClick);
+    };
+  }, [isPlaying, isMuted]);
+
   const togglePlay = () => {
     if (!videoRef.current) return;
     if (isPlaying) {
