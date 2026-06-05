@@ -8,6 +8,7 @@ interface StreamStatus {
   current_artist: string;
   album_art: string | null;
   listeners_count: number;
+  tv_online: boolean;
 }
 
 interface AudioContextType {
@@ -20,6 +21,7 @@ interface AudioContextType {
   artistName: string;
   albumArt: string | null;
   listenersCount: number;
+  tvOnline: boolean;
   play: () => void;
   pause: () => void;
   togglePlay: () => void;
@@ -38,11 +40,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Status de música e ouvintes sincronizados do Supabase
+  // Status de música, ouvintes e TV sincronizados do Supabase
   const [songTitle, setSongTitle] = useState("Programação Musical");
   const [artistName, setArtistName] = useState("Rádio Itaimbé 87.9 FM");
   const [albumArt, setAlbumArt] = useState<string | null>(null);
   const [listenersCount, setListenersCount] = useState(0);
+  const [tvOnline, setTvOnline] = useState(false);
 
   // URL de stream segura (Cloudflare Tunnel -> Proxy Local -> Caster.fm)
   const streamUrl = "https://stream.radioitaimbe.com.br/";
@@ -100,7 +103,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const fetchStatus = async () => {
       const { data } = await supabase
         .from("stream_status")
-        .select("current_song, current_artist, album_art, listeners_count")
+        .select("current_song, current_artist, album_art, listeners_count, tv_online")
         .eq("id", "main")
         .single();
 
@@ -109,6 +112,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setArtistName(data.current_artist || "Rádio Itaimbé 87.9 FM");
         setAlbumArt(data.album_art);
         setListenersCount(data.listeners_count || 0);
+        setTvOnline(!!data.tv_online);
       }
     };
 
@@ -130,6 +134,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           setArtistName(newData.current_artist || "Rádio Itaimbé 87.9 FM");
           setAlbumArt(newData.album_art);
           setListenersCount(newData.listeners_count || 0);
+          setTvOnline(!!newData.tv_online);
         }
       )
       .subscribe();
@@ -259,6 +264,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         artistName,
         albumArt,
         listenersCount,
+        tvOnline,
         play,
         pause,
         togglePlay,

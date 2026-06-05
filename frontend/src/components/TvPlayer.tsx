@@ -12,7 +12,7 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
@@ -33,7 +33,12 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
         video.addEventListener("loadedmetadata", () => {
           setIsLoading(false);
           video.play().catch((err) => {
-            console.log("Erro no autoplay nativo:", err);
+            console.log("Erro no autoplay nativo unmuted, tentando mutar...", err);
+            setIsMuted(true);
+            video.muted = true;
+            video.play().catch((err2) => {
+              console.log("Autoplay nativo mutado falhou também:", err2);
+            });
           });
         }, { once: true });
       } 
@@ -59,7 +64,12 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
               setIsLoading(false);
               video.play().catch((err) => {
-                console.log("Autoplay bloqueado pelo navegador. Iniciando silenciado:", err);
+                console.log("Autoplay unmuted falhou, tentando mutar...", err);
+                setIsMuted(true);
+                video.muted = true;
+                video.play().catch((err2) => {
+                  console.log("Autoplay mutado falhou também:", err2);
+                });
               });
             });
 

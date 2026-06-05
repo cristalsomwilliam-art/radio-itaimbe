@@ -127,12 +127,12 @@ export default function Home() {
         // Live começou: silenciar o streaming da rádio
         pauseRadio();
       } else {
-        // Live terminou: voltar a tocar o streaming da rádio automaticamente
-        playRadio();
+        // Live terminou: recarregar a página para voltar para a rádio ao vivo
+        window.location.reload();
       }
     }
     prevTvOnlineRef.current = status.tv_online;
-  }, [status.tv_online, isLoading, playRadio, pauseRadio]);
+  }, [status.tv_online, isLoading, pauseRadio]);
 
   return (
     <div className="space-y-10 md:space-y-14">

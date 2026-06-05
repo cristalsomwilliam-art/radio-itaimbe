@@ -17,6 +17,7 @@ export default function Player() {
     changeVolume,
     toggleMute,
     analyserRef,
+    tvOnline,
   } = useAudio();
 
   const [isLiked, setIsLiked] = useState(false);
@@ -175,7 +176,10 @@ export default function Player() {
             {/* Play/Pause Gigante Rosa */}
             <button
               onClick={togglePlay}
-              className="w-10 h-10 rounded-full bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] flex items-center justify-center text-white shadow-lg shadow-pink-500/30 hover:scale-105 transition-all active:scale-95"
+              disabled={tvOnline}
+              className={`w-10 h-10 rounded-full bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] flex items-center justify-center text-white shadow-lg shadow-pink-500/30 hover:scale-105 transition-all active:scale-95 ${
+                tvOnline ? "opacity-40 cursor-not-allowed hover:scale-100 active:scale-100 shadow-none" : ""
+              }`}
             >
               {isPlaying ? (
                 <Pause className="w-4 h-4 fill-white text-white" />
@@ -190,8 +194,12 @@ export default function Player() {
             </button>
 
             {/* Volume Icon e Controle */}
-            <div className="flex items-center gap-2 group/volume ml-2">
-              <button onClick={toggleMute} className="text-zinc-400 hover:text-white p-2 rounded-full transition-colors">
+            <div className={`flex items-center gap-2 group/volume ml-2 ${tvOnline ? "opacity-40" : ""}`}>
+              <button
+                onClick={toggleMute}
+                disabled={tvOnline}
+                className={`text-zinc-400 hover:text-white p-2 rounded-full transition-colors ${tvOnline ? "cursor-not-allowed" : ""}`}
+              >
                 {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
               <input
@@ -200,8 +208,9 @@ export default function Player() {
                 max="1"
                 step="0.01"
                 value={isMuted ? 0 : volume}
+                disabled={tvOnline}
                 onChange={(e) => changeVolume(parseFloat(e.target.value))}
-                className="w-16 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#e81e4d] group-hover/volume:w-20 transition-all duration-300"
+                className={`w-16 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#e81e4d] group-hover/volume:w-20 transition-all duration-300 ${tvOnline ? "cursor-not-allowed" : ""}`}
               />
             </div>
           </div>
