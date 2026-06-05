@@ -30,10 +30,16 @@ export async function GET(request: NextRequest) {
 
   // 1. Validar Token de Segurança
   if (token !== expectedToken) {
+    const expectedCodes = expectedToken ? Array.from(expectedToken).map(c => c.charCodeAt(0)) : [];
+    const receivedCodes = token ? Array.from(token).map(c => c.charCodeAt(0)) : [];
     return NextResponse.json({ 
       error: "Não autorizado", 
       debug_expected: expectedToken || "EMPTY", 
       debug_received: token || "EMPTY",
+      expected_len: expectedToken?.length || 0,
+      received_len: token?.length || 0,
+      expected_codes: expectedCodes,
+      received_codes: receivedCodes,
       env_raw: process.env.RADIOBOSS_SECRET_TOKEN === undefined ? "UNDEFINED" : `LEN:${process.env.RADIOBOSS_SECRET_TOKEN.length}`
     }, { status: 401 });
   }
