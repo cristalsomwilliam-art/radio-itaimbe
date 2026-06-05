@@ -26,11 +26,14 @@ export default function CustomChat() {
   const [isSending, setIsSending] = useState(false);
   const [loginLoading, setLoginLoading] = useState<string | null>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const profileCache = useRef<Record<string, Profile>>({});
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesContainerRef.current?.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   };
 
   // 1. Monitorar estado de autenticação do usuário
@@ -220,7 +223,7 @@ export default function CustomChat() {
       </div>
 
       {/* Área de Mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar min-h-0 bg-black/10">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar min-h-0 bg-black/10">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full gap-2">
             <Loader2 className="w-6 h-6 text-[#e81e4d] animate-spin" />
@@ -268,7 +271,6 @@ export default function CustomChat() {
             Nenhuma mensagem enviada. Seja o primeiro!
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Rodapé / Input de Envio ou Box de Login */}
