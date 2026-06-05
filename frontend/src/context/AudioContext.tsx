@@ -101,18 +101,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // Sincronizar dados de música do Supabase
   useEffect(() => {
     const fetchStatus = async () => {
-      const { data } = await supabase
-        .from("stream_status")
-        .select("current_song, current_artist, album_art, listeners_count, tv_online")
-        .eq("id", "main")
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("stream_status")
+          .select("current_song, current_artist, album_art, listeners_count, tv_online")
+          .eq("id", "main")
+          .single();
 
-      if (data) {
-        setSongTitle(data.current_song || "Programação Musical");
-        setArtistName(data.current_artist || "Rádio Itaimbé 87.9 FM");
-        setAlbumArt(data.album_art);
-        setListenersCount(data.listeners_count || 0);
-        setTvOnline(!!data.tv_online);
+        if (data && !error) {
+          setSongTitle(data.current_song || "Programação Musical");
+          setArtistName(data.current_artist || "Rádio Itaimbé 87.9 FM");
+          setAlbumArt(data.album_art);
+          setListenersCount(data.listeners_count || 0);
+          setTvOnline(!!data.tv_online);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar status no AudioContext:", err);
       }
     };
 
@@ -139,8 +143,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
+    // 5. Polling de Fallback a cada 5 segundos
+    const pollingInterval = setInterval(fetchStatus, 5000);
+
     return () => {
       supabase.removeChannel(subscription);
+      clearInterval(pollingInterval);
     };
   }, []);
 

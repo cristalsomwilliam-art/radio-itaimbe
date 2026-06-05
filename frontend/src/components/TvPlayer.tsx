@@ -24,14 +24,32 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
 
     let hls: any = null;
     let stallTimeout: NodeJS.Timeout | null = null;
+    let loadingTimeout: NodeJS.Timeout | null = null;
     setIsLoading(true);
 
     const initPlayer = async () => {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+      
+      // Iniciar timer de 8 segundos para reiniciar se o carregamento demorar (ex: stream iniciando)
+      loadingTimeout = setTimeout(() => {
+        if (videoRef.current && !videoRef.current.paused) {
+          return; // Já está tocando
+        }
+        console.log("Player de vídeo demorando para carregar (8s). Tentando reiniciar conexão HLS...");
+        initPlayer();
+      }, 8000);
+
       // Se suportar HLS nativo (Safari / iOS)
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = streamUrl;
         video.addEventListener("loadedmetadata", () => {
           setIsLoading(false);
+          if (loadingTimeout) {
+            clearTimeout(loadingTimeout);
+            loadingTimeout = null;
+          }
           video.play().catch((err) => {
             console.log("Erro no autoplay nativo unmuted, tentando mutar...", err);
             setIsMuted(true);
@@ -63,6 +81,10 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
 
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
               setIsLoading(false);
+              if (loadingTimeout) {
+                clearTimeout(loadingTimeout);
+                loadingTimeout = null;
+              }
               video.play().catch((err) => {
                 console.log("Autoplay unmuted falhou, tentando mutar...", err);
                 setIsMuted(true);
@@ -112,6 +134,10 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
         clearTimeout(stallTimeout);
         stallTimeout = null;
       }
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
     };
     const handlePause = () => setIsPlaying(false);
     
@@ -138,16 +164,20 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
       if (stallTimeout) {
         clearTimeout(stallTimeout);
       }
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
       if (hls) {
         hls.destroy();
       }
     };
   }, [streamUrl]);
 
-  // Controle de Volume
+  // Controle de Volume e Mute
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.volume = isMuted ? 0 : volume;
+      videoRef.current.muted = isMuted;
     }
   }, [volume, isMuted]);
 
