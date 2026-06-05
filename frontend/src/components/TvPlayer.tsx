@@ -12,7 +12,7 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
@@ -23,6 +23,7 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
     if (!video) return;
 
     let hls: any = null;
+    let stallTimeout: NodeJS.Timeout | null = null;
     setIsLoading(true);
 
     const initPlayer = async () => {
@@ -31,11 +32,18 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
         video.src = streamUrl;
         video.addEventListener("loadedmetadata", () => {
           setIsLoading(false);
-        });
+          video.play().catch((err) => {
+            console.log("Erro no autoplay nativo:", err);
+          });
+        }, { once: true });
       } 
       // Caso contrário, carregar o Hls.js dinamicamente
       else {
         try {
+          if (hls) {
+            hls.destroy();
+            hls = null;
+          }
           const HlsModule = await import("hls.js");
           const Hls = HlsModule.default;
 
@@ -50,6 +58,9 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
 
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
               setIsLoading(false);
+              video.play().catch((err) => {
+                console.log("Autoplay bloqueado pelo navegador. Iniciando silenciado:", err);
+              });
             });
 
             hls.on(Hls.Events.ERROR, (event: any, data: any) => {
@@ -87,9 +98,22 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
     const handlePlaying = () => {
       setIsPlaying(true);
       setIsLoading(false);
+      if (stallTimeout) {
+        clearTimeout(stallTimeout);
+        stallTimeout = null;
+      }
     };
     const handlePause = () => setIsPlaying(false);
-    const handleWaiting = () => setIsLoading(true);
+    
+    const handleWaiting = () => {
+      setIsLoading(true);
+      // Se travar por mais de 6 segundos, reinicia a conexão HLS
+      if (stallTimeout) clearTimeout(stallTimeout);
+      stallTimeout = setTimeout(() => {
+        console.log("Player de vídeo travado (waiting). Tentando reconectar...");
+        initPlayer();
+      }, 6000);
+    };
 
     video.addEventListener("playing", handlePlaying);
     video.addEventListener("pause", handlePause);
@@ -100,6 +124,9 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
         video.removeEventListener("playing", handlePlaying);
         video.removeEventListener("pause", handlePause);
         video.removeEventListener("waiting", handleWaiting);
+      }
+      if (stallTimeout) {
+        clearTimeout(stallTimeout);
       }
       if (hls) {
         hls.destroy();

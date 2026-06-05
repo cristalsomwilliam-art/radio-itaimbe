@@ -53,6 +53,47 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const prevVolumeRef = useRef<number>(0.8);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stallTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
+
+  // Limpar timeouts no unmount
+  useEffect(() => {
+    return () => {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (stallTimeoutRef.current) clearTimeout(stallTimeoutRef.current);
+    };
+  }, []);
+
+  const handleReconnect = () => {
+    if (!isPlaying) return;
+    
+    if (reconnectAttemptsRef.current >= 5) {
+      console.log("Limite de reconexões do áudio atingido.");
+      setError("Conexão com a rádio perdida. Tente dar play novamente.");
+      setIsPlaying(false);
+      return;
+    }
+
+    reconnectAttemptsRef.current += 1;
+    console.log(`Tentativa de reconexão de áudio ${reconnectAttemptsRef.current}/5...`);
+
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      if (!audioRef.current || !isPlaying) return;
+      try {
+        audioRef.current.load();
+        await audioRef.current.play();
+        console.log("Áudio reconectado com sucesso!");
+        reconnectAttemptsRef.current = 0;
+        setError(null);
+      } catch (err) {
+        console.warn("Falha na tentativa de reconexão do áudio, tentando novamente...", err);
+        handleReconnect();
+      }
+    }, 3000);
+  };
 
   // Sincronizar dados de música do Supabase
   useEffect(() => {
@@ -136,6 +177,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setError(null);
+      reconnectAttemptsRef.current = 0;
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (stallTimeoutRef.current) clearTimeout(stallTimeoutRef.current);
+
       // Recarregar a fonte de áudio no play de streaming para evitar atrasos acumulados
       audioRef.current.load();
       await audioRef.current.play();
@@ -151,6 +196,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (!audioRef.current) return;
     audioRef.current.pause();
     setIsPlaying(false);
+    reconnectAttemptsRef.current = 0;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    if (stallTimeoutRef.current) {
+      clearTimeout(stallTimeoutRef.current);
+      stallTimeoutRef.current = null;
+    }
   };
 
   const togglePlay = () => {
@@ -221,11 +275,48 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         src={typeof window !== "undefined" && window.location.hostname === "localhost" ? devStreamUrl : streamUrl}
         crossOrigin="anonymous"
         preload="none"
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => {
+          setIsPlaying(true);
+          reconnectAttemptsRef.current = 0;
+          if (stallTimeoutRef.current) {
+            clearTimeout(stallTimeoutRef.current);
+            stallTimeoutRef.current = null;
+          }
+        }}
+        onPlaying={() => {
+          setIsPlaying(true);
+          reconnectAttemptsRef.current = 0;
+          if (stallTimeoutRef.current) {
+            clearTimeout(stallTimeoutRef.current);
+            stallTimeoutRef.current = null;
+          }
+        }}
         onPause={() => setIsPlaying(false)}
+        onWaiting={() => {
+          if (isPlaying) {
+            if (stallTimeoutRef.current) clearTimeout(stallTimeoutRef.current);
+            stallTimeoutRef.current = setTimeout(() => {
+              console.log("Streaming de áudio travado (waiting). Tentando reconectar...");
+              handleReconnect();
+            }, 5000);
+          }
+        }}
+        onStalled={() => {
+          if (isPlaying) {
+            if (stallTimeoutRef.current) clearTimeout(stallTimeoutRef.current);
+            stallTimeoutRef.current = setTimeout(() => {
+              console.log("Áudio stalled (congelado). Tentando reconectar...");
+              handleReconnect();
+            }, 5000);
+          }
+        }}
         onError={(e) => {
           console.error("Erro no elemento de áudio:", e);
-          setIsPlaying(false);
+          if (isPlaying) {
+            handleReconnect();
+          } else {
+            setIsPlaying(false);
+          }
         }}
       />
       {children}
