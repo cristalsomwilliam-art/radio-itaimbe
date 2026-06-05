@@ -81,6 +81,10 @@ export async function GET(request: NextRequest) {
         imageUrl = "https:" + imageUrl;
       }
 
+      if (imageUrl) {
+        imageUrl = cleanCDATA(imageUrl);
+      }
+
       items.push({
         title,
         link,

@@ -68,14 +68,12 @@ export default function Home() {
       setIsLoading(true);
       try {
         // 1. Carregar status do streaming
-        const { data: statusData } = await supabase
-          .from("stream_status")
-          .select("*")
-          .eq("id", "main")
-          .single();
-
-        if (statusData) {
-          setStatus(statusData as StreamStatus);
+        const res = await fetch(`/api/stream-status?t=${Date.now()}`, { cache: "no-store" });
+        if (res.ok) {
+          const statusData = await res.json();
+          if (statusData) {
+            setStatus(statusData as StreamStatus);
+          }
         }
       } catch (err) {
         console.error("Erro ao carregar status inicial:", err);
@@ -122,28 +120,26 @@ export default function Home() {
     // 5. Polling de Fallback a cada 5 segundos para caso de falha no Realtime
     const pollingInterval = setInterval(async () => {
       try {
-        const { data: statusData, error } = await supabase
-          .from("stream_status")
-          .select("*")
-          .eq("id", "main")
-          .single();
-
-        if (statusData && !error) {
-          setStatus((prev) => {
-            // Só atualizar se houver mudanças para evitar re-renderizações desnecessárias
-            if (
-              prev.tv_online !== statusData.tv_online ||
-              prev.tv_viewers_count !== statusData.tv_viewers_count ||
-              prev.tv_stream_title !== statusData.tv_stream_title ||
-              prev.current_song !== statusData.current_song ||
-              prev.current_artist !== statusData.current_artist ||
-              JSON.stringify(prev.song_history) !== JSON.stringify(statusData.song_history)
-            ) {
-              console.log("Status atualizado via Polling:", statusData);
-              return statusData as StreamStatus;
-            }
-            return prev;
-          });
+        const res = await fetch(`/api/stream-status?t=${Date.now()}`, { cache: "no-store" });
+        if (res.ok) {
+          const statusData = await res.json();
+          if (statusData) {
+            setStatus((prev) => {
+              // Só atualizar se houver mudanças para evitar re-renderizações desnecessárias
+              if (
+                prev.tv_online !== statusData.tv_online ||
+                prev.tv_viewers_count !== statusData.tv_viewers_count ||
+                prev.tv_stream_title !== statusData.tv_stream_title ||
+                prev.current_song !== statusData.current_song ||
+                prev.current_artist !== statusData.current_artist ||
+                JSON.stringify(prev.song_history) !== JSON.stringify(statusData.song_history)
+              ) {
+                console.log("Status atualizado via Polling:", statusData);
+                return statusData as StreamStatus;
+              }
+              return prev;
+            });
+          }
         }
       } catch (err) {
         console.error("Erro no polling de status:", err);

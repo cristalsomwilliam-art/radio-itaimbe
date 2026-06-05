@@ -133,6 +133,9 @@ export default function NoticiasPage() {
                   src={selectedArticle.imageUrl}
                   alt={selectedArticle.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
+                  }}
                 />
               </div>
             )}
@@ -216,7 +219,14 @@ export default function NoticiasPage() {
                   >
                     {article.imageUrl && (
                       <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-zinc-800/60 bg-zinc-950 flex-shrink-0">
-                        <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
+                        <img 
+                          src={article.imageUrl} 
+                          alt={article.title} 
+                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
+                          onError={(e) => {
+                            e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
+                          }}
+                        />
                       </div>
                     )}
                     <div className="flex-1 min-w-0 space-y-1.5">
