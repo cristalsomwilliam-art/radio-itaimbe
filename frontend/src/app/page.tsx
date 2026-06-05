@@ -5,7 +5,7 @@ import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Sta
 import { supabase } from "@/lib/supabase";
 import { useAudio } from "@/context/AudioContext";
 import TvPlayer from "@/components/TvPlayer";
-import OwncastChat from "@/components/OwncastChat";
+import CustomChat from "@/components/CustomChat";
 import Visualizer from "@/components/Visualizer";
 import Link from "next/link";
 
@@ -156,7 +156,7 @@ export default function Home() {
               </div>
               {/* Chat do Owncast */}
               <div className="lg:col-span-1 h-full">
-                <OwncastChat chatUrl={owncastChatUrl} />
+                <CustomChat />
               </div>
             </div>
           </div>

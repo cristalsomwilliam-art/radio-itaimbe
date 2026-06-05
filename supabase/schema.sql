@@ -11,6 +11,7 @@ CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     email TEXT NOT NULL,
     full_name TEXT,
+    avatar_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -21,6 +22,10 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Permitir leitura de perfis pelos próprios administradores"
     ON public.profiles FOR SELECT
     USING (auth.uid() = id);
+
+CREATE POLICY "Permitir leitura pública de perfis"
+    ON public.profiles FOR SELECT
+    USING (true);
 
 CREATE POLICY "Permitir atualização de perfis pelos próprios administradores"
     ON public.profiles FOR UPDATE
@@ -220,8 +225,15 @@ CREATE TRIGGER on_stream_status_update BEFORE UPDATE ON public.stream_status FOR
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email, full_name)
-    VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email));
+    INSERT INTO public.profiles (id, email, full_name, avatar_url)
+    VALUES (
+        NEW.id, 
+        NEW.email, 
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+        NEW.raw_user_meta_data->>'avatar_url'
+    )
+    ON CONFLICT (id) DO UPDATE 
+    SET full_name = EXCLUDED.full_name, avatar_url = EXCLUDED.avatar_url;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -229,3 +241,37 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+---------------------------------------------------------
+-- 8. TABELA DE MENSAGENS DO CHAT (CHAT_MESSAGES)
+---------------------------------------------------------
+CREATE TABLE public.chat_messages (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    message TEXT NOT NULL CHECK (char_length(trim(message)) > 0 AND char_length(message) <= 300),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS em chat_messages
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para chat_messages
+CREATE POLICY "Permitir leitura pública de mensagens do chat"
+    ON public.chat_messages FOR SELECT
+    USING (true);
+
+CREATE POLICY "Permitir envio de mensagens por usuários logados"
+    ON public.chat_messages FOR INSERT
+    WITH CHECK (auth.uid() = profile_id);
+
+CREATE POLICY "Permitir exclusão de mensagens por moderadores/admins"
+    ON public.chat_messages FOR DELETE
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE id = auth.uid()
+        )
+    );
+
+-- Habilitar tempo real (Realtime) para chat_messages no Supabase
+ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
