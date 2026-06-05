@@ -234,7 +234,6 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
         playsInline
         className="w-full h-full object-contain cursor-pointer"
         onClick={togglePlay}
-        autoPlay
         muted={isMuted}
       />
 
@@ -254,6 +253,17 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
           <Tv className="w-4 h-4 text-accent-400 animate-pulse" />
           <span className="text-xs font-bold text-white tracking-wider">TV ITAIMBÉ</span>
         </div>
+      )}
+
+      {/* Botão flutuante para desmutar se estiver mutado automaticamente */}
+      {isPlaying && isMuted && (
+        <button
+          onClick={() => setIsMuted(false)}
+          className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-gradient-to-r from-red-600 to-pink-600 hover:scale-105 active:scale-95 transition-all px-4 py-2.5 rounded-full border border-white/10 shadow-lg text-[10px] md:text-xs font-black text-white uppercase tracking-wider animate-bounce"
+        >
+          <VolumeX className="w-3.5 h-3.5" />
+          <span>Ativar Áudio</span>
+        </button>
       )}
 
       {/* Controles do Player */}
