@@ -40,7 +40,7 @@ interface NewsItem {
 }
 
 export default function Home() {
-  const { isPlaying, togglePlay, play: playRadio, pause: pauseRadio } = useAudio();
+  const { isPlaying, togglePlay, pause: pauseRadio } = useAudio();
   const prevTvOnlineRef = useRef<boolean | null>(null);
   const [status, setStatus] = useState<StreamStatus>({
     tv_online: false,
@@ -66,30 +66,35 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      try {
+        // 1. Carregar status do streaming
+        const { data: statusData } = await supabase
+          .from("stream_status")
+          .select("*")
+          .eq("id", "main")
+          .single();
 
-      // 1. Carregar status do streaming
-      const { data: statusData } = await supabase
-        .from("stream_status")
-        .select("*")
-        .eq("id", "main")
-        .single();
-
-      if (statusData) {
-        setStatus(statusData as StreamStatus);
+        if (statusData) {
+          setStatus(statusData as StreamStatus);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar status inicial:", err);
       }
 
-      // 2. Carregar Banners
-      const { data: bannersData } = await supabase
-        .from("banners")
-        .select("*")
-        .eq("active", true)
-        .limit(3);
+      try {
+        // 2. Carregar Banners
+        const { data: bannersData } = await supabase
+          .from("banners")
+          .select("*")
+          .eq("active", true)
+          .limit(3);
 
-      if (bannersData) {
-        setBanners(bannersData as Banner[]);
+        if (bannersData) {
+          setBanners(bannersData as Banner[]);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar banners iniciais:", err);
       }
-
-      // 3. Notícias carregadas estaticamente
 
       setIsLoading(false);
     };
@@ -108,13 +113,46 @@ export default function Home() {
           filter: "id=eq.main",
         },
         (payload) => {
+          console.log("Status atualizado via Realtime:", payload.new);
           setStatus(payload.new as StreamStatus);
         }
       )
       .subscribe();
 
+    // 5. Polling de Fallback a cada 5 segundos para caso de falha no Realtime
+    const pollingInterval = setInterval(async () => {
+      try {
+        const { data: statusData, error } = await supabase
+          .from("stream_status")
+          .select("*")
+          .eq("id", "main")
+          .single();
+
+        if (statusData && !error) {
+          setStatus((prev) => {
+            // Só atualizar se houver mudanças para evitar re-renderizações desnecessárias
+            if (
+              prev.tv_online !== statusData.tv_online ||
+              prev.tv_viewers_count !== statusData.tv_viewers_count ||
+              prev.tv_stream_title !== statusData.tv_stream_title ||
+              prev.current_song !== statusData.current_song ||
+              prev.current_artist !== statusData.current_artist ||
+              JSON.stringify(prev.song_history) !== JSON.stringify(statusData.song_history)
+            ) {
+              console.log("Status atualizado via Polling:", statusData);
+              return statusData as StreamStatus;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error("Erro no polling de status:", err);
+      }
+    }, 5000);
+
     return () => {
       supabase.removeChannel(statusSubscription);
+      clearInterval(pollingInterval);
     };
   }, []);
 
