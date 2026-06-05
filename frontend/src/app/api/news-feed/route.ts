@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
   const portal = searchParams.get("portal");
 
   let feedUrl = "";
-  if (portal === "g1") {
-    feedUrl = "https://g1.globo.com/rss/g1/rio-grande-do-sul/";
+  if (portal === "estadao") {
+    feedUrl = "https://www.estadao.com.br/arc/outboundfeeds/rss/?outputType=xml";
   } else if (portal === "jovempan") {
     feedUrl = "https://jovempan.com.br/feed/";
   } else if (portal === "oeste") {

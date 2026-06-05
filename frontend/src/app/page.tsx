@@ -443,17 +443,17 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* G1 */}
+          {/* Estadão */}
           <a
-            href="https://g1.globo.com"
+            href="https://www.estadao.com.br"
             target="_blank"
             rel="noopener noreferrer"
-            className="glass-panel rounded-2xl overflow-hidden group hover:border-red-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
+            className="glass-panel rounded-2xl overflow-hidden group hover:border-blue-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
           >
             <div className="relative aspect-video bg-zinc-950 overflow-hidden">
               <img
-                src="/g1_cover.png"
-                alt="G1 - Globo"
+                src="/estadao_cover.png"
+                alt="Estadão"
                 className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
               />
               <div className="absolute top-2.5 left-2.5">
@@ -465,10 +465,10 @@ export default function Home() {
             <div className="p-4 flex-1 flex flex-col justify-between">
               <div>
                 <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
-                  G1 - Globo
+                  Estadão
                 </h3>
                 <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
-                  Notícias em tempo real sobre o Brasil, o mundo, economia, tecnologia, saúde e esportes.
+                  Notícias em tempo real sobre o Brasil, o mundo, economia, política, cultura e a cobertura dos acontecimentos gerais e regionais.
                 </p>
               </div>
               <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
@@ -492,7 +492,7 @@ export default function Home() {
               />
               <div className="absolute top-2.5 left-2.5">
                 <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
-                  Política & Opinião
+                  Análises & Economia
                 </span>
               </div>
             </div>
@@ -502,7 +502,7 @@ export default function Home() {
                   Jovem Pan News
                 </h3>
                 <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
-                  Debates, análises políticas em tempo real, esportes, entretenimento e transmissões ao vivo.
+                  Análises em tempo real, economia, debates, esportes, entretenimento e transmissões ao vivo da emissora.
                 </p>
               </div>
               <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
@@ -526,7 +526,7 @@ export default function Home() {
               />
               <div className="absolute top-2.5 left-2.5">
                 <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
-                  Análises & Economia
+                  Política & Opinião
                 </span>
               </div>
             </div>
@@ -536,7 +536,7 @@ export default function Home() {
                   Revista Oeste
                 </h3>
                 <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
-                  Jornalismo independente com análises sobre política, economia, defesa do livre mercado.
+                  Jornalismo independente com opinião, debates e análises políticas e econômicas em defesa do livre mercado.
                 </p>
               </div>
               <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">

@@ -23,31 +23,31 @@ interface ArticleItem {
 
 const portals: PortalItem[] = [
   {
-    id: "g1",
-    name: "G1 - Globo",
-    description: "Notícias em tempo real sobre o Brasil, o mundo, economia, tecnologia, saúde, esportes e notícias regionais.",
-    url: "https://g1.globo.com",
-    image_url: "/g1_cover.png",
-    color: "from-red-600 to-red-800 hover:border-red-500/40",
+    id: "estadao",
+    name: "Estadão",
+    description: "Notícias em tempo real sobre o Brasil, o mundo, economia, política, cultura e a cobertura dos acontecimentos gerais e regionais.",
+    url: "https://www.estadao.com.br",
+    image_url: "/estadao_cover.png",
+    color: "from-blue-700 to-slate-800 hover:border-blue-500/40",
     badge: "Geral & Regional"
   },
   {
     id: "jovempan",
     name: "Jovem Pan News",
-    description: "Opinião, debates, análises políticas em tempo real, esportes, entretenimento e transmissões ao vivo da emissora.",
+    description: "Análises em tempo real, economia, debates, esportes, entretenimento e transmissões ao vivo da emissora.",
     url: "https://jovempan.com.br",
     image_url: "/jovem_pan_cover.png",
     color: "from-[#e81e4d] to-rose-700 hover:border-rose-500/40",
-    badge: "Política & Opinião"
+    badge: "Análises & Economia"
   },
   {
     id: "oeste",
     name: "Revista Oeste",
-    description: "Jornalismo independente com análises sobre política, economia, defesa do livre mercado e da democracia.",
+    description: "Jornalismo independente com opinião, debates e análises políticas e econômicas em defesa do livre mercado e da democracia.",
     url: "https://revistaoeste.com",
     image_url: "/revista_oeste_cover.png",
     color: "from-amber-500 to-yellow-600 hover:border-yellow-500/40",
-    badge: "Análises & Economia"
+    badge: "Política & Opinião"
   }
 ];
 
