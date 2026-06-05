@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Tv, Radio, Users, Music, RefreshCw, ChevronRight } from "lucide-react";
+import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAudio } from "@/context/AudioContext";
 import TvPlayer from "@/components/TvPlayer";
 import OwncastChat from "@/components/OwncastChat";
 import Visualizer from "@/components/Visualizer";
@@ -38,6 +39,7 @@ interface NewsItem {
 }
 
 export default function Home() {
+  const { isPlaying, togglePlay } = useAudio();
   const [status, setStatus] = useState<StreamStatus>({
     tv_online: false,
     tv_viewers_count: 0,
@@ -124,22 +126,22 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="space-y-8 md:space-y-12">
-      {/* 1. SEÇÃO DE TRANSMISSÃO PRINCIPAL (TELA DA TV OU VISUALIZADOR DA RÁDIO) */}
+    <div className="space-y-10 md:space-y-14">
+      {/* 1. SEÇÃO DE TRANSMISSÃO PRINCIPAL */}
       <section className="w-full">
         {isLoading ? (
-          <div className="w-full h-[350px] md:h-[480px] bg-zinc-900/30 border border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-3">
-            <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-zinc-500 text-xs font-semibold">Sincronizando sinal...</span>
+          <div className="w-full h-[380px] md:h-[480px] bg-zinc-900/30 border border-zinc-800/40 rounded-3xl flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 border-3 border-[#e81e4d] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Sincronizando sinal...</span>
           </div>
         ) : status.tv_online ? (
           /* MODO TV AO VIVO COM CHAT */
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
-                  <h1 className="text-lg md:text-xl font-extrabold text-white uppercase tracking-wider">
+                  <h1 className="text-lg md:text-xl font-extrabold text-white uppercase tracking-wider text-glow">
                     TV ITAIMBÉ AO VIVO
                   </h1>
                 </div>
@@ -149,8 +151,8 @@ export default function Home() {
               </div>
 
               <div className="flex items-center gap-4 text-xs font-semibold bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-full self-start">
-                <div className="flex items-center gap-1.5 text-accent-400">
-                  <Users className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 text-red-400">
+                  <Users className="w-4 h-4 animate-pulse" />
                   <span>{status.tv_viewers_count} assistindo</span>
                 </div>
               </div>
@@ -168,85 +170,200 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          /* MODO RÁDIO AUTOMÁTICO (VISUALIZADOR + HISTÓRICO) */
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-pulse"></span>
-                  <h1 className="text-lg md:text-xl font-extrabold text-white uppercase tracking-wider">
-                    RÁDIO ITAIMBÉ FM
+          /* MODO RÁDIO AUTOMÁTICO (Mockup Grid de Alta Fidelidade) */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* CARD PRINCIPAL DA RÁDIO (Esquerda, 2 colunas) */}
+            <div className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#270b47] via-[#110423] to-[#04010b] border border-white/5 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 justify-between shadow-2xl shadow-purple-950/10 min-h-[380px] md:min-h-[440px]">
+              {/* Bubbles de luz decorativas */}
+              <div className="absolute top-10 left-1/4 w-32 h-32 bg-[#e81e4d]/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-10 right-1/4 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
+
+              {/* Informações e Controles (Lado Esquerdo) */}
+              <div className="flex-1 flex flex-col justify-between h-full z-10 w-full">
+                <div>
+                  {/* Badge Ao Vivo */}
+                  <div className="inline-flex items-center gap-2 bg-[#e81e4d]/15 border border-[#e81e4d]/30 text-[#e81e4d] text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 bg-[#e81e4d] rounded-full animate-pulse"></span>
+                    Ao Vivo Agora
+                  </div>
+
+                  {/* Nome da Rádio */}
+                  <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mt-5 uppercase tracking-tight">
+                    RÁDIO <br />
+                    <span className="bg-gradient-to-r from-white via-zinc-100 to-[#e81e4d] bg-clip-text text-transparent">
+                      ITAIMBÉ FM
+                    </span>
                   </h1>
+
+                  {/* Slogan */}
+                  <div className="flex items-center gap-2 text-zinc-400 mt-2">
+                    <span className="text-[#e81e4d] text-sm animate-pulse">⚡</span>
+                    <p className="text-xs md:text-sm font-semibold tracking-wide">
+                      Conectando você com o que há de melhor!
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs md:text-sm text-zinc-400 font-medium mt-1">
-                  Música atual: <span className="text-white font-semibold">{status.current_song}</span>
-                </p>
+
+                {/* Caixa de Música Atual Glassmorphic */}
+                <div className="mt-8 bg-zinc-950/45 border border-white/5 rounded-2xl p-4 backdrop-blur-md max-w-sm w-full shadow-lg shadow-black/40">
+                  <span className="text-[9px] font-extrabold text-[#e81e4d] uppercase tracking-widest block mb-1">
+                    Música atual:
+                  </span>
+                  <p className="text-xs md:text-sm font-black text-white line-clamp-2 leading-relaxed">
+                    {status.current_song || "Programação Musical"}
+                  </p>
+                  <p className="text-[10px] text-zinc-400 font-bold tracking-wide mt-1 truncate">
+                    {status.current_artist || "Lançamento 2026"}
+                  </p>
+                </div>
+
+                {/* Controles de Play e Compartilhar */}
+                <div className="flex items-center gap-3 mt-6">
+                  <button
+                    onClick={togglePlay}
+                    className="bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] hover:scale-105 active:scale-95 transition-all text-white text-xs font-black px-7 py-3.5 rounded-full flex items-center gap-2 shadow-lg shadow-pink-500/25 uppercase tracking-wider"
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause className="w-4 h-4 fill-white" />
+                        <span>Pausar Rádio</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 fill-white translate-x-0.5" />
+                        <span>Ouvir Agora</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: "Rádio Itaimbé 87.9 FM",
+                          text: "Ouça a Rádio Itaimbé ao vivo!",
+                          url: window.location.origin,
+                        });
+                      } else {
+                        navigator.clipboard.writeText(window.location.origin);
+                        alert("Link copiado!");
+                      }
+                    }}
+                    className="bg-white/5 hover:bg-white/10 text-white p-3.5 rounded-full border border-white/5 transition-all hover:scale-105 active:scale-95 shadow-md"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4 text-xs font-semibold bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-full self-start">
-                <div className="flex items-center gap-1.5 text-primary-400">
-                  <Users className="w-4 h-4" />
-                  <span>{status.listeners_count} ouvintes online</span>
+              {/* Visualizador de Áudio Circular (Lado Direito) */}
+              <div className="flex flex-col items-center justify-center w-full md:w-auto z-10">
+                <Visualizer />
+                
+                {/* Badge de Modo */}
+                <div className="mt-2 inline-flex items-center gap-1.5 bg-zinc-950/60 border border-white/5 text-zinc-300 text-[8px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest shadow-md">
+                  <span className="w-1.5 h-1.5 bg-[#e81e4d] rounded-full animate-pulse"></span>
+                  Modo Rádio Automático
                 </div>
               </div>
+
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Canvas Wave Visualizer */}
-              <div className="lg:col-span-2">
-                <Visualizer
-                  isPlaying={true} // Por estar na home da rádio, simula onda
-                  albumArt={status.album_art}
-                  songTitle={status.current_song}
-                  artistName={status.current_artist}
-                />
-              </div>
-
-              {/* Histórico de Músicas Tocadas & Próxima */}
-              <div className="lg:col-span-1 flex flex-col justify-between bg-zinc-950/80 border border-zinc-800 rounded-2xl p-5 shadow-xl min-h-[350px]">
+            {/* SIDEBAR DA DIREITA (1 coluna) */}
+            <div className="lg:col-span-1 flex flex-col justify-between gap-5 h-full">
+              
+              {/* Card de Últimas Músicas */}
+              <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 shadow-2xl flex flex-col h-[280px] justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-4 border-b border-zinc-800 pb-2">
-                    <Music className="w-4 h-4 text-primary-400" />
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wide">Últimas Músicas</h3>
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
+                    <div className="flex items-center gap-2">
+                      <Music className="w-4 h-4 text-[#e81e4d]" />
+                      <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
+                        Últimas Músicas
+                      </h3>
+                    </div>
+                    
+                    <Link
+                      href="/programacao"
+                      className="text-[9px] font-black bg-[#e81e4d] text-white hover:bg-pink-600 transition-colors px-3 py-1 rounded-full uppercase tracking-widest shadow-md shadow-pink-500/10"
+                    >
+                      Ver Todas
+                    </Link>
                   </div>
 
                   {status.song_history && status.song_history.length > 0 ? (
-                    <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                    <div className="space-y-3 max-h-[170px] overflow-y-auto pr-1">
                       {status.song_history.map((song, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs py-1 border-b border-zinc-900/50"
+                          className="flex items-center justify-between text-xs py-2 border-b border-white/5 hover:bg-white/5 px-2 rounded-xl transition-all group cursor-pointer"
                         >
-                          <div className="min-w-0 pr-3">
-                            <p className="font-semibold text-zinc-200 truncate">{song.title}</p>
-                            <p className="text-[10px] text-zinc-500 truncate mt-0.5">{song.artist}</p>
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                              <Play className="w-3 h-3 text-[#e81e4d] opacity-0 group-hover:opacity-100 transition-opacity absolute fill-[#e81e4d]" />
+                              <Music className="w-3.5 h-3.5 text-zinc-600 group-hover:opacity-0 transition-opacity" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-zinc-100 truncate text-[11px] group-hover:text-[#e81e4d] transition-colors">
+                                {song.title}
+                              </p>
+                              <p className="text-[9px] text-zinc-500 truncate mt-0.5 font-medium">
+                                {song.artist}
+                              </p>
+                            </div>
                           </div>
-                          <span className="text-[10px] text-zinc-600 font-medium whitespace-nowrap">
-                            {song.time}
-                          </span>
+                          
+                          {/* Mini Equalizador animado */}
+                          <div className="flex items-center gap-4">
+                            <span className="text-[9px] text-zinc-600 font-bold whitespace-nowrap">
+                              {song.time}
+                            </span>
+                            <div className="flex items-end gap-[1.5px] h-3 w-3.5">
+                              <span className="w-[1.5px] bg-[#e81e4d] rounded-full animate-[bounce_0.8s_infinite_100ms] h-full"></span>
+                              <span className="w-[1.5px] bg-[#e81e4d] rounded-full animate-[bounce_0.8s_infinite_300ms] h-3/5"></span>
+                              <span className="w-[1.5px] bg-[#e81e4d] rounded-full animate-[bounce_0.8s_infinite_500ms] h-4/5"></span>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-zinc-500 text-center py-6">Nenhum histórico disponível.</p>
+                    <p className="text-[10px] text-zinc-500 text-center py-8 font-medium">
+                      Nenhum histórico disponível.
+                    </p>
                   )}
                 </div>
-
-                {status.next_song && (
-                  <div className="mt-4 bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between">
-                    <div>
-                      <span className="text-[8px] font-bold text-accent-400 uppercase tracking-widest block">
-                        A Seguir
-                      </span>
-                      <span className="text-xs font-semibold text-white block truncate max-w-[200px]">
-                        {status.next_song}
-                      </span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-600" />
-                  </div>
-                )}
               </div>
+
+              {/* Card Peça Sua Música */}
+              <div className="bg-gradient-to-br from-[#8b5cf6] via-[#4c1d95] to-[#1e1b4b] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group min-h-[145px] flex flex-col justify-between">
+                {/* Decorações neon */}
+                <div className="absolute right-[-20px] top-[-20px] w-24 h-24 bg-pink-500/25 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+                <div className="absolute left-[-30px] bottom-[-30px] w-28 h-28 bg-[#22d3ee]/20 rounded-full blur-2xl"></div>
+
+                <div className="z-10">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                    Peça sua música
+                  </h3>
+                  <p className="text-[10px] text-zinc-300 mt-1 leading-relaxed max-w-[200px]">
+                    Participe da nossa programação! Envie seu recado e peça seu som no WhatsApp.
+                  </p>
+                </div>
+
+                <a
+                  href="https://wa.me/555535541179?text=Olá!%20Estou%20ouvindo%20a%20Itaimbé%20FM,%20gostaria%20de%20pedir%20uma%20música!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-4 z-10 active:scale-95"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                  Pedir Música
+                </a>
+              </div>
+
             </div>
+
           </div>
         )}
       </section>
@@ -261,15 +378,15 @@ export default function Home() {
                 href={banner.link || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative h-28 rounded-xl overflow-hidden border border-zinc-800/80 group hover:border-zinc-700/60 transition-all shadow-lg"
+                className="relative h-28 rounded-2xl overflow-hidden border border-zinc-800/40 group hover:border-zinc-700/50 transition-all shadow-lg"
               >
                 <img
                   src={banner.image_url}
                   alt={banner.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-[0.85]"
+                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 brightness-[0.85]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
-                  <h4 className="text-xs font-bold text-white leading-tight">{banner.title}</h4>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent flex items-end p-4">
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-wider leading-tight">{banner.title}</h4>
                 </div>
               </a>
             ))}
@@ -277,16 +394,90 @@ export default function Home() {
         </section>
       )}
 
-      {/* 3. SEÇÃO DE NOTÍCIAS RECENTES */}
+      {/* 3. 4 CARDS DE AÇÕES RÁPIDAS (Estilo Mockup) */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Rádio ao Vivo */}
+        <div className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group">
+          <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center text-[#e81e4d] group-hover:scale-105 transition-transform duration-300">
+            <Radio className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
+              Rádio Ao Vivo
+            </h4>
+            <p className="text-[9px] text-zinc-500 mt-0.5">
+              24h de programação sem parar
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Programação */}
+        <Link
+          href="/programacao"
+          className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform duration-300">
+            <Star className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
+              Programação
+            </h4>
+            <p className="text-[9px] text-zinc-500 mt-0.5">
+              Confira nossa grade completa
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 3: Notícias */}
+        <Link
+          href="/noticias"
+          className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform duration-300">
+            <Newspaper className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
+              Notícias
+            </h4>
+            <p className="text-[9px] text-zinc-500 mt-0.5">
+              Fique por dentro das novidades
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 4: Participe */}
+        <a
+          href="https://wa.me/555535541179?text=Olá!%20Quero%20participar%20da%20programação!"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform duration-300">
+            <MessageCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
+              Participe
+            </h4>
+            <p className="text-[9px] text-zinc-500 mt-0.5">
+              Envie recado e faça seu pedido
+            </p>
+          </div>
+        </a>
+      </section>
+
+      {/* 4. SEÇÃO DE NOTÍCIAS RECENTES */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <h2 className="text-lg font-black tracking-wide text-white uppercase flex items-center gap-2">
-            <span className="w-1 h-5 bg-accent-500 rounded"></span>
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+          <h2 className="text-lg font-black tracking-wider text-white uppercase flex items-center gap-2">
+            <span className="w-1 h-5 bg-[#e81e4d] rounded"></span>
             Últimas Notícias
           </h2>
           <Link
             href="/noticias"
-            className="text-xs font-bold text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-0.5"
+            className="text-[10px] font-extrabold text-[#e81e4d] hover:text-pink-400 transition-colors uppercase tracking-wider flex items-center gap-0.5"
           >
             Ver Todas <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -298,14 +489,14 @@ export default function Home() {
               <Link
                 key={item.id}
                 href={`/noticias/${item.slug}`}
-                className="glass-panel rounded-xl overflow-hidden group hover:border-zinc-700/50 flex flex-col h-full shadow-lg transition-all"
+                className="glass-panel rounded-2xl overflow-hidden group hover:border-zinc-700/50 flex flex-col h-full shadow-lg transition-all"
               >
                 <div className="relative aspect-video bg-zinc-800 overflow-hidden">
                   {item.image_url ? (
                     <img
                       src={item.image_url}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-zinc-950 font-bold text-[10px] tracking-wider">
@@ -321,14 +512,14 @@ export default function Home() {
                         month: "long",
                       })}
                     </span>
-                    <h3 className="text-sm font-bold text-white mt-1 group-hover:text-primary-400 transition-colors line-clamp-2">
+                    <h3 className="text-xs md:text-sm font-bold text-white mt-1 group-hover:text-[#e81e4d] transition-colors line-clamp-2">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1.5">
+                    <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1.5">
                       {item.excerpt}
                     </p>
                   </div>
-                  <div className="text-[10px] text-accent-400 font-bold uppercase tracking-wider mt-4 flex items-center gap-0.5">
+                  <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-4 flex items-center gap-0.5">
                     Ler Mais <ChevronRight className="w-3 h-3" />
                   </div>
                 </div>
