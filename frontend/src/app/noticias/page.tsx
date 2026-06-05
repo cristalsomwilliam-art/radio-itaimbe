@@ -1,112 +1,107 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Newspaper, ChevronRight } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import Link from "next/link";
+import React from "react";
+import { Newspaper, ExternalLink } from "lucide-react";
 
-interface NewsItem {
+interface PortalItem {
   id: string;
-  title: string;
-  excerpt: string;
-  slug: string;
-  image_url: string | null;
-  published_at: string;
+  name: string;
+  description: string;
+  url: string;
+  image_url: string;
+  color: string;
+  badge: string;
 }
 
+const portals: PortalItem[] = [
+  {
+    id: "g1",
+    name: "G1 - Globo",
+    description: "Notícias em tempo real sobre o Brasil, o mundo, economia, tecnologia, saúde, esportes e notícias regionais.",
+    url: "https://g1.globo.com",
+    image_url: "/g1_cover.png",
+    color: "from-red-600 to-red-800 hover:border-red-500/40",
+    badge: "Geral & Regional"
+  },
+  {
+    id: "jovempan",
+    name: "Jovem Pan News",
+    description: "Opinião, debates, análises políticas em tempo real, esportes, entretenimento e transmissões ao vivo da emissora.",
+    url: "https://jovempan.com.br",
+    image_url: "/jovem_pan_cover.png",
+    color: "from-[#e81e4d] to-rose-700 hover:border-rose-500/40",
+    badge: "Política & Opinião"
+  },
+  {
+    id: "revistaoeste",
+    name: "Revista Oeste",
+    description: "Jornalismo independente com análises sobre política, economia, defesa do livre mercado e da democracia.",
+    url: "https://revistaoeste.com",
+    image_url: "/revista_oeste_cover.png",
+    color: "from-amber-500 to-yellow-600 hover:border-yellow-500/40",
+    badge: "Análises & Economia"
+  }
+];
+
 export default function NoticiasPage() {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchNews = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from("news")
-        .select("id, title, excerpt, slug, image_url, published_at")
-        .order("published_at", { ascending: false });
-
-      if (data && !error) {
-        setNews(data as NewsItem[]);
-      } else if (error) {
-        console.error("Erro ao buscar notícias:", error);
-      }
-      setIsLoading(false);
-    };
-
-    fetchNews();
-  }, []);
-
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8 md:space-y-12">
       {/* Cabeçalho */}
-      <div className="flex flex-col gap-1 border-b border-zinc-800 pb-4">
+      <div className="flex flex-col gap-1 border-b border-zinc-800/80 pb-4">
         <div className="flex items-center gap-2">
-          <Newspaper className="w-5 h-5 text-primary-400" />
+          <Newspaper className="w-5 h-5 text-[#e81e4d]" />
           <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">
             Portal de Notícias
           </h1>
         </div>
         <p className="text-xs md:text-sm text-zinc-400 font-medium">
-          Acompanhe os acontecimentos, novidades e eventos na nossa rádio e em toda a região.
+          Acompanhe os principais acontecimentos do país e do mundo através dos portais de notícias recomendados pela Rádio Itaimbé.
         </p>
       </div>
 
-      {/* Grid de Notícias */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs text-zinc-500 font-medium">Carregando notícias...</span>
-        </div>
-      ) : news.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {news.map((item) => (
-            <Link
-              key={item.id}
-              href={`/noticias/${item.slug}`}
-              className="glass-panel rounded-xl overflow-hidden group hover:border-zinc-700/50 flex flex-col h-full shadow-lg transition-all"
-            >
-              <div className="relative aspect-video bg-zinc-800 overflow-hidden">
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-zinc-950 font-bold text-[10px] tracking-wider">
-                    RADIO ITAIMBÉ 87.9
-                  </div>
-                )}
+      {/* Grid de Portais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {portals.map((portal) => (
+          <a
+            key={portal.id}
+            href={portal.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`glass-panel rounded-2xl overflow-hidden group flex flex-col h-full shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl ${portal.color}`}
+          >
+            {/* Imagem de Capa */}
+            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
+              <img
+                src={portal.image_url}
+                alt={portal.name}
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 brightness-90"
+              />
+              <div className="absolute top-3 left-3">
+                <span className="bg-black/70 backdrop-blur-md text-[9px] font-black uppercase text-white px-2.5 py-1 rounded-full tracking-wider border border-white/10">
+                  {portal.badge}
+                </span>
               </div>
-              <div className="p-4 flex-1 flex flex-col justify-between">
-                <div>
-                  <span className="text-[10px] font-semibold text-zinc-500">
-                    {new Date(item.published_at).toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
-                  <h3 className="text-sm font-bold text-white mt-1 group-hover:text-primary-400 transition-colors line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-zinc-400 font-normal leading-relaxed line-clamp-3 mt-1.5 font-normal">
-                    {item.excerpt}
-                  </p>
-                </div>
-                <div className="text-[10px] text-accent-400 font-bold uppercase tracking-wider mt-4 flex items-center gap-0.5">
-                  Ler Reportagem <ChevronRight className="w-3.5 h-3.5" />
-                </div>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-sm md:text-base font-black text-white group-hover:text-[#e81e4d] transition-colors leading-tight">
+                  {portal.name}
+                </h3>
+                <p className="text-xs text-zinc-400 font-normal leading-relaxed">
+                  {portal.description}
+                </p>
               </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-zinc-950/20 border border-dashed border-zinc-800 rounded-xl">
-          <p className="text-sm text-zinc-500 font-medium">Nenhuma notícia publicada no momento.</p>
-        </div>
-      )}
+              
+              <div className="text-[10px] text-zinc-300 font-black uppercase tracking-wider flex items-center gap-1.5 self-start group-hover:text-white transition-colors bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-zinc-800/80">
+                Acessar Portal <ExternalLink className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
+

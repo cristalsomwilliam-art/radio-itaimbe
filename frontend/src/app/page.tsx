@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio } from "lucide-react";
+import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAudio } from "@/context/AudioContext";
 import TvPlayer from "@/components/TvPlayer";
@@ -87,16 +87,7 @@ export default function Home() {
         setBanners(bannersData as Banner[]);
       }
 
-      // 3. Carregar Notícias Recentes
-      const { data: newsData } = await supabase
-        .from("news")
-        .select("id, title, excerpt, slug, image_url, published_at")
-        .order("published_at", { ascending: false })
-        .limit(3);
-
-      if (newsData) {
-        setNews(newsData as NewsItem[]);
-      }
+      // 3. Notícias carregadas estaticamente
 
       setIsLoading(false);
     };
@@ -468,67 +459,124 @@ export default function Home() {
         </a>
       </section>
 
-      {/* 4. SEÇÃO DE NOTÍCIAS RECENTES */}
+      {/* 4. SEÇÃO DE PORTAIS DE NOTÍCIAS */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
           <h2 className="text-lg font-black tracking-wider text-white uppercase flex items-center gap-2">
             <span className="w-1 h-5 bg-[#e81e4d] rounded"></span>
-            Últimas Notícias
+            Portal de Notícias
           </h2>
           <Link
             href="/noticias"
             className="text-[10px] font-extrabold text-[#e81e4d] hover:text-pink-400 transition-colors uppercase tracking-wider flex items-center gap-0.5"
           >
-            Ver Todas <ChevronRight className="w-3.5 h-3.5" />
+            Ver Detalhes <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        {news.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {news.map((item) => (
-              <Link
-                key={item.id}
-                href={`/noticias/${item.slug}`}
-                className="glass-panel rounded-2xl overflow-hidden group hover:border-zinc-700/50 flex flex-col h-full shadow-lg transition-all"
-              >
-                <div className="relative aspect-video bg-zinc-800 overflow-hidden">
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-zinc-950 font-bold text-[10px] tracking-wider">
-                      RADIO ITAIMBÉ 87.9
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[10px] font-semibold text-zinc-500">
-                      {new Date(item.published_at).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "long",
-                      })}
-                    </span>
-                    <h3 className="text-xs md:text-sm font-bold text-white mt-1 group-hover:text-[#e81e4d] transition-colors line-clamp-2">
-                      {item.title}
-                    </h3>
-                    <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1.5">
-                      {item.excerpt}
-                    </p>
-                  </div>
-                  <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-4 flex items-center gap-0.5">
-                    Ler Mais <ChevronRight className="w-3 h-3" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-zinc-500 text-xs font-medium">Nenhuma notícia publicada ainda.</div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* G1 */}
+          <a
+            href="https://g1.globo.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-panel rounded-2xl overflow-hidden group hover:border-red-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
+          >
+            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
+              <img
+                src="/g1_cover.png"
+                alt="G1 - Globo"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
+              />
+              <div className="absolute top-2.5 left-2.5">
+                <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
+                  Geral & Regional
+                </span>
+              </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
+                  G1 - Globo
+                </h3>
+                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
+                  Notícias em tempo real sobre o Brasil, o mundo, economia, tecnologia, saúde e esportes.
+                </p>
+              </div>
+              <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
+                Acessar Portal <ExternalLink className="w-3 h-3" />
+              </div>
+            </div>
+          </a>
+
+          {/* Jovem Pan */}
+          <a
+            href="https://jovempan.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-panel rounded-2xl overflow-hidden group hover:border-rose-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
+          >
+            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
+              <img
+                src="/jovem_pan_cover.png"
+                alt="Jovem Pan News"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
+              />
+              <div className="absolute top-2.5 left-2.5">
+                <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
+                  Política & Opinião
+                </span>
+              </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
+                  Jovem Pan News
+                </h3>
+                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
+                  Debates, análises políticas em tempo real, esportes, entretenimento e transmissões ao vivo.
+                </p>
+              </div>
+              <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
+                Acessar Portal <ExternalLink className="w-3 h-3" />
+              </div>
+            </div>
+          </a>
+
+          {/* Revista Oeste */}
+          <a
+            href="https://revistaoeste.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-panel rounded-2xl overflow-hidden group hover:border-yellow-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
+          >
+            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
+              <img
+                src="/revista_oeste_cover.png"
+                alt="Revista Oeste"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
+              />
+              <div className="absolute top-2.5 left-2.5">
+                <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
+                  Análises & Economia
+                </span>
+              </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
+                  Revista Oeste
+                </h3>
+                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
+                  Jornalismo independente com análises sobre política, economia, defesa do livre mercado.
+                </p>
+              </div>
+              <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
+                Acessar Portal <ExternalLink className="w-3 h-3" />
+              </div>
+            </div>
+          </a>
+        </div>
       </section>
     </div>
   );
