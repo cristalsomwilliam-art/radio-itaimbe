@@ -332,8 +332,8 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       return;
     }
 
-    // 1. Limite de tempo por usuário (10 minutos de cooldown) usando Local Storage
-    const COOLDOWN_MINUTES = 10;
+    // 1. Limite de tempo por usuário (3 minutos de cooldown) usando Local Storage
+    const COOLDOWN_MINUTES = 3;
     const lastRequestTime = localStorage.getItem("last_request_timestamp");
     if (lastRequestTime) {
       const elapsedMs = Date.now() - parseInt(lastRequestTime, 10);
