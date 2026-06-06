@@ -38,6 +38,21 @@ export default function CustomChat() {
     });
   };
 
+  const formatDisplayName = (name: string) => {
+    if (!name) return "Ouvinte";
+    const nameLower = name.trim().toLowerCase();
+    if (nameLower.includes("cristalsomwilliam")) {
+      return "William";
+    }
+    if (name.includes("@")) {
+      return name.split("@")[0]
+        .split(/[\._-]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+    return name;
+  };
+
   // 1. Monitorar estado de autenticação do usuário
   useEffect(() => {
     const getSession = async () => {
@@ -277,10 +292,10 @@ export default function CustomChat() {
                   isAdminMsg ? "border-2 border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]" : "bg-zinc-800 border border-zinc-700/50"
                 }`}>
                   {msg.profiles.avatar_url ? (
-                    <img src={msg.profiles.avatar_url} alt={msg.profiles.full_name} className="w-full h-full object-cover" />
+                    <img src={msg.profiles.avatar_url} alt={formatDisplayName(msg.profiles.full_name)} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-zinc-500 uppercase">
-                      {msg.profiles.full_name.charAt(0)}
+                      {formatDisplayName(msg.profiles.full_name).charAt(0)}
                     </div>
                   )}
                 </div>
@@ -291,7 +306,7 @@ export default function CustomChat() {
                     isAdminMsg ? "text-amber-400" : "text-zinc-500"
                   }`}>
                     {isAdminMsg && <span className="text-[10px]">👑</span>}
-                    {msg.profiles.full_name}
+                    {formatDisplayName(msg.profiles.full_name)}
                     {isAdminMsg && (
                       <span className="bg-amber-500/20 text-amber-400 text-[7px] px-1 py-0.2 rounded font-extrabold uppercase border border-amber-500/30">
                         Admin
