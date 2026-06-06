@@ -38,15 +38,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Mensagem vazia" }, { status: 400 });
     }
 
-    let cleanChatname = chatname || "Ouvinte";
+    const cleanChatname = String(chatname || "Ouvinte");
     const nameLower = cleanChatname.trim().toLowerCase();
 
+    let formattedName = cleanChatname;
     if (nameLower.includes("cristalsomwilliam")) {
-      cleanChatname = "William";
+      formattedName = "William";
     } else if (cleanChatname.includes("@")) {
-      cleanChatname = cleanChatname.split("@")[0]
+      formattedName = cleanChatname.split("@")[0]
         .split(/[\._-]/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
     }
 
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Encaminhar para a API do Social Stream Ninja (via GET com payload JSON codificado na URL)
     const payload = {
-      chatname: cleanChatname,
+      chatname: formattedName,
       chatmessage: chatmessage,
       chatimg: chatimg || "",
       type: "custom"
