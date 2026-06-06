@@ -404,7 +404,7 @@ export default function Home() {
 
         {/* Card 4: Participe */}
         <a
-          href="https://wa.me/555535541179?text=Olá!%20Quero%20participar%20da%20programação!"
+          href="https://wa.me/5551997286166?text=Olá!%20Quero%20participar%20da%20programação!"
           target="_blank"
           rel="noopener noreferrer"
           className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"

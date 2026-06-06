@@ -125,7 +125,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       const whatsappText = `Olá! Gostaria de pedir uma música pelo site da Rádio Itaimbé:\n\n*Pedido de Música*\n• *Nome:* ${formName.trim()}\n• *Música/Artista:* ${formSong.trim()}${
         formMessage.trim() ? `\n• *Recado:* ${formMessage.trim()}` : ""
       }`;
-      const whatsappUrl = `https://wa.me/555535541179?text=${encodeURIComponent(whatsappText)}`;
+      const whatsappUrl = `https://wa.me/5551997286166?text=${encodeURIComponent(whatsappText)}`;
       
       window.open(whatsappUrl, "_blank");
 
