@@ -684,8 +684,8 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       )}
       {/* Toast Notification Premium */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-[10005] animate-in slide-in-from-bottom-5 duration-300">
-          <div className={`backdrop-blur-md border px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm ${
+        <div className="fixed top-5 right-5 left-5 md:left-auto z-[10005] animate-in slide-in-from-top-5 duration-300 md:max-w-sm">
+          <div className={`backdrop-blur-md border px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 w-full ${
             toast.type === 'success' ? 'bg-emerald-950/80 border-emerald-500/30 text-emerald-300 shadow-emerald-500/10' :
             toast.type === 'error' ? 'bg-red-950/80 border-red-500/30 text-red-300 shadow-red-500/10' :
             'bg-zinc-950/80 border-white/10 text-zinc-300 shadow-black/40'
