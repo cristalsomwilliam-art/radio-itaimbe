@@ -57,24 +57,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, forwarded: false, message: "Social Stream Ninja não configurado." });
     }
 
-    // 4. Encaminhar para a API do Social Stream Ninja
-    const socialStreamUrl = `https://io.socialstream.ninja/${sessionId.trim()}`;
+    // 4. Encaminhar para a API do Social Stream Ninja (via GET com payload JSON codificado na URL)
     const payload = {
-      action: "sendChat",
-      value: {
-        type: "custom",
-        chatname: chatname || "Ouvinte",
-        chatmessage: chatmessage,
-        chatimg: chatimg || ""
-      }
+      chatname: chatname || "Ouvinte",
+      chatmessage: chatmessage,
+      chatimg: chatimg || "",
+      type: "custom"
     };
 
+    const encodedValue = encodeURIComponent(JSON.stringify(payload));
+    const socialStreamUrl = `https://io.socialstream.ninja/${sessionId.trim()}/extContent/null/${encodedValue}`;
+
     const response = await fetch(socialStreamUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
+      method: "GET"
     });
 
     if (!response.ok) {
