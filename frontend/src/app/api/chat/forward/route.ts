@@ -57,6 +57,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, forwarded: false, message: "Social Stream Ninja não configurado." });
     }
 
+    // Extrair o Session ID real caso o usuário tenha colado a URL inteira por engano
+    let cleanSessionId = sessionId.trim();
+    if (cleanSessionId.includes("session=")) {
+      const match = cleanSessionId.match(/[?&]session=([^&]+)/);
+      if (match && match[1]) {
+        cleanSessionId = match[1];
+      }
+    } else if (cleanSessionId.includes("/")) {
+      cleanSessionId = cleanSessionId.split("/").pop() || cleanSessionId;
+    }
+
     // 4. Encaminhar para a API do Social Stream Ninja (via GET com payload JSON codificado na URL)
     const payload = {
       chatname: chatname || "Ouvinte",
@@ -66,7 +77,7 @@ export async function POST(request: NextRequest) {
     };
 
     const encodedValue = encodeURIComponent(JSON.stringify(payload));
-    const socialStreamUrl = `https://io.socialstream.ninja/${sessionId.trim()}/extContent/null/${encodedValue}`;
+    const socialStreamUrl = `https://io.socialstream.ninja/${cleanSessionId}/extContent/null/${encodedValue}`;
 
     const response = await fetch(socialStreamUrl, {
       method: "GET"
