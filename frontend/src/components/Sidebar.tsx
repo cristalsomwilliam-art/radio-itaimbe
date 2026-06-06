@@ -497,11 +497,15 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                          req.status === 'error' ? 'Erro' :
                          'Pendente'}
                       </span>
-                      {req.status_message && (
-                        <span className="text-[8px] text-zinc-400 font-medium truncate max-w-[170px]" title={req.status_message}>
-                          {req.status_message}
-                        </span>
-                      )}
+                      <span className="text-[8px] text-zinc-400 font-medium truncate max-w-[170px]" title={req.status_message || ''}>
+                        {req.status_message || (
+                          req.status === 'queued' ? 'Aguarde que em breve a sua musica vai tocar na radio itaimbé' :
+                          req.status === 'processing' ? 'Verificando arquivos no SSD...' :
+                          req.status === 'not_found' ? 'Música não encontrada no SSD' :
+                          req.status === 'error' ? 'Erro de comunicação local' :
+                          'Aguardando processamento...'
+                        )}
+                      </span>
                     </div>
                   </div>
                 ))}
