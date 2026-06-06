@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Music, Play, MessageCircle, Trash2 } from "lucide-react";
+import { Music, Play, MessageCircle, Trash2, LogIn, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface SongHistoryItem {
@@ -169,6 +169,8 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [formMessage, setFormMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loginLoading, setLoginLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
@@ -261,19 +263,46 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
     fetchRequests();
 
-    // Verificar se o usuário está logado como admin
-    const checkAdmin = async () => {
+    // Verificar status do usuário atual
+    const checkUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(user);
         setIsAdmin(user?.email === "cristalsomwilliam@gmail.com");
-      } catch {
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .single();
+          if (profile) {
+            setFormName(profile.full_name);
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao verificar usuário na Sidebar:", err);
+        setCurrentUser(null);
         setIsAdmin(false);
       }
     };
-    checkAdmin();
+    checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(session?.user?.email === "cristalsomwilliam@gmail.com");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user ?? null;
+      setCurrentUser(user);
+      setIsAdmin(user?.email === "cristalsomwilliam@gmail.com");
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single();
+        if (profile) {
+          setFormName(profile.full_name);
+        }
+      } else {
+        setFormName("");
+      }
     });
 
     // 2. Inscrever em tempo real (INSERT, DELETE e UPDATE para monitorar status)
@@ -322,8 +351,28 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
     };
   }, []);
 
+  const handleSocialLogin = async (provider: "facebook" | "google") => {
+    setLoginLoading(provider);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error(`Erro ao logar com ${provider}:`, err.message);
+      setLoginLoading(null);
+    }
+  };
+
   const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) {
+      showToast("Você precisa estar autenticado para pedir músicas.", "error");
+      return;
+    }
     if (!formName.trim() || !formSong.trim()) return;
 
     // Auto-moderação de nomes de duplo sentido (trolls)
@@ -601,105 +650,151 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 Pedir Música & Mandar Recado
               </h2>
               <p className="text-xs text-zinc-400">
-                Seu pedido aparecerá no mural do site em tempo real!
-              </p>
-            </div>
+                Seu pedido aparecerá no             {currentUser ? (
+              <form onSubmit={handleRequestSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Seu Nome (Autenticado)</label>
+                  <input
+                    type="text"
+                    required
+                    readOnly
+                    value={formName}
+                    placeholder="Nome do perfil"
+                    className="w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-xs text-zinc-450 cursor-not-allowed focus:outline-none"
+                  />
+                </div>
 
-            <form onSubmit={handleRequestSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Seu Nome</label>
-                <input
-                  type="text"
-                  required
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Ex: João Silva"
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors"
-                />
-              </div>
-
-              <div className="space-y-1.5 relative">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Música & Artista</label>
-                <input
-                  type="text"
-                  required
-                  value={formSong}
-                  onChange={(e) => {
-                    setFormSong(e.target.value);
-                    setSelectedFilePath(null);
-                  }}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  placeholder="Ex: Imagine - John Lennon"
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors pr-10"
-                />
-                {isSearching && (
-                  <div className="absolute right-3 top-[34px] flex items-center">
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-[#e81e4d]/20 border-t-[#e81e4d] animate-spin"></span>
-                  </div>
-                )}
-                {/* Lista de Sugestões de Autocomplete */}
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[10000] max-h-48 overflow-y-auto animate-in fade-in duration-100">
-                    {suggestions.map((sug, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setFormSong(`${sug.title} - ${sug.artist}`);
-                          setSelectedFilePath(sug.file_path);
-                          setShowSuggestions(false);
-                        }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-b-0 flex flex-col transition-colors"
-                      >
-                        <span className="font-bold text-white text-[11px]">{sug.title}</span>
-                        <span className="text-[9px] text-zinc-500 mt-0.5">{sug.artist}</span>
-                      </button>
-                    ))}
-                    <div className="px-4 py-2 bg-zinc-900/50 text-[8px] text-zinc-500 font-bold uppercase tracking-wider border-t border-white/5 text-center">
-                      Música verificada no SSD da Rádio
+                <div className="space-y-1.5 relative">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Música & Artista</label>
+                  <input
+                    type="text"
+                    required
+                    value={formSong}
+                    onChange={(e) => {
+                      setFormSong(e.target.value);
+                      setSelectedFilePath(null);
+                    }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    placeholder="Ex: Imagine - John Lennon"
+                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors pr-10"
+                  />
+                  {isSearching && (
+                    <div className="absolute right-3 top-[34px] flex items-center">
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#e81e4d]/20 border-t-[#e81e4d] animate-spin"></span>
                     </div>
-                  </div>
-                )}
-                {/* Caso de busca vazia ou customizada */}
-                {showSuggestions && suggestions.length === 0 && formSong.trim().length >= 2 && !isSearching && (
-                  <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-3 z-[10000] animate-in fade-in duration-100 text-[10px] text-zinc-400">
-                    <p className="font-semibold text-zinc-300">Nenhum resultado exato no catálogo.</p>
-                    <p className="text-[9px] text-zinc-500 mt-1 leading-normal">
-                      Você pode enviar assim mesmo! Nosso robô tentará encontrar o arquivo aproximado no SSD.
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
+                  {/* Lista de Sugestões de Autocomplete */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[10000] max-h-48 overflow-y-auto animate-in fade-in duration-100">
+                      {suggestions.map((sug, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setFormSong(`${sug.title} - ${sug.artist}`);
+                            setSelectedFilePath(sug.file_path);
+                            setShowSuggestions(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-b-0 flex flex-col transition-colors"
+                        >
+                          <span className="font-bold text-white text-[11px]">{sug.title}</span>
+                          <span className="text-[9px] text-zinc-500 mt-0.5">{sug.artist}</span>
+                        </button>
+                      ))}
+                      <div className="px-4 py-2 bg-zinc-900/50 text-[8px] text-zinc-500 font-bold uppercase tracking-wider border-t border-white/5 text-center">
+                        Música verificada no SSD da Rádio
+                      </div>
+                    </div>
+                  )}
+                  {/* Caso de busca vazia ou customizada */}
+                  {showSuggestions && suggestions.length === 0 && formSong.trim().length >= 2 && !isSearching && (
+                    <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-3 z-[10000] animate-in fade-in duration-100 text-[10px] text-zinc-400">
+                      <p className="font-semibold text-zinc-300">Nenhum resultado exato no catálogo.</p>
+                      <p className="text-[9px] text-zinc-500 mt-1 leading-normal">
+                        Você pode enviar assim mesmo! Nosso robô tentará encontrar o arquivo aproximado no SSD.
+                      </p>
+                    </div>
+                  )}
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Recado / Mensagem (Opcional)</label>
-                <textarea
-                  value={formMessage}
-                  onChange={(e) => setFormMessage(e.target.value)}
-                  placeholder="Mande um abraço para alguém especial..."
-                  rows={3}
-                  maxLength={250}
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors resize-none"
-                />
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Recado / Mensagem (Opcional)</label>
+                  <textarea
+                    value={formMessage}
+                    onChange={(e) => setFormMessage(e.target.value)}
+                    placeholder="Mande um abraço para alguém especial..."
+                    rows={3}
+                    maxLength={250}
+                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors resize-none"
+                  />
+                </div>
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  {isSubmitting ? "Enviando..." : "Pedir Música"}
-                </button>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-3 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {isSubmitting ? "Enviando..." : "Pedir Música"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4 py-2 text-center">
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Para pedir músicas e mandar recados no mural, identifique-se de forma segura usando sua rede social.
+                </p>
+                
+                <div className="grid grid-cols-1 gap-2 pt-2">
+                  {/* Botão Facebook */}
+                  <button
+                    type="button"
+                    onClick={() => handleSocialLogin("facebook")}
+                    disabled={loginLoading !== null}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 text-[#1877F2] font-black text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-98"
+                  >
+                    {loginLoading === "facebook" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <LogIn className="w-3.5 h-3.5" />
+                    )}
+                    <span>Facebook</span>
+                  </button>
+
+                  {/* Botão Google */}
+                  <button
+                    type="button"
+                    onClick={() => handleSocialLogin("google")}
+                    disabled={loginLoading !== null}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-98"
+                  >
+                    {loginLoading === "google" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <LogIn className="w-3.5 h-3.5" />
+                    )}
+                    <span>Google</span>
+                  </button>
+                </div>
+
+                <div className="pt-4 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-450 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+                  >
+                    Fechar
+                  </button>
+                </div>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}
