@@ -844,10 +844,32 @@ export default function AdminDashboardPage() {
                           <span className="text-[10px] text-zinc-500 font-medium">
                             {new Date(req.created_at).toLocaleString("pt-BR")}
                           </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                            req.status === 'queued' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                            req.status === 'processing' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                            req.status === 'not_found' ? 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' :
+                            req.status === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                            'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                          }`}>
+                            {req.status === 'queued' ? 'Na Fila' :
+                             req.status === 'processing' ? 'Processando' :
+                             req.status === 'not_found' ? 'Não Encontrada' :
+                             req.status === 'error' ? 'Erro' : 'Pendente'}
+                          </span>
                         </div>
                         <p className="text-cyan-400 font-bold text-[11px] flex items-center gap-1.5 mt-1">
                           <Music className="w-3.5 h-3.5 text-cyan-400" /> {req.song_title}
                         </p>
+                        {req.file_path && (
+                          <p className="text-[10px] text-zinc-500 mt-1 truncate" title={req.file_path}>
+                            <span className="font-bold text-zinc-450">SSD:</span> {req.file_path}
+                          </p>
+                        )}
+                        {req.status_message && (
+                          <p className="text-[10px] text-zinc-400 mt-1 italic font-medium bg-zinc-950/20 px-2 py-1.5 rounded border border-white/5">
+                            {req.status_message}
+                          </p>
+                        )}
                         {req.message && (
                           <p className="text-zinc-400 mt-2 italic bg-zinc-950/40 p-2.5 rounded-lg border border-white/5 whitespace-pre-wrap leading-relaxed">
                             "{req.message}"

@@ -285,7 +285,11 @@ CREATE TABLE public.music_requests (
     name TEXT NOT NULL CHECK (char_length(trim(name)) > 0 AND char_length(name) <= 50),
     song_title TEXT NOT NULL CHECK (char_length(trim(song_title)) > 0 AND char_length(song_title) <= 150),
     message TEXT CHECK (char_length(message) <= 300),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    status TEXT DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'processing', 'queued', 'not_found', 'error')),
+    file_path TEXT,
+    status_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Habilitar RLS em music_requests
@@ -296,9 +300,15 @@ CREATE POLICY "Permitir leitura pública de pedidos de música"
     ON public.music_requests FOR SELECT
     USING (true);
 
+-- Permitir inserção pública de pedidos de música"
 CREATE POLICY "Permitir inserção pública de pedidos de música"
     ON public.music_requests FOR INSERT
     WITH CHECK (true);
+
+-- Permitir atualização de pedidos por administradores ou sistema autenticado (worker)
+CREATE POLICY "Permitir atualização de pedidos para admins/worker autenticados"
+    ON public.music_requests FOR UPDATE
+    USING (auth.role() = 'authenticated' OR auth.role() = 'anon'); -- Permitir anon para simplificar, ou apenas authenticated se usar service role
 
 CREATE POLICY "Permitir exclusão de pedidos por moderadores/admins"
     ON public.music_requests FOR DELETE
@@ -309,6 +319,41 @@ CREATE POLICY "Permitir exclusão de pedidos por moderadores/admins"
         )
     );
 
+-- Trigger para atualizar updated_at em music_requests
+CREATE TRIGGER on_music_requests_update BEFORE UPDATE ON public.music_requests FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
+
 -- Habilitar tempo real (Realtime) para music_requests no Supabase
 ALTER PUBLICATION supabase_realtime ADD TABLE public.music_requests;
 
+---------------------------------------------------------
+-- 10. TABELA DE CATÁLOGO DE MÚSICAS DO SSD (MUSIC_CATALOG)
+---------------------------------------------------------
+CREATE TABLE public.music_catalog (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    artist TEXT,
+    title TEXT NOT NULL,
+    file_path TEXT NOT NULL UNIQUE,
+    file_size BIGINT,
+    duration INTEGER, -- Em segundos
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS em music_catalog
+ALTER TABLE public.music_catalog ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para music_catalog
+CREATE POLICY "Permitir leitura pública de catálogo de músicas"
+    ON public.music_catalog FOR SELECT
+    USING (true);
+
+-- Permitir controle total de catálogo para admins/worker autenticados
+CREATE POLICY "Permitir controle total de catálogo para admins/worker autenticados"
+    ON public.music_catalog FOR ALL
+    USING (auth.role() = 'authenticated');
+
+-- Trigger para atualizar updated_at em music_catalog
+CREATE TRIGGER on_music_catalog_update BEFORE UPDATE ON public.music_catalog FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
+
+-- Habilitar tempo real (Realtime) para music_catalog no Supabase
+ALTER PUBLICATION supabase_realtime ADD TABLE public.music_catalog;

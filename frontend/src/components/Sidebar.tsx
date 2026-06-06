@@ -21,6 +21,9 @@ interface MusicRequest {
   name: string;
   song_title: string;
   message?: string;
+  status: "pending" | "processing" | "queued" | "not_found" | "error";
+  file_path?: string;
+  status_message?: string;
   created_at: string;
 }
 
@@ -167,6 +170,48 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Estados para busca no catálogo SSD
+  const [suggestions, setSuggestions] = useState<{ artist: string; title: string; file_path: string }[]>([]);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Buscar sugestões de música (debounced)
+  useEffect(() => {
+    if (!formSong.trim() || formSong.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    if (selectedFilePath) {
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const { data, error } = await supabase
+          .from("music_catalog")
+          .select("artist, title, file_path")
+          .or(`title.ilike.%${formSong}%,artist.ilike.%${formSong}%`)
+          .limit(5);
+
+        if (error) throw error;
+        if (data) {
+          setSuggestions(data as { artist: string; title: string; file_path: string }[]);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar sugestões no catálogo:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [formSong, selectedFilePath]);
+
   useEffect(() => {
     // 1. Carregar os últimos 10 pedidos do banco
     const fetchRequests = async () => {
@@ -201,7 +246,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       setIsAdmin(!!session?.user);
     });
 
-    // 2. Inscrever em tempo real
+    // 2. Inscrever em tempo real (INSERT, DELETE e UPDATE para monitorar status)
     const channel = supabase
       .channel("music_requests_sidebar")
       .on(
@@ -213,6 +258,19 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         },
         (payload) => {
           setRequests((prev) => [payload.new as MusicRequest, ...prev.slice(0, 9)]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "music_requests",
+        },
+        (payload) => {
+          setRequests((prev) =>
+            prev.map((r) => (r.id === payload.new.id ? (payload.new as MusicRequest) : r))
+          );
         }
       )
       .on(
@@ -252,15 +310,19 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
           name: formName.trim(),
           song_title: formSong.trim(),
           message: formMessage.trim() || null,
+          file_path: selectedFilePath || null,
         },
       ]);
 
       if (error) throw error;
 
-      // Resetar form e fechar modal (Redirecionamento do whats removido conforme solicitação)
+      alert("Pedido enviado com sucesso! Aguarde que em breve a sua musica vai tocar na radio itaimbé.");
+
+      // Resetar form e fechar modal
       setFormName("");
       setFormSong("");
       setFormMessage("");
+      setSelectedFilePath(null);
       setIsModalOpen(false);
     } catch (err) {
       console.error("Erro ao enviar pedido:", err);
@@ -378,10 +440,24 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                     className="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1 transition-all hover:bg-white/10 relative group/item"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-extrabold text-[10px] text-pink-400 truncate max-w-[120px]">
+                      <span className="font-extrabold text-[10px] text-pink-400 truncate max-w-[100px]">
                         {req.name}
                       </span>
                       <div className="flex items-center gap-1.5">
+                        {/* Indicador de Status do Pedido no Mural */}
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                          req.status === 'queued' ? 'bg-emerald-400' :
+                          req.status === 'processing' ? 'bg-blue-400 animate-pulse' :
+                          req.status === 'not_found' ? 'bg-zinc-400' :
+                          req.status === 'error' ? 'bg-red-400' :
+                          'bg-yellow-400 animate-pulse'
+                        }`} title={
+                          req.status === 'queued' ? (req.status_message || 'Na fila do RadioBOSS') :
+                          req.status === 'processing' ? (req.status_message || 'Processando...') :
+                          req.status === 'not_found' ? (req.status_message || 'Música não encontrada no SSD') :
+                          req.status === 'error' ? (req.status_message || 'Erro ao processar') :
+                          'Aguardando o robô...'
+                        }></span>
                         <span className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">
                           {formatRequestTime(req.created_at)}
                         </span>
@@ -405,6 +481,28 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                         "{req.message}"
                       </p>
                     )}
+                    
+                    {/* Status e aviso visíveis para o ouvinte */}
+                    <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-white/5">
+                      <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                        req.status === 'queued' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        req.status === 'processing' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse' :
+                        req.status === 'not_found' ? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20' :
+                        req.status === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                        'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse'
+                      }`}>
+                        {req.status === 'queued' ? 'Na Fila' :
+                         req.status === 'processing' ? 'Processando' :
+                         req.status === 'not_found' ? 'Não Encontrada' :
+                         req.status === 'error' ? 'Erro' :
+                         'Pendente'}
+                      </span>
+                      {req.status_message && (
+                        <span className="text-[8px] text-zinc-400 font-medium truncate max-w-[170px]" title={req.status_message}>
+                          {req.status_message}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -452,16 +550,57 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Música & Artista</label>
                 <input
                   type="text"
                   required
                   value={formSong}
-                  onChange={(e) => setFormSong(e.target.value)}
+                  onChange={(e) => {
+                    setFormSong(e.target.value);
+                    setSelectedFilePath(null);
+                  }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder="Ex: Imagine - John Lennon"
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors"
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors pr-10"
                 />
+                {isSearching && (
+                  <div className="absolute right-3 top-[34px] flex items-center">
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-[#e81e4d]/20 border-t-[#e81e4d] animate-spin"></span>
+                  </div>
+                )}
+                {/* Lista de Sugestões de Autocomplete */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[10000] max-h-48 overflow-y-auto animate-in fade-in duration-100">
+                    {suggestions.map((sug, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setFormSong(`${sug.title} - ${sug.artist}`);
+                          setSelectedFilePath(sug.file_path);
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-b-0 flex flex-col transition-colors"
+                      >
+                        <span className="font-bold text-white text-[11px]">{sug.title}</span>
+                        <span className="text-[9px] text-zinc-500 mt-0.5">{sug.artist}</span>
+                      </button>
+                    ))}
+                    <div className="px-4 py-2 bg-zinc-900/50 text-[8px] text-zinc-500 font-bold uppercase tracking-wider border-t border-white/5 text-center">
+                      Música verificada no SSD da Rádio
+                    </div>
+                  </div>
+                )}
+                {/* Caso de busca vazia ou customizada */}
+                {showSuggestions && suggestions.length === 0 && formSong.trim().length >= 2 && !isSearching && (
+                  <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-3 z-[10000] animate-in fade-in duration-100 text-[10px] text-zinc-400">
+                    <p className="font-semibold text-zinc-300">Nenhum resultado exato no catálogo.</p>
+                    <p className="text-[9px] text-zinc-500 mt-1 leading-normal">
+                      Você pode enviar assim mesmo! Nosso robô tentará encontrar o arquivo aproximado no SSD.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
