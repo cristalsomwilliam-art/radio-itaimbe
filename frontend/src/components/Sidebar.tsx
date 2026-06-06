@@ -169,6 +169,15 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [formMessage, setFormMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
+    setToast({ message, type });
+    // Esconder o toast automaticamente após 5 segundos
+    setTimeout(() => {
+      setToast(null);
+    }, 5000);
+  };
 
   // Estados para busca no catálogo SSD
   const [suggestions, setSuggestions] = useState<{ artist: string; title: string; file_path: string }[]>([]);
@@ -298,7 +307,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
     // Auto-moderação de nomes de duplo sentido (trolls)
     if (isDoubleMeaningName(formName)) {
-      alert("Por favor, use um nome válido para fazer o seu pedido.");
+      showToast("Por favor, use um nome válido para fazer o seu pedido.", "error");
       return;
     }
 
@@ -310,7 +319,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
       if (elapsedMs < cooldownMs) {
         const remainingMinutes = Math.ceil((cooldownMs - elapsedMs) / 60000);
-        alert(`Você já fez um pedido recentemente. Por favor, aguarde mais ${remainingMinutes} minuto(s) para pedir outra música.`);
+        showToast(`Você já fez um pedido recentemente. Por favor, aguarde mais ${remainingMinutes} minuto(s) para pedir outra música.`, "error");
         return;
       }
     }
@@ -329,7 +338,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         ? baseQuery.eq("file_path", selectedFilePath)
         : baseQuery.ilike("song_title", `%${formSong.trim()}%`));
       if (!dupError && duplicateRequests && duplicateRequests.length > 0) {
-        alert("Esta música já foi pedida recentemente e está na fila para tocar. Por favor, escolha outra música!");
+        showToast("Esta música já foi pedida recentemente e está na fila para tocar. Por favor, escolha outra música!", "error");
         setIsSubmitting(false);
         return;
       }
@@ -349,7 +358,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       // Salvar o timestamp do pedido com sucesso no Local Storage do usuário
       localStorage.setItem("last_request_timestamp", Date.now().toString());
 
-      alert("Pedido enviado com sucesso! Aguarde que em breve a sua musica vai tocar na radio itaimbé.");
+      showToast("Pedido enviado com sucesso! Aguarde que em breve a sua música vai tocar na rádio Itaimbé.", "success");
 
       // Resetar form e fechar modal
       setFormName("");
@@ -359,7 +368,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       setIsModalOpen(false);
     } catch (err) {
       console.error("Erro ao enviar pedido:", err);
-      alert("Houve um erro ao registrar seu pedido. Tente novamente.");
+      showToast("Houve um erro ao registrar seu pedido. Tente novamente.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -373,9 +382,10 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         .delete()
         .eq("id", id);
       if (error) throw error;
+      showToast("Pedido removido com sucesso.", "success");
     } catch (err) {
       console.error("Erro ao apagar pedido:", err);
-      alert("Erro ao excluir o pedido.");
+      showToast("Erro ao excluir o pedido.", "error");
     }
   };
 
@@ -669,6 +679,23 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Toast Notification Premium */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-[10005] animate-in slide-in-from-bottom-5 duration-300">
+          <div className={`backdrop-blur-md border px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm ${
+            toast.type === 'success' ? 'bg-emerald-950/80 border-emerald-500/30 text-emerald-300 shadow-emerald-500/10' :
+            toast.type === 'error' ? 'bg-red-950/80 border-red-500/30 text-red-300 shadow-red-500/10' :
+            'bg-zinc-950/80 border-white/10 text-zinc-300 shadow-black/40'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              toast.type === 'success' ? 'bg-emerald-400 animate-pulse' :
+              toast.type === 'error' ? 'bg-red-400 animate-pulse' :
+              'bg-cyan-400 animate-pulse'
+            }`}></span>
+            <p className="text-[11px] font-bold leading-normal">{toast.message}</p>
           </div>
         </div>
       )}
