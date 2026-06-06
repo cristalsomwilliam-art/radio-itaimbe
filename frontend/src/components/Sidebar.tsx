@@ -200,15 +200,36 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
       try {
+        const words = formSong.trim().split(/\s+/).filter(w => w.length >= 2);
+        if (words.length === 0) {
+          setSuggestions([]);
+          setShowSuggestions(false);
+          setIsSearching(false);
+          return;
+        }
+
+        // Selecionar a palavra mais longa e relevante para buscar no banco (ignorar stopwords)
+        const stopwords = ["de", "do", "da", "os", "as", "um", "uns", "uma", "umas", "com", "para", "por", "sem", "sob", "the", "and", "for", "you"];
+        const searchWords = words.filter(w => !stopwords.includes(w.toLowerCase()));
+        const longestWord = (searchWords.length > 0 ? searchWords : words)
+          .reduce((a, b) => (a.length > b.length ? a : b), "");
+
         const { data, error } = await supabase
           .from("music_catalog")
           .select("artist, title, file_path")
-          .or(`title.ilike.%${formSong}%,artist.ilike.%${formSong}%`)
-          .limit(5);
+          .or(`title.ilike.%${longestWord}%,artist.ilike.%${longestWord}%`)
+          .limit(80); // Buscar mais para podermos filtrar no client
 
         if (error) throw error;
+        
         if (data) {
-          setSuggestions(data as { artist: string; title: string; file_path: string }[]);
+          // Filtrar no client-side para garantir que todos os termos estejam presentes
+          const filtered = (data as { artist: string; title: string; file_path: string }[]).filter(item => {
+            const combined = `${item.title} ${item.artist}`.toLowerCase();
+            return words.every(word => combined.includes(word.toLowerCase()));
+          });
+
+          setSuggestions(filtered.slice(0, 5));
           setShowSuggestions(true);
         }
       } catch (err) {
