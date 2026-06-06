@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Music, Play, MessageCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface SongHistoryItem {
   title: string;
@@ -15,11 +16,131 @@ interface SidebarProps {
   layout?: "vertical" | "horizontal";
 }
 
+interface MusicRequest {
+  id: string;
+  name: string;
+  song_title: string;
+  message?: string;
+  created_at: string;
+}
+
+function formatRequestTime(createdAt: string): string {
+  try {
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "agora";
+    if (diffMins < 60) return `há ${diffMins} min`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `há ${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `há ${diffDays}d`;
+  } catch {
+    return "";
+  }
+}
+
 export default function Sidebar({ songHistory, layout = "vertical" }: SidebarProps) {
   const containerClass =
     layout === "horizontal"
       ? "grid grid-cols-1 md:grid-cols-2 gap-5 w-full"
       : "flex flex-col justify-between gap-5 h-full";
+
+  // Mural de pedidos
+  const [requests, setRequests] = useState<MusicRequest[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formSong, setFormSong] = useState("");
+  const [formMessage, setFormMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    // 1. Carregar os últimos 10 pedidos do banco
+    const fetchRequests = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("music_requests")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        if (data) setRequests(data as MusicRequest[]);
+      } catch (err) {
+        console.error("Erro ao carregar mural de pedidos:", err);
+      }
+    };
+
+    fetchRequests();
+
+    // 2. Inscrever em tempo real
+    const channel = supabase
+      .channel("music_requests_sidebar")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "music_requests",
+        },
+        (payload) => {
+          setRequests((prev) => [payload.new as MusicRequest, ...prev.slice(0, 9)]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "music_requests",
+        },
+        (payload) => {
+          setRequests((prev) => prev.filter((r) => r.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formSong.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      // 1. Inserir no Supabase (atualiza o mural via realtime na hora)
+      const { error } = await supabase.from("music_requests").insert([
+        {
+          name: formName.trim(),
+          song_title: formSong.trim(),
+          message: formMessage.trim() || null,
+        },
+      ]);
+
+      if (error) throw error;
+
+      // 2. Gerar mensagem para o WhatsApp e redirecionar
+      const whatsappText = `Olá! Gostaria de pedir uma música pelo site da Rádio Itaimbé:\n\n*Pedido de Música*\n• *Nome:* ${formName.trim()}\n• *Música/Artista:* ${formSong.trim()}${
+        formMessage.trim() ? `\n• *Recado:* ${formMessage.trim()}` : ""
+      }`;
+      const whatsappUrl = `https://wa.me/555535541179?text=${encodeURIComponent(whatsappText)}`;
+      
+      window.open(whatsappUrl, "_blank");
+
+      // Resetar form e fechar modal
+      setFormName("");
+      setFormSong("");
+      setFormMessage("");
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Erro ao enviar pedido:", err);
+      alert("Houve um erro ao registrar seu pedido. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className={containerClass}>
@@ -86,31 +207,142 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         </div>
       </div>
 
-      {/* Card Peça Sua Música */}
-      <div className="bg-gradient-to-br from-[#8b5cf6] via-[#4c1d95] to-[#1e1b4b] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group min-h-[145px] flex flex-col justify-between h-[280px] lg:h-auto">
+      {/* Card Peça Sua Música - Mural de Pedidos */}
+      <div className="bg-gradient-to-br from-[#8b5cf6] via-[#4c1d95] to-[#1e1b4b] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group flex flex-col justify-between h-[280px]">
         {/* Decorações neon */}
         <div className="absolute right-[-20px] top-[-20px] w-24 h-24 bg-pink-500/25 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
         <div className="absolute left-[-30px] bottom-[-30px] w-28 h-28 bg-[#22d3ee]/20 rounded-full blur-2xl"></div>
 
-        <div className="z-10">
-          <h3 className="text-sm font-black text-white uppercase tracking-wider">
-            Peça sua música
-          </h3>
-          <p className="text-[10px] text-zinc-300 mt-2 leading-relaxed max-w-[200px]">
-            Participe da nossa programação! Envie seu recado e peça seu som no WhatsApp.
-          </p>
-        </div>
+        <div className="z-10 flex flex-col h-full justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-pink-400 fill-pink-500/10" />
+                <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
+                  Mural de Pedidos
+                </h3>
+              </div>
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </div>
 
-        <a
-          href="https://wa.me/555535541179?text=Olá!%20Estou%20ouvindo%20a%20Itaimbé%20FM,%20gostaria%20de%20pedir%20uma%20música!"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-4 z-10 active:scale-95"
-        >
-          <MessageCircle className="w-3.5 h-3.5 fill-current" />
-          Pedir Música
-        </a>
+            {requests && requests.length > 0 ? (
+              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                {requests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1 transition-all hover:bg-white/10"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-extrabold text-[10px] text-pink-400 truncate max-w-[120px]">
+                        {req.name}
+                      </span>
+                      <span className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">
+                        {formatRequestTime(req.created_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[9px] text-cyan-300 font-bold">
+                      <Music className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span className="truncate">{req.song_title}</span>
+                    </div>
+                    {req.message && (
+                      <p className="text-[9px] text-zinc-350 italic font-medium leading-normal break-words">
+                        "{req.message}"
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center space-y-1">
+                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Mural Vazio</p>
+                <p className="text-[9px] text-zinc-500 font-medium">Seja o primeiro a pedir uma música!</p>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
+          >
+            <MessageCircle className="w-3.5 h-3.5 fill-current" />
+            Pedir Música
+          </button>
+        </div>
       </div>
+
+      {/* Modal de Pedido de Música */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <div className="space-y-1">
+              <h2 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">
+                Pedir Música & Mandar Recado
+              </h2>
+              <p className="text-xs text-zinc-400">
+                Seu pedido aparecerá no mural do site e será enviado para o WhatsApp da rádio!
+              </p>
+            </div>
+
+            <form onSubmit={handleRequestSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Seu Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Ex: João Silva"
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Música & Artista</label>
+                <input
+                  type="text"
+                  required
+                  value={formSong}
+                  onChange={(e) => setFormSong(e.target.value)}
+                  placeholder="Ex: Imagine - John Lennon"
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Recado / Mensagem (Opcional)</label>
+                <textarea
+                  value={formMessage}
+                  onChange={(e) => setFormMessage(e.target.value)}
+                  placeholder="Mande um abraço para alguém especial..."
+                  rows={3}
+                  maxLength={250}
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isSubmitting ? "Enviando..." : "Pedir Música"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

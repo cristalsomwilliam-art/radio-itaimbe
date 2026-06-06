@@ -15,6 +15,7 @@ import {
   Power,
   LogOut,
   Upload,
+  Music,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -45,6 +46,7 @@ export default function AdminDashboardPage() {
   const [news, setNews] = useState<any[]>([]);
   const [videoclips, setVideoclips] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
+  const [musicRequests, setMusicRequests] = useState<any[]>([]);
 
   // --- Formulários / Uploads ---
   const [uploading, setUploading] = useState(false);
@@ -95,6 +97,10 @@ export default function AdminDashboardPage() {
       // 6. Banners
       const { data: bannersData } = await supabase.from("banners").select("*").order("created_at", { ascending: false });
       if (bannersData) setBanners(bannersData);
+
+      // 7. Pedidos de Música
+      const { data: requestsData } = await supabase.from("music_requests").select("*").order("created_at", { ascending: false });
+      if (requestsData) setMusicRequests(requestsData);
 
     } catch (e) {
       console.error(e);
@@ -238,6 +244,16 @@ export default function AdminDashboardPage() {
     if (!error) loadData();
   };
 
+  const deleteMusicRequest = async (id: string) => {
+    if (!confirm("Tem certeza que deseja remover este pedido do mural?")) return;
+    const { error } = await supabase.from("music_requests").delete().eq("id", id);
+    if (!error) {
+      setMusicRequests((prev) => prev.filter((r) => r.id !== id));
+    } else {
+      alert("Erro ao excluir pedido: " + error.message);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-3">
@@ -315,6 +331,14 @@ export default function AdminDashboardPage() {
             }`}
           >
             <ImageIcon className="w-4 h-4" /> Banners & Sponsors
+          </button>
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === "requests" ? "bg-primary-500 text-white shadow-lg" : "bg-zinc-900/50 text-zinc-400 hover:bg-zinc-900"
+            }`}
+          >
+            <Music className="w-4 h-4" /> Pedidos de Música
           </button>
         </div>
 
@@ -801,6 +825,46 @@ export default function AdminDashboardPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: PEDIDOS DE MÚSICA */}
+          {activeTab === "requests" && (
+            <div className="space-y-6">
+              <h2 className="text-base font-bold text-white border-b border-zinc-800 pb-2">Pedidos de Música (Mural)</h2>
+              
+              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                {musicRequests.length > 0 ? (
+                  musicRequests.map((req) => (
+                    <div key={req.id} className="flex items-start justify-between p-4 bg-zinc-900/80 border border-zinc-800 rounded-xl text-xs gap-4 hover:border-zinc-750 transition-all">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-white text-sm">{req.name}</span>
+                          <span className="text-[10px] text-zinc-500 font-medium">
+                            {new Date(req.created_at).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <p className="text-cyan-400 font-bold text-[11px] flex items-center gap-1.5 mt-1">
+                          <Music className="w-3.5 h-3.5 text-cyan-400" /> {req.song_title}
+                        </p>
+                        {req.message && (
+                          <p className="text-zinc-400 mt-2 italic bg-zinc-950/40 p-2.5 rounded-lg border border-white/5 whitespace-pre-wrap leading-relaxed">
+                            "{req.message}"
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => deleteMusicRequest(req.id)}
+                        className="text-red-400 hover:text-red-500 p-1.5 bg-zinc-950 hover:bg-zinc-800 rounded-lg border border-zinc-800 transition-colors flex-shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-zinc-500 text-xs py-12 text-center">Nenhum pedido de música recebido no momento.</p>
+                )}
               </div>
             </div>
           )}

@@ -275,3 +275,40 @@ CREATE POLICY "Permitir exclusão de mensagens por moderadores/admins"
 
 -- Habilitar tempo real (Realtime) para chat_messages no Supabase
 ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+
+---------------------------------------------------------
+-- 9. TABELA DE PEDIDOS DE MÚSICA (MUSIC_REQUESTS)
+-- Mural de recados e pedidos de música
+---------------------------------------------------------
+CREATE TABLE public.music_requests (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name TEXT NOT NULL CHECK (char_length(trim(name)) > 0 AND char_length(name) <= 50),
+    song_title TEXT NOT NULL CHECK (char_length(trim(song_title)) > 0 AND char_length(song_title) <= 150),
+    message TEXT CHECK (char_length(message) <= 300),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS em music_requests
+ALTER TABLE public.music_requests ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para music_requests
+CREATE POLICY "Permitir leitura pública de pedidos de música"
+    ON public.music_requests FOR SELECT
+    USING (true);
+
+CREATE POLICY "Permitir inserção pública de pedidos de música"
+    ON public.music_requests FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Permitir exclusão de pedidos por moderadores/admins"
+    ON public.music_requests FOR DELETE
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE id = auth.uid()
+        )
+    );
+
+-- Habilitar tempo real (Realtime) para music_requests no Supabase
+ALTER PUBLICATION supabase_realtime ADD TABLE public.music_requests;
+
