@@ -320,18 +320,14 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       // 2. Prevenir pedidos duplicados da mesma música que já estejam ativos/na fila (ou tocados nos últimos 15 min)
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       
-      let query = supabase
+      const baseQuery = supabase
         .from("music_requests")
         .select("id, song_title, file_path, status, created_at")
         .or(`status.eq.pending,status.eq.processing,and(status.eq.queued,created_at.gte.${fifteenMinutesAgo})`);
         
-      if (selectedFilePath) {
-        query = query.eq("file_path", selectedFilePath);
-      } else {
-        query = query.ilike("song_title", `%${formSong.trim()}%`);
-      }
-      
-      const { data: duplicateRequests, error: dupError } = await query;
+      const { data: duplicateRequests, error: dupError } = await (selectedFilePath
+        ? baseQuery.eq("file_path", selectedFilePath)
+        : baseQuery.ilike("song_title", `%${formSong.trim()}%`));
       if (!dupError && duplicateRequests && duplicateRequests.length > 0) {
         alert("Esta música já foi pedida recentemente e está na fila para tocar. Por favor, escolha outra música!");
         setIsSubmitting(false);
