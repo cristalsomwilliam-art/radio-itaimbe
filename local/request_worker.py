@@ -512,6 +512,37 @@ def get_current_playing_index():
         logger.error(f"Erro ao obter índice de reprodução do RadioBOSS: {str(e)}")
         raise e
 
+def get_playlist_tracks():
+    """Retorna a lista de faixas da playlist ativa do RadioBOSS com seus caminhos."""
+    xml_data = b""
+    try:
+        try:
+            xml_data = radioboss_request("getplaylist2")
+            raw_str = xml_data.decode('utf-8', errors='ignore').strip()
+            if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
+                return []
+            root = ET.fromstring(xml_data)
+        except Exception:
+            xml_data = radioboss_request("getplaylist")
+            raw_str = xml_data.decode('utf-8', errors='ignore').strip()
+            if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
+                return []
+            root = ET.fromstring(xml_data)
+        
+        tracks = []
+        for track in root.findall('track'):
+            idx = track.attrib.get('index') or track.attrib.get('INDEX')
+            filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
+            if idx and filename:
+                tracks.append({
+                    "index": int(idx),
+                    "filename": filename
+                })
+        return tracks
+    except Exception as e:
+        logger.warning(f"Erro ao obter faixas da playlist: {e}")
+        return []
+
 def insert_song_in_radioboss(filepath, target_pos):
     """Insere o arquivo físico na fila do RadioBOSS na posição especificada."""
     params = {
@@ -580,8 +611,37 @@ def process_single_request(request):
                 target_pos = 1
                 status_desc = "Playlist inativa, inserido no início da fila."
             else:
+                # 1. Buscar caminhos de arquivos das músicas recentemente na fila no Supabase
+                recent_queued_paths = set()
+                try:
+                    status, req_data = supabase_request("music_requests?status=eq.queued&select=file_path&limit=100")
+                    if status == 200 and isinstance(req_data, list):
+                        for r in req_data:
+                            path = r.get("file_path")
+                            if path:
+                                recent_queued_paths.add(os.path.normpath(path).lower())
+                except Exception as e_req:
+                    logger.warning(f"Erro ao obter caminhos na fila do Supabase: {e_req}")
+
+                # 2. Obter a playlist do RadioBOSS
+                playlist_tracks = get_playlist_tracks()
+                
+                # 3. Começar a partir de current_idx + 2
                 target_pos = current_idx + 2
-                status_desc = "Inserido na fila (2 posições abaixo da música atual)"
+                
+                # Criar mapeamento de index -> filename para busca rápida
+                playlist_map = {t["index"]: os.path.normpath(t["filename"]).lower() for t in playlist_tracks}
+                
+                # Avançar a posição para depois de qualquer música já pedida que esteja na fila
+                while True:
+                    track_path = playlist_map.get(target_pos)
+                    if track_path and track_path in recent_queued_paths:
+                        logger.info(f"Posição {target_pos} contém música já pedida ({track_path}). Avançando...")
+                        target_pos += 1
+                    else:
+                        break
+                
+                status_desc = f"Inserido na fila na posição {target_pos} (respeitando ordem cronológica)"
         except Exception as e_idx:
             logger.warning(f"Não foi possível obter o índice da música tocando ({str(e_idx)}). Inserindo no final da playlist por segurança.")
             target_pos = -1  # No RadioBOSS, -1 insere no final da playlist ativa
