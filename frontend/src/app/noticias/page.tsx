@@ -19,6 +19,7 @@ interface ArticleItem {
   description: string;
   pubDate: string;
   imageUrl: string;
+  fullContent?: string;
 }
 
 const portals: PortalItem[] = [
@@ -141,9 +142,16 @@ export default function NoticiasPage() {
             )}
 
             <div className="space-y-6 border-t border-zinc-800/60 pt-6">
-              <p className="text-sm md:text-base text-zinc-300 font-normal leading-relaxed whitespace-pre-line">
-                {selectedArticle.description || "Nenhum resumo disponível para esta notícia."}
-              </p>
+              {selectedArticle.fullContent ? (
+                <div 
+                  className="news-content-body text-sm md:text-base text-zinc-300 font-normal leading-relaxed space-y-4"
+                  dangerouslySetInnerHTML={{ __html: selectedArticle.fullContent }}
+                />
+              ) : (
+                <p className="text-sm md:text-base text-zinc-300 font-normal leading-relaxed whitespace-pre-line">
+                  {selectedArticle.description || "Nenhum resumo disponível para esta notícia."}
+                </p>
+              )}
               
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-800/40">
                 <a

@@ -76,6 +76,35 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Tentar obter o conteúdo completo do artigo
+      const contentEncodedMatch = itemXml.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/i) ||
+                                  itemXml.match(/<content>([\s\S]*?)<\/content>/i) ||
+                                  itemXml.match(/<body>([\s\S]*?)<\/body>/i);
+      
+      let fullContent = "";
+      if (contentEncodedMatch) {
+        fullContent = cleanCDATA(contentEncodedMatch[1]);
+      } else {
+        fullContent = rawDescription; // Fallback para a própria descrição HTML
+      }
+
+      // Se ainda não encontrou imagem, tentar achar a primeira tag img no HTML do conteúdo completo
+      if (!imageUrl && fullContent) {
+        const htmlImgMatch = fullContent.match(/<img[^>]+src="([^"]+)"/i);
+        if (htmlImgMatch) {
+          imageUrl = htmlImgMatch[1];
+        }
+      }
+
+      // Limpar o HTML do conteúdo para remover elementos inseguros ou indesejados
+      if (fullContent) {
+        fullContent = fullContent
+          .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
+          .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+          .replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "")
+          .replace(/<form[^>]*>([\s\S]*?)<\/form>/gi, "");
+      }
+
       // Evitar links quebrados ou relativos
       if (imageUrl && imageUrl.startsWith("//")) {
         imageUrl = "https:" + imageUrl;
@@ -90,7 +119,8 @@ export async function GET(request: NextRequest) {
         link,
         description,
         pubDate,
-        imageUrl
+        imageUrl,
+        fullContent
       });
 
       // Limitar a 15 notícias
