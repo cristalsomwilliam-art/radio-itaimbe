@@ -274,7 +274,7 @@ export default function CustomChat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950/80 backdrop-blur-md rounded-xl border border-zinc-800 overflow-hidden shadow-xl min-h-[400px] md:min-h-[500px]">
+    <div className="flex flex-col h-[500px] lg:h-[680px] bg-zinc-950/80 backdrop-blur-md rounded-xl border border-zinc-800 overflow-hidden shadow-xl">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex-shrink-0">
         <div className="flex items-center gap-2">
