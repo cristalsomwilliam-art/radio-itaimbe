@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { MessageSquare, RefreshCw, LogIn, Send, LogOut, Loader2 } from "lucide-react";
 
 interface Profile {
+  email?: string;
   full_name: string;
   avatar_url: string | null;
 }
@@ -27,6 +28,7 @@ export default function CustomChat() {
   const [loginLoading, setLoginLoading] = useState<string | null>(null);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const profileCache = useRef<Record<string, Profile>>({});
 
   const scrollToBottom = () => {
@@ -87,6 +89,7 @@ export default function CustomChat() {
           created_at,
           profile_id,
           profiles (
+            email,
             full_name,
             avatar_url
           )
@@ -127,7 +130,7 @@ export default function CustomChat() {
           if (!senderProfile) {
             const { data } = await supabase
               .from("profiles")
-              .select("full_name, avatar_url")
+              .select("email, full_name, avatar_url")
               .eq("id", senderId)
               .single();
             
@@ -181,6 +184,14 @@ export default function CustomChat() {
     }
   };
 
+  // Adicionar Emoji
+  const handleAddEmoji = (emoji: string) => {
+    setNewMessage((prev) => prev + emoji);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
+  };
+
   // 5. Autenticação Social
   const handleSocialLogin = async (provider: "facebook" | "google" | "tiktok") => {
     setLoginLoading(provider);
@@ -232,13 +243,16 @@ export default function CustomChat() {
         ) : messages.length > 0 ? (
           messages.map((msg) => {
             const isMe = user && msg.profile_id === user.id;
+            const isAdminMsg = msg.profiles.email === "cristalsomwilliam@gmail.com";
             return (
               <div
                 key={msg.id}
-                className={`flex gap-2.5 items-start ${isMe ? "flex-row-reverse" : ""}`}
+                className={`flex gap-2.5 items-start animate-in fade-in slide-in-from-bottom-2 duration-300 ${isMe ? "flex-row-reverse" : ""}`}
               >
                 {/* Avatar */}
-                <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700/50 flex-shrink-0">
+                <div className={`w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative ${
+                  isAdminMsg ? "border-2 border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]" : "bg-zinc-800 border border-zinc-700/50"
+                }`}>
                   {msg.profiles.avatar_url ? (
                     <img src={msg.profiles.avatar_url} alt={msg.profiles.full_name} className="w-full h-full object-cover" />
                   ) : (
@@ -250,14 +264,24 @@ export default function CustomChat() {
 
                 {/* Conteúdo do Balão */}
                 <div className={`flex flex-col max-w-[75%] ${isMe ? "items-end" : ""}`}>
-                  <span className="text-[9px] font-bold text-zinc-500 mb-0.5 px-0.5">
+                  <span className={`text-[9px] font-black mb-0.5 px-0.5 flex items-center gap-1 ${
+                    isAdminMsg ? "text-amber-400" : "text-zinc-500"
+                  }`}>
+                    {isAdminMsg && <span className="text-[10px]">👑</span>}
                     {msg.profiles.full_name}
+                    {isAdminMsg && (
+                      <span className="bg-amber-500/20 text-amber-400 text-[7px] px-1 py-0.2 rounded font-extrabold uppercase border border-amber-500/30">
+                        Admin
+                      </span>
+                    )}
                   </span>
                   <div
-                    className={`px-3 py-2 text-xs rounded-2xl leading-relaxed whitespace-pre-wrap break-all border ${
-                      isMe
-                        ? "bg-[#e81e4d]/10 border-[#e81e4d]/20 text-white rounded-tr-none"
-                        : "bg-zinc-900/60 border-zinc-800/80 text-zinc-200 rounded-tl-none"
+                    className={`px-3 py-2 text-xs rounded-2xl leading-relaxed whitespace-pre-wrap break-all border transition-all ${
+                      isAdminMsg
+                        ? "bg-gradient-to-r from-amber-500/10 via-purple-500/5 to-[#e81e4d]/5 border-amber-500/30 text-amber-100 shadow-md rounded-tl-none animate-pulse-slow"
+                        : isMe
+                          ? "bg-[#e81e4d]/10 border-[#e81e4d]/20 text-white rounded-tr-none"
+                          : "bg-zinc-900/60 border-zinc-800/80 text-zinc-200 rounded-tl-none"
                     }`}
                   >
                     {msg.message}
@@ -276,29 +300,46 @@ export default function CustomChat() {
       {/* Rodapé / Input de Envio ou Box de Login */}
       <div className="p-4 bg-zinc-900/50 border-t border-zinc-850 flex-shrink-0">
         {isLoading ? null : user ? (
-          /* Usuário Logado: Campo de Digitação */
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Digite sua mensagem no chat..."
-              maxLength={300}
-              disabled={isSending}
-              className="flex-1 bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700/60 focus:border-[#e81e4d] focus:ring-0 text-xs text-white rounded-xl px-3.5 py-3 transition-colors outline-none placeholder-zinc-600 disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={!newMessage.trim() || isSending}
-              className="bg-[#e81e4d] text-white hover:bg-pink-600 px-4 py-3 rounded-xl transition-all disabled:opacity-40 disabled:hover:bg-[#e81e4d] active:scale-95 flex items-center justify-center"
-            >
-              {isSending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
-          </form>
+          /* Usuário Logado: Campo de Digitação e Emojis */
+          <div className="space-y-2.5">
+            {/* Barra de Emojis Rápidos (Facebook Style) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 custom-scrollbar select-none">
+              {["👍", "❤️", "😂", "😮", "😢", "😡", "🔥", "👏", "🎉", "🎵", "⚡", "🚀"].map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleAddEmoji(emoji)}
+                  className="w-7 h-7 flex items-center justify-center text-sm rounded-lg hover:bg-white/10 active:scale-90 transition-all"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <input
+                type="text"
+                ref={inputRef}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Digite sua mensagem no chat..."
+                maxLength={300}
+                disabled={isSending}
+                className="flex-1 bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700/60 focus:border-[#e81e4d] focus:ring-0 text-xs text-white rounded-xl px-3.5 py-3 transition-colors outline-none placeholder-zinc-600 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={!newMessage.trim() || isSending}
+                className="bg-[#e81e4d] text-white hover:bg-pink-600 px-4 py-3 rounded-xl transition-all disabled:opacity-40 disabled:hover:bg-[#e81e4d] active:scale-95 flex items-center justify-center"
+              >
+                {isSending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </form>
+          </div>
         ) : (
           /* Usuário Deslogado: Botões de Login Social */
           <div className="space-y-3 text-center">
