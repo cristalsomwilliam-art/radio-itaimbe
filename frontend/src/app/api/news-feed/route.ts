@@ -20,6 +20,16 @@ function stripHtml(str: string): string {
   return str.replace(/<[^>]*>?/gm, '').trim();
 }
 
+function normalizeUrl(url: string): string {
+  if (!url) return "";
+  let u = url.trim();
+  if (u.startsWith("//")) u = "https:" + u;
+  return u
+    .replace(/^https?:\/\/(www\.)?/i, "")
+    .split("?")[0]
+    .trim();
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const portal = searchParams.get("portal");
@@ -103,6 +113,24 @@ export async function GET(request: NextRequest) {
           .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
           .replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "")
           .replace(/<form[^>]*>([\s\S]*?)<\/form>/gi, "");
+
+        // Remover imagem duplicada do corpo se for a mesma do banner/capa
+        if (imageUrl) {
+          const normalizedImageUrl = normalizeUrl(imageUrl);
+          const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+          fullContent = fullContent.replace(imgRegex, (match, src) => {
+            if (normalizeUrl(cleanCDATA(src)) === normalizedImageUrl) {
+              return "";
+            }
+            return match;
+          });
+
+          // Limpar tags de contêiner vazias que restaram da imagem removida
+          fullContent = fullContent
+            .replace(/<figure[^>]*>\s*<\/figure>/gi, "")
+            .replace(/<p[^>]*>\s*<\/p>/gi, "")
+            .replace(/<div[^>]*>\s*<\/div>/gi, "");
+        }
       }
 
       // Evitar links quebrados ou relativos
