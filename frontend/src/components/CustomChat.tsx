@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { MessageSquare, RefreshCw, LogIn, Send, LogOut, Loader2 } from "lucide-react";
+import { MessageSquare, RefreshCw, LogIn, Send, LogOut, Loader2, Trash2 } from "lucide-react";
 
 interface Profile {
   email?: string;
@@ -169,6 +169,14 @@ export default function CustomChat() {
           setTimeout(scrollToBottom, 50);
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "chat_messages" },
+        (payload) => {
+          const deletedId = payload.old.id;
+          setMessages((prev) => prev.filter((msg) => msg.id !== deletedId));
+        }
+      )
       .subscribe();
 
     return () => {
@@ -219,6 +227,20 @@ export default function CustomChat() {
       console.error("Erro ao enviar mensagem:", err.message);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleDeleteMessage = async (id: string) => {
+    if (!confirm("Deseja apagar esta mensagem do chat?")) return;
+    try {
+      const { error } = await supabase
+        .from("chat_messages")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Erro ao deletar mensagem:", err.message);
+      alert("Erro ao excluir mensagem: " + err.message);
     }
   };
 
@@ -311,6 +333,15 @@ export default function CustomChat() {
                       <span className="bg-amber-500/20 text-amber-400 text-[7px] px-1 py-0.2 rounded font-extrabold uppercase border border-amber-500/30">
                         Admin
                       </span>
+                    )}
+                    {user?.email === "cristalsomwilliam@gmail.com" && (
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="text-red-550 hover:text-red-500 ml-1 p-0.5 rounded hover:bg-red-500/10 transition-colors"
+                        title="Apagar mensagem"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     )}
                   </span>
                   <div
