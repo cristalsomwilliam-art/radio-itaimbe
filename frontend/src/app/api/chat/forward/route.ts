@@ -38,6 +38,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Mensagem vazia" }, { status: 400 });
     }
 
+    let cleanChatname = chatname || "Ouvinte";
+    const nameLower = cleanChatname.toLowerCase();
+
+    if (nameLower === "cristalsomwilliam@gmail.com" || nameLower === "cristalsomwilliam") {
+      cleanChatname = "Cristal Som William";
+    } else if (cleanChatname.includes("@")) {
+      cleanChatname = cleanChatname.split("@")[0]
+        .split(/[\._-]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+
     // 3. Buscar session_id do Social Stream Ninja no Supabase (bypassando RLS via service role)
     const { data: config, error: configError } = await supabaseAdmin
       .from("social_stream_config")
@@ -70,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Encaminhar para a API do Social Stream Ninja (via GET com payload JSON codificado na URL)
     const payload = {
-      chatname: chatname || "Ouvinte",
+      chatname: cleanChatname,
       chatmessage: chatmessage,
       chatimg: chatimg || "",
       type: "custom"
