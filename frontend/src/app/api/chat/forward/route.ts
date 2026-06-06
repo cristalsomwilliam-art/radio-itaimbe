@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
     }
 
     let cleanChatname = chatname || "Ouvinte";
-    const nameLower = cleanChatname.toLowerCase();
+    const nameLower = cleanChatname.trim().toLowerCase();
 
-    if (nameLower === "cristalsomwilliam@gmail.com" || nameLower === "cristalsomwilliam") {
-      cleanChatname = "Cristal Som William";
+    if (nameLower.includes("cristalsomwilliam")) {
+      cleanChatname = "William";
     } else if (cleanChatname.includes("@")) {
       cleanChatname = cleanChatname.split("@")[0]
         .split(/[\._-]/)
