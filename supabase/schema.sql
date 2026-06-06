@@ -53,9 +53,9 @@ CREATE POLICY "Permitir leitura pública de locutores"
     ON public.hosts FOR SELECT
     USING (true);
 
-CREATE POLICY "Permitir controle total para admins autenticados"
+CREATE POLICY "Permitir controle total de locutores apenas para o administrador"
     ON public.hosts FOR ALL
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 ---------------------------------------------------------
 -- 3. TABELA DE PROGRAMAÇÃO (SCHEDULES)
@@ -80,9 +80,9 @@ CREATE POLICY "Permitir leitura pública da programação"
     ON public.schedules FOR SELECT
     USING (true);
 
-CREATE POLICY "Permitir controle total de programação para admins autenticados"
+CREATE POLICY "Permitir controle total de programação apenas para o administrador"
     ON public.schedules FOR ALL
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 ---------------------------------------------------------
 -- 4. TABELA DE NOTÍCIAS (NEWS)
@@ -107,9 +107,9 @@ CREATE POLICY "Permitir leitura pública de notícias"
     ON public.news FOR SELECT
     USING (true);
 
-CREATE POLICY "Permitir controle total de notícias para admins autenticados"
+CREATE POLICY "Permitir controle total de notícias apenas para o administrador"
     ON public.news FOR ALL
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 ---------------------------------------------------------
 -- 5. TABELA DE VIDEOCLIPES (VIDEOCLIPS)
@@ -131,9 +131,9 @@ CREATE POLICY "Permitir leitura pública de videoclipes"
     ON public.videoclips FOR SELECT
     USING (true);
 
-CREATE POLICY "Permitir controle total de videoclipes para admins autenticados"
+CREATE POLICY "Permitir controle total de videoclipes apenas para o administrador"
     ON public.videoclips FOR ALL
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 ---------------------------------------------------------
 -- 6. TABELA DE BANNERS E PATROCÍNIOS (BANNERS)
@@ -155,9 +155,9 @@ CREATE POLICY "Permitir leitura pública de banners"
     ON public.banners FOR SELECT
     USING (true);
 
-CREATE POLICY "Permitir controle total de banners para admins autenticados"
+CREATE POLICY "Permitir controle total de banners apenas para o administrador"
     ON public.banners FOR ALL
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 ---------------------------------------------------------
 -- 7. TABELA DE ESTADO DE STREAMING (STREAM_STATUS)
@@ -192,15 +192,9 @@ CREATE POLICY "Permitir leitura pública do status da rádio"
     ON public.stream_status FOR SELECT
     USING (true);
 
-CREATE POLICY "Permitir controle total de status para admins autenticados"
+CREATE POLICY "Permitir controle total de status apenas para o administrador"
     ON public.stream_status FOR ALL
-    USING (auth.role() = 'authenticated');
-
--- Permitir atualizações via Webhooks (Service Role no Next.js ignora RLS, 
--- mas criamos esta política para administradores caso atualizem manualmente via painel)
-CREATE POLICY "Permitir atualização de status para admins autenticados"
-    ON public.stream_status FOR UPDATE
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 ---------------------------------------------------------
 -- TRIGGERS PARA DATA DE ATUALIZAÇÃO (updated_at)
@@ -264,14 +258,9 @@ CREATE POLICY "Permitir envio de mensagens por usuários logados"
     ON public.chat_messages FOR INSERT
     WITH CHECK (auth.uid() = profile_id);
 
-CREATE POLICY "Permitir exclusão de mensagens por moderadores/admins"
+CREATE POLICY "Permitir exclusão de mensagens apenas para o administrador"
     ON public.chat_messages FOR DELETE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE id = auth.uid()
-        )
-    );
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 -- Habilitar tempo real (Realtime) para chat_messages no Supabase
 ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
@@ -305,19 +294,14 @@ CREATE POLICY "Permitir inserção pública de pedidos de música"
     ON public.music_requests FOR INSERT
     WITH CHECK (true);
 
--- Permitir atualização de pedidos por administradores ou sistema autenticado (worker)
-CREATE POLICY "Permitir atualização de pedidos para admins/worker autenticados"
+-- Permitir atualização e exclusão de pedidos apenas para o administrador
+CREATE POLICY "Permitir atualização de pedidos apenas para o administrador"
     ON public.music_requests FOR UPDATE
-    USING (auth.role() = 'authenticated' OR auth.role() = 'anon'); -- Permitir anon para simplificar, ou apenas authenticated se usar service role
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
-CREATE POLICY "Permitir exclusão de pedidos por moderadores/admins"
+CREATE POLICY "Permitir exclusão de pedidos apenas para o administrador"
     ON public.music_requests FOR DELETE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles
-            WHERE id = auth.uid()
-        )
-    );
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 -- Trigger para atualizar updated_at em music_requests
 CREATE TRIGGER on_music_requests_update BEFORE UPDATE ON public.music_requests FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
@@ -347,10 +331,10 @@ CREATE POLICY "Permitir leitura pública de catálogo de músicas"
     ON public.music_catalog FOR SELECT
     USING (true);
 
--- Permitir controle total de catálogo para admins/worker autenticados
-CREATE POLICY "Permitir controle total de catálogo para admins/worker autenticados"
+-- Permitir controle total de catálogo apenas para o administrador
+CREATE POLICY "Permitir controle total de catálogo apenas para o administrador"
     ON public.music_catalog FOR ALL
-    USING (auth.role() = 'authenticated');
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
 
 -- Trigger para atualizar updated_at em music_catalog
 CREATE TRIGGER on_music_catalog_update BEFORE UPDATE ON public.music_catalog FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();

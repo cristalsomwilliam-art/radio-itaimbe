@@ -265,7 +265,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
     const checkAdmin = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        setIsAdmin(!!user);
+        setIsAdmin(user?.email === "cristalsomwilliam@gmail.com");
       } catch {
         setIsAdmin(false);
       }
@@ -273,7 +273,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
     checkAdmin();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(!!session?.user);
+      setIsAdmin(session?.user?.email === "cristalsomwilliam@gmail.com");
     });
 
     // 2. Inscrever em tempo real (INSERT, DELETE e UPDATE para monitorar status)

@@ -60,7 +60,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
+      if (!authUser || authUser.email !== "cristalsomwilliam@gmail.com") {
+        if (authUser) {
+          await supabase.auth.signOut();
+        }
         router.push("/admin/login");
       } else {
         setUser({ id: authUser.id, email: authUser.email || "" });
