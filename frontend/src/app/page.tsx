@@ -266,7 +266,9 @@ export default function Home() {
                 <div className="flex items-center gap-3 mt-6">
                   <button
                     onClick={togglePlay}
-                    className="bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] hover:scale-105 active:scale-95 transition-all text-white text-xs font-black px-7 py-3.5 rounded-full flex items-center gap-2 shadow-lg shadow-pink-500/25 uppercase tracking-wider"
+                    className={`bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] active:scale-95 transition-all text-white text-xs font-black px-7 py-3.5 rounded-full flex items-center gap-2 shadow-lg shadow-pink-500/25 uppercase tracking-wider ${
+                      isPlaying ? "hover:scale-105" : "animate-play-pulse"
+                    }`}
                   >
                     {isPlaying ? (
                       <>

@@ -135,3 +135,20 @@ body {
   font-style: italic;
   color: #a1a1aa; /* text-zinc-400 */
 }
+
+/* Play Button Attention Grabber Animation */
+@keyframes playPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(232, 30, 77, 0.4);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 30px rgba(232, 30, 77, 0.85), 0 0 12px rgba(232, 30, 77, 0.45);
+  }
+}
+
+.animate-play-pulse {
+  animation: playPulse 1.8s infinite ease-in-out;
+}
+
