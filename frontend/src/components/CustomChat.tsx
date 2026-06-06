@@ -166,17 +166,40 @@ export default function CustomChat() {
     e.preventDefault();
     if (!newMessage.trim() || !user || isSending) return;
 
+    const messageText = newMessage.trim();
     setIsSending(true);
     try {
       const { error } = await supabase
         .from("chat_messages")
         .insert({
           profile_id: user.id,
-          message: newMessage.trim()
+          message: messageText
         });
 
       if (error) throw error;
       setNewMessage("");
+
+      // Obter o token JWT da sessão atual para autenticar na API de encaminhamento
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (token) {
+        // Enviar a mensagem para a API de encaminhamento do Social Stream Ninja em background
+        fetch("/api/chat/forward", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            chatname: profile?.full_name || user?.user_metadata?.full_name || "Ouvinte",
+            chatmessage: messageText,
+            chatimg: profile?.avatar_url || user?.user_metadata?.avatar_url || ""
+          })
+        }).catch((err) => {
+          console.error("Erro ao encaminhar mensagem para o Social Stream Ninja:", err.message);
+        });
+      }
     } catch (err: any) {
       console.error("Erro ao enviar mensagem:", err.message);
     } finally {

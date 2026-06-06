@@ -41,6 +41,8 @@ export default function AdminDashboardPage() {
     show_logo_overlay: true,
   });
 
+  const [socialStreamSessionId, setSocialStreamSessionId] = useState("");
+
   const [hosts, setHosts] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
@@ -105,6 +107,10 @@ export default function AdminDashboardPage() {
       const { data: requestsData } = await supabase.from("music_requests").select("*").order("created_at", { ascending: false });
       if (requestsData) setMusicRequests(requestsData);
 
+      // 8. Social Stream Ninja Config
+      const { data: configData } = await supabase.from("social_stream_config").select("session_id").eq("id", "main").maybeSingle();
+      if (configData) setSocialStreamSessionId(configData.session_id || "");
+
     } catch (e) {
       console.error(e);
     }
@@ -148,7 +154,7 @@ export default function AdminDashboardPage() {
 
   // --- Ações de Alteração ---
   const saveStreamSettings = async () => {
-    const { error } = await supabase
+    const { error: streamError } = await supabase
       .from("stream_status")
       .update({
         tv_stream_title: streamStatus.tv_stream_title,
@@ -157,8 +163,18 @@ export default function AdminDashboardPage() {
       })
       .eq("id", "main");
 
-    if (!error) alert("Configurações atualizadas com sucesso!");
-    else alert("Erro ao atualizar configurações: " + error.message);
+    const { error: configError } = await supabase
+      .from("social_stream_config")
+      .upsert({
+        id: "main",
+        session_id: socialStreamSessionId.trim() || null
+      });
+
+    if (!streamError && !configError) {
+      alert("Configurações atualizadas com sucesso!");
+    } else {
+      alert("Erro ao atualizar configurações: " + (streamError?.message || configError?.message));
+    }
   };
 
   const createHost = async (e: React.FormEvent) => {
@@ -392,6 +408,28 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setStreamStatus({ ...streamStatus, show_logo_overlay: e.target.checked })}
                     className="accent-primary-500 h-4 w-4"
                   />
+                </div>
+
+                {/* Social Stream Ninja */}
+                <div className="border-t border-zinc-800/80 pt-4 mt-2 space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">Integração Social Stream Ninja</h3>
+                    <p className="text-[10px] text-zinc-500">Encaminha as mensagens do chat em tempo real para o seu overlay do OBS.</p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-zinc-400 font-semibold">ID da Sessão (Session ID)</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: minha_live_itaimbe"
+                      value={socialStreamSessionId}
+                      onChange={(e) => setSocialStreamSessionId(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-primary-500/50 transition-all"
+                    />
+                    <p className="text-[9px] text-zinc-500">
+                      O ID da sessão utilizado no plugin Social Stream Ninja. Deixe em branco para desativar o envio de mensagens do site para a live.
+                    </p>
+                  </div>
                 </div>
 
                 <button

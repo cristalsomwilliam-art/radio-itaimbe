@@ -341,3 +341,32 @@ CREATE TRIGGER on_music_catalog_update BEFORE UPDATE ON public.music_catalog FOR
 
 -- Habilitar tempo real (Realtime) para music_catalog no Supabase
 ALTER PUBLICATION supabase_realtime ADD TABLE public.music_catalog;
+
+---------------------------------------------------------
+-- 11. TABELA DE CONFIGURAÇÃO DO SOCIAL STREAM NINJA (SOCIAL_STREAM_CONFIG)
+---------------------------------------------------------
+CREATE TABLE public.social_stream_config (
+    id TEXT PRIMARY KEY DEFAULT 'main',
+    session_id TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS em social_stream_config
+ALTER TABLE public.social_stream_config ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para social_stream_config
+CREATE POLICY "Permitir controle total apenas para o administrador"
+    ON public.social_stream_config FOR ALL
+    USING (auth.jwt() ->> 'email' = 'cristalsomwilliam@gmail.com');
+
+-- Inserir registro padrão se não existir
+INSERT INTO public.social_stream_config (id, session_id)
+VALUES ('main', NULL)
+ON CONFLICT (id) DO NOTHING;
+
+-- Trigger para atualizar updated_at em social_stream_config
+CREATE TRIGGER on_social_stream_config_update 
+    BEFORE UPDATE ON public.social_stream_config 
+    FOR EACH ROW 
+    EXECUTE PROCEDURE public.handle_updated_at();
+
