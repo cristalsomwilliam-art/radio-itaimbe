@@ -349,8 +349,8 @@ export default function Home() {
         </section>
       )}
 
-      {/* 3. 4 CARDS DE AÇÕES RÁPIDAS (Estilo Mockup) */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 3. 3 CARDS DE AÇÕES RÁPIDAS (Estilo Mockup) */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Rádio ao Vivo */}
         <div className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group">
           <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center text-[#e81e4d] group-hover:scale-105 transition-transform duration-300">
@@ -401,26 +401,6 @@ export default function Home() {
             </p>
           </div>
         </Link>
-
-        {/* Card 4: Participe */}
-        <a
-          href="https://wa.me/5551997286166?text=Olá!%20Quero%20participar%20da%20programação!"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform duration-300">
-            <MessageCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
-              Participe
-            </h4>
-            <p className="text-[9px] text-zinc-500 mt-0.5">
-              Envie recado e faça seu pedido
-            </p>
-          </div>
-        </a>
       </section>
 
       {/* 4. SEÇÃO DE PORTAIS DE NOTÍCIAS */}
