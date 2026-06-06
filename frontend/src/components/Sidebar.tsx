@@ -39,6 +39,119 @@ function formatRequestTime(createdAt: string): string {
   }
 }
 
+function isDoubleMeaningName(name: string): boolean {
+  if (!name) return false;
+  
+  // Normalizar: minúsculo, sem acentos, remover caracteres não-letras
+  const normalized = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z]/g, "");
+
+  // Lista de padrões bloqueados (strings normalizadas sem espaços)
+  const blacklist = [
+    "jacintoleite",
+    "jacintopinto",
+    "paulatejano",
+    "paulatejando",
+    "cucabeludo",
+    "tomasturbando",
+    "tomasturbano",
+    "isadorapinto",
+    "oscaralho",
+    "hromeupinto",
+    "romeupinto",
+    "deidecosta",
+    "simasturbo",
+    "pauloatar",
+    "paulolatar",
+    "paulobrificado",
+    "caiodeboca",
+    "miapica",
+    "miapika",
+    "miapicha",
+    "serjaorego",
+    "sergiorego",
+    "inaciorego",
+    "inaciopinto",
+    "zoidecu",
+    "paulaatras",
+    "paulaatraz",
+    "elmamaria",
+    "elmachips",
+    "paulinhamarisa",
+    "paulamarisa",
+    "kikolindo",
+    "kikofofo",
+    "kikolouco",
+    "kikocu",
+    "didecosta",
+    "deidecoz",
+    "zoiodecu",
+    "cuzinho",
+    "viado",
+    "pauano",
+    "pauanorigo",
+    "pauinano",
+    "jefersoncu",
+    "jeffersoncu",
+    "miltonrocha",
+    "miltinhocharego",
+    "miltonrocharego",
+    "pautras",
+    "paulatezano",
+    "paulatezando",
+    "isadoraboceta",
+    "isadoracuzinho",
+    "alancapote",
+    "alancaralho",
+    "filhodaputa",
+    "putaquepariu",
+  ];
+
+  const blacklistKeywords = [
+    "cucabeludo",
+    "tomasturb",
+    "paulatejan",
+    "jacintoleit",
+    "jacintopint",
+    "deidecosta",
+    "simasturb",
+    "paulobrificad",
+    "caiodeboc",
+    "kikolind",
+  ];
+
+  // 1. Checar correspondência exata ou parcial da string sem espaços
+  if (blacklist.some((blocked) => normalized.includes(blocked))) {
+    return true;
+  }
+
+  // 2. Checar palavras-chave específicas na string normalizada
+  if (blacklistKeywords.some((keyword) => normalized.includes(keyword))) {
+    return true;
+  }
+
+  // 3. Checar combinações fonéticas específicas
+  const hasJacinto = normalized.includes("jacinto");
+  const hasRego = normalized.includes("rego");
+  const hasPinto = normalized.includes("pinto");
+  const hasTejano = normalized.includes("tejano") || normalized.includes("tejando");
+  const hasPaula = normalized.includes("paula");
+  const hasTomas = normalized.includes("tomas");
+  const hasTurbando = normalized.includes("turbando") || normalized.includes("turbano");
+  const hasCuca = normalized.includes("cuca");
+  const hasBeludo = normalized.includes("beludo");
+
+  if (hasJacinto && (hasRego || hasPinto)) return true;
+  if (hasPaula && hasTejano) return true;
+  if (hasTomas && hasTurbando) return true;
+  if (hasCuca && hasBeludo) return true;
+
+  return false;
+}
+
 export default function Sidebar({ songHistory, layout = "vertical" }: SidebarProps) {
   const containerClass =
     layout === "horizontal"
@@ -124,6 +237,12 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formSong.trim()) return;
+
+    // Auto-moderação de nomes de duplo sentido (trolls)
+    if (isDoubleMeaningName(formName)) {
+      alert("Por favor, use um nome válido para fazer o seu pedido.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
