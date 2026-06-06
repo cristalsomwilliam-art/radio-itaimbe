@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Music, Play, MessageCircle } from "lucide-react";
+import { Music, Play, MessageCircle, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface SongHistoryItem {
@@ -52,6 +52,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [formSong, setFormSong] = useState("");
   const [formMessage, setFormMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // 1. Carregar os últimos 10 pedidos do banco
@@ -71,6 +72,21 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
     };
 
     fetchRequests();
+
+    // Verificar se o usuário está logado como admin
+    const checkAdmin = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAdmin(!!user);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAdmin(!!session?.user);
+    });
 
     // 2. Inscrever em tempo real
     const channel = supabase
@@ -101,6 +117,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
     return () => {
       supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -121,15 +138,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
       if (error) throw error;
 
-      // 2. Gerar mensagem para o WhatsApp e redirecionar
-      const whatsappText = `Olá! Gostaria de pedir uma música pelo site da Rádio Itaimbé:\n\n*Pedido de Música*\n• *Nome:* ${formName.trim()}\n• *Música/Artista:* ${formSong.trim()}${
-        formMessage.trim() ? `\n• *Recado:* ${formMessage.trim()}` : ""
-      }`;
-      const whatsappUrl = `https://wa.me/5551997286166?text=${encodeURIComponent(whatsappText)}`;
-      
-      window.open(whatsappUrl, "_blank");
-
-      // Resetar form e fechar modal
+      // Resetar form e fechar modal (Redirecionamento do whats removido conforme solicitação)
       setFormName("");
       setFormSong("");
       setFormMessage("");
@@ -139,6 +148,20 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       alert("Houve um erro ao registrar seu pedido. Tente novamente.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteRequest = async (id: string) => {
+    if (!confirm("Tem certeza que deseja apagar este pedido do mural?")) return;
+    try {
+      const { error } = await supabase
+        .from("music_requests")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erro ao apagar pedido:", err);
+      alert("Erro ao excluir o pedido.");
     }
   };
 
@@ -233,15 +256,26 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 {requests.map((req) => (
                   <div
                     key={req.id}
-                    className="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1 transition-all hover:bg-white/10"
+                    className="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1 transition-all hover:bg-white/10 relative group/item"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-extrabold text-[10px] text-pink-400 truncate max-w-[120px]">
                         {req.name}
                       </span>
-                      <span className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">
-                        {formatRequestTime(req.created_at)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">
+                          {formatRequestTime(req.created_at)}
+                        </span>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDeleteRequest(req.id)}
+                            className="text-red-400 hover:text-red-500 transition-colors p-0.5 bg-black/40 rounded border border-white/5 hover:bg-red-950/20 active:scale-90"
+                            title="Apagar pedido"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1 text-[9px] text-cyan-300 font-bold">
                       <Music className="w-2.5 h-2.5 flex-shrink-0" />
@@ -282,7 +316,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 Pedir Música & Mandar Recado
               </h2>
               <p className="text-xs text-zinc-400">
-                Seu pedido aparecerá no mural do site e será enviado para o WhatsApp da rádio!
+                Seu pedido aparecerá no mural do site em tempo real!
               </p>
             </div>
 
