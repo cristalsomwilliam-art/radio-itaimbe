@@ -302,9 +302,43 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       return;
     }
 
+    // 1. Limite de tempo por usuário (10 minutos de cooldown) usando Local Storage
+    const COOLDOWN_MINUTES = 10;
+    const lastRequestTime = localStorage.getItem("last_request_timestamp");
+    if (lastRequestTime) {
+      const elapsedMs = Date.now() - parseInt(lastRequestTime, 10);
+      const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+      if (elapsedMs < cooldownMs) {
+        const remainingMinutes = Math.ceil((cooldownMs - elapsedMs) / 60000);
+        alert(`Você já fez um pedido recentemente. Por favor, aguarde mais ${remainingMinutes} minuto(s) para pedir outra música.`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      // 1. Inserir no Supabase (atualiza o mural via realtime na hora)
+      // 2. Prevenir pedidos duplicados da mesma música que já estejam ativos/na fila (ou tocados nos últimos 15 min)
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      
+      let query = supabase
+        .from("music_requests")
+        .select("id, song_title, file_path, status, created_at")
+        .or(`status.eq.pending,status.eq.processing,and(status.eq.queued,created_at.gte.${fifteenMinutesAgo})`);
+        
+      if (selectedFilePath) {
+        query = query.eq("file_path", selectedFilePath);
+      } else {
+        query = query.ilike("song_title", `%${formSong.trim()}%`);
+      }
+      
+      const { data: duplicateRequests, error: dupError } = await query;
+      if (!dupError && duplicateRequests && duplicateRequests.length > 0) {
+        alert("Esta música já foi pedida recentemente e está na fila para tocar. Por favor, escolha outra música!");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Inserir no Supabase (atualiza o mural via realtime na hora)
       const { error } = await supabase.from("music_requests").insert([
         {
           name: formName.trim(),
@@ -315,6 +349,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       ]);
 
       if (error) throw error;
+
+      // Salvar o timestamp do pedido com sucesso no Local Storage do usuário
+      localStorage.setItem("last_request_timestamp", Date.now().toString());
 
       alert("Pedido enviado com sucesso! Aguarde que em breve a sua musica vai tocar na radio itaimbé.");
 
