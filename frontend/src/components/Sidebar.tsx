@@ -650,7 +650,11 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 Pedir Música & Mandar Recado
               </h2>
               <p className="text-xs text-zinc-400">
-                Seu pedido aparecerá no             {currentUser ? (
+                Seu pedido aparecerá no mural do site em tempo real!
+              </p>
+            </div>
+
+            {currentUser ? (
               <form onSubmit={handleRequestSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Seu Nome (Autenticado)</label>
