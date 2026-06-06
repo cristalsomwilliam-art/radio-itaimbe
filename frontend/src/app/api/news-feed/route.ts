@@ -106,13 +106,17 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Limpar o HTML do conteúdo para remover elementos inseguros ou indesejados
+      // Limpar o HTML do conteúdo para remover elementos inseguros ou indesejados (XSS Mitigation)
       if (fullContent) {
         fullContent = fullContent
           .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
           .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
           .replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "")
-          .replace(/<form[^>]*>([\s\S]*?)<\/form>/gi, "");
+          .replace(/<form[^>]*>([\s\S]*?)<\/form>/gi, "")
+          // Remover atributos inline de eventos Javascript (ex: onerror, onload, onclick)
+          .replace(/\s+on[a-z]+\s*=\s*["'][\s\S]*?["']/gi, "")
+          // Substituir links com protocolo javascript: por links vazios
+          .replace(/href\s*=\s*["']\s*javascript:[\s\S]*?["']/gi, 'href="#"');
 
         // Remover imagem duplicada do corpo se for a mesma do banner/capa
         if (imageUrl) {
