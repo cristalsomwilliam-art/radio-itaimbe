@@ -7,6 +7,7 @@ interface RequestBody {
   mensagem?: string;
   musica?: string;
   artista?: string;
+  grupo?: number;
 }
 
 // Mapeamento de códigos de clima WMO para condições em português
@@ -294,9 +295,73 @@ export async function POST(request: NextRequest) {
 
     // --- TAREFA: HORÓSCOPO ---
     if (tipo === "horoscopo") {
-      const prompt = "Gere as previsões leves e positivas para os 12 signos do zodíaco (Áries, Touro, Gêmeos, Câncer, Leão, Virgem, Libra, Escorpião, Sagitário, Capricórnio, Aquário e Peixes) de hoje.";
+      const grupo = body.grupo;
+      let prompt = "";
+      let instruction = horoscopoSystemInstruction;
 
-      const responseText = await callLLM(prompt, horoscopoSystemInstruction);
+      if (grupo === 1) {
+        prompt = "Gere as previsões de hoje para o Grupo 1 (Áries, Touro, Gêmeos e Câncer).";
+        instruction = `Você é o locutor oficial da Rádio Itaimbé FM.
+Sua tarefa é criar o boletim de horóscopo diário para os signos de Áries, Touro, Gêmeos e Câncer.
+O horóscopo deve ter um tom positivo, leve e motivador, próprio para rádio.
+
+Você DEVE retornar APENAS um JSON no formato:
+{
+  "status": "ok",
+  "tipo": "horoscopo",
+  "grupo": 1,
+  "texto": "Áries: previsão... Touro: previsão... Gêmeos: previsão... Câncer: previsão..."
+}
+
+REGRAS:
+- Máximo de 25 palavras por signo.
+- NÃO inclua diagnósticos médicos, menções a doenças, conselhos financeiros/investimentos ou promessas garantidas.
+
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
+      } else if (grupo === 2) {
+        prompt = "Gere as previsões de hoje para o Grupo 2 (Leão, Virgem, Libra e Escorpião).";
+        instruction = `Você é o locutor oficial da Rádio Itaimbé FM.
+Sua tarefa é criar o boletim de horóscopo diário para os signos de Leão, Virgem, Libra e Escorpião.
+O horóscopo deve ter um tom positivo, leve e motivador, próprio para rádio.
+
+Você DEVE retornar APENAS um JSON no formato:
+{
+  "status": "ok",
+  "tipo": "horoscopo",
+  "grupo": 2,
+  "texto": "Leão: previsão... Virgem: previsão... Libra: previsão... Escorpião: previsão..."
+}
+
+REGRAS:
+- Máximo de 25 palavras por signo.
+- NÃO inclua diagnósticos médicos, menções a doenças, conselhos financeiros/investimentos ou promessas garantidas.
+
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
+      } else if (grupo === 3) {
+        prompt = "Gere as previsões de hoje para o Grupo 3 (Sagitário, Capricórnio, Aquário e Peixes).";
+        instruction = `Você é o locutor oficial da Rádio Itaimbé FM.
+Sua tarefa é criar o boletim de horóscopo diário para os signos de Sagitário, Capricórnio, Aquário e Peixes.
+O horóscopo deve ter um tom positivo, leve e motivador, próprio para rádio.
+
+Você DEVE retornar APENAS um JSON no formato:
+{
+  "status": "ok",
+  "tipo": "horoscopo",
+  "grupo": 3,
+  "texto": "Sagitário: previsão... Capricórnio: previsão... Aquário: previsão... Peixes: previsão..."
+}
+
+REGRAS:
+- Máximo de 25 palavras por signo.
+- NÃO inclua diagnósticos médicos, menções a doenças, conselhos financeiros/investimentos ou promessas garantidas.
+
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
+      } else {
+        prompt = "Gere as previsões leves e positivas para os 12 signos do zodíaco (Áries, Touro, Gêmeos, Câncer, Leão, Virgem, Libra, Escorpião, Sagitário, Capricórnio, Aquário e Peixes) de hoje.";
+        instruction = horoscopoSystemInstruction;
+      }
+
+      const responseText = await callLLM(prompt, instruction);
       const resultJson = cleanJsonResponse(responseText);
 
       return NextResponse.json(resultJson);
