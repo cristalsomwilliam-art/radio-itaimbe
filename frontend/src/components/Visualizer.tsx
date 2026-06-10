@@ -322,7 +322,7 @@ export default function Visualizer() {
   }, [isPlaying, analyserRef]);
 
   return (
-    <div className="relative w-full h-[320px] md:h-[360px] flex items-center justify-center bg-transparent">
+    <div className="relative w-[300px] h-[300px] md:w-[330px] md:h-[330px] flex items-center justify-center bg-transparent">
       {/* Canvas Shader */}
       <canvas ref={canvasRef} className="w-full h-full block" />
     </div>
