@@ -52,46 +52,57 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
 
   let geminiError = "";
 
-  // 1. Tentar utilizar a API do Gemini (Gratuita/Acessível por padrão)
+  // 1. Tentar utilizar a API do Gemini com fallback robusto de modelos e versões
   if (geminiApiKey) {
-    try {
-      const model = "gemini-1.5-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+    const models = [
+      "gemini-3.5-flash",
+      "gemini-2.5-flash",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest"
+    ];
+    const versions = ["v1", "v1beta"];
 
-      const payload = {
-        contents: [
-          {
-            parts: [
+    for (const version of versions) {
+      for (const model of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${geminiApiKey}`;
+
+          const payload = {
+            contents: [
               {
-                text: `${systemInstruction}\n\nEntrada/Dados atuais:\n${prompt}`
+                parts: [
+                  {
+                    text: `${systemInstruction}\n\nEntrada/Dados atuais:\n${prompt}`
+                  }
+                ]
               }
-            ]
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.7
+            }
+          };
+
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) return text.trim();
+          } else {
+            const errText = await res.text();
+            geminiError = `Erro da API do Gemini (${model} em ${version} - status ${res.status}): ${errText}`;
+            console.warn(geminiError);
           }
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.7
+        } catch (err: any) {
+          geminiError = `Falha na chamada da API do Gemini (${model} em ${version}): ${err.message || err}`;
+          console.error(geminiError);
         }
-      };
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) return text.trim();
-      } else {
-        const errText = await res.text();
-        geminiError = `Erro da API do Gemini (status ${res.status}): ${errText}`;
-        console.warn(geminiError);
       }
-    } catch (err: any) {
-      geminiError = `Falha na chamada da API do Gemini: ${err.message || err}`;
-      console.error(geminiError);
     }
   }
 
