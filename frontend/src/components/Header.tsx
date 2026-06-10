@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAudio } from "@/context/AudioContext";
-import { Tv, Calendar, Newspaper, Lock } from "lucide-react";
+import { Tv, Calendar, Newspaper } from "lucide-react";
 
 export default function Header() {
   const { listenersCount } = useAudio();
@@ -76,17 +76,6 @@ export default function Header() {
               )}
             </Link>
 
-            <div className="w-px h-5 bg-zinc-800 mx-1 md:mx-2 hidden sm:block"></div>
-            
-            <Link
-              href="/admin/login"
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
-                isAdmin ? "text-white" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="hidden sm:inline">Admin</span>
-            </Link>
           </nav>
 
           {/* Pill Badge: Ouvintes Online (Mockup Style) */}

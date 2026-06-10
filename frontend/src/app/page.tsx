@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio, ExternalLink } from "lucide-react";
+import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio, ExternalLink, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAudio } from "@/context/AudioContext";
 import TvPlayer from "@/components/TvPlayer";
@@ -40,7 +40,7 @@ interface NewsItem {
 }
 
 export default function Home() {
-  const { isPlaying, togglePlay, pause: pauseRadio } = useAudio();
+  const { isPlaying, togglePlay, pause: pauseRadio, volume, changeVolume, isMuted, toggleMute } = useAudio();
   const prevTvOnlineRef = useRef<boolean | null>(null);
   const [status, setStatus] = useState<StreamStatus>({
     tv_online: false,
@@ -320,6 +320,38 @@ export default function Home() {
                     >
                       <Share2 className="w-4 h-4" />
                     </button>
+                  </div>
+
+                  {/* Barra de volume */}
+                  <div className="flex items-center gap-3 bg-zinc-950/40 border border-white/5 px-4 py-2.5 rounded-full w-full max-w-[240px] shadow-lg shadow-black/20 backdrop-blur-md">
+                    <button
+                      onClick={toggleMute}
+                      className="text-zinc-400 hover:text-white transition-colors p-1 rounded-full flex-shrink-0"
+                      title={isMuted ? "Ativar som" : "Desativar som"}
+                    >
+                      {isMuted || volume === 0 ? (
+                        <VolumeX className="w-4 h-4 text-[#e81e4d]" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-zinc-300" />
+                      )}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => changeVolume(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#e81e4d]"
+                      style={{
+                        background: `linear-gradient(to right, #e81e4d 0%, #e81e4d ${
+                          (isMuted ? 0 : volume) * 100
+                        }%, #27272a ${(isMuted ? 0 : volume) * 100}%, #27272a 100%)`,
+                      }}
+                    />
+                    <span className="text-[10px] text-zinc-400 font-bold min-w-[28px] text-right flex-shrink-0">
+                      {Math.round((isMuted ? 0 : volume) * 100)}%
+                    </span>
                   </div>
 
                   {/* Patrocinador rotativo de alta visibilidade abaixo do play */}
