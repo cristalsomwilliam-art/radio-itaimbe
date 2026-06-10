@@ -306,7 +306,7 @@ def sync_batch_to_supabase(tracks):
         "Prefer": "resolution=merge-duplicates"
     }
     try:
-        status, response = supabase_request("music_catalog", method="POST", body=tracks, extra_headers=headers)
+        status, response = supabase_request("music_catalog?on_conflict=file_path", method="POST", body=tracks, extra_headers=headers)
         if status in (200, 201):
             logger.info(f"[OK] Lote sincronizado com sucesso no Supabase.")
         else:
