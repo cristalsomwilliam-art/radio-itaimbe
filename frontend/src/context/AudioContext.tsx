@@ -49,8 +49,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // URL de stream segura (Cloudflare Tunnel -> Proxy Local -> Caster.fm)
   const streamUrl = "https://stream.radioitaimbe.com.br/";
-  // Link de fallback em localhost caso esteja em ambiente de desenvolvimento local
-  const devStreamUrl = "http://localhost:8000/";
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -265,7 +263,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         volume,
         isMuted,
         error,
-        streamUrl: typeof window !== "undefined" && window.location.hostname === "localhost" ? devStreamUrl : streamUrl,
+        streamUrl: streamUrl,
         songTitle,
         artistName,
         albumArt,
@@ -284,7 +282,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       {/* Elemento de áudio global com crossOrigin para habilitar o analisador da Web Audio API */}
       <audio
         ref={audioRef}
-        src={typeof window !== "undefined" && window.location.hostname === "localhost" ? devStreamUrl : streamUrl}
+        src={streamUrl}
         crossOrigin="anonymous"
         preload="none"
         onPlay={() => {

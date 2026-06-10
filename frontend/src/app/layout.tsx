@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Player from "@/components/Player";
 import Header from "@/components/Header";
 import { AudioProvider } from "@/context/AudioContext";
 
@@ -46,12 +45,9 @@ export default function RootLayout({
           <Header />
 
           {/* CONTEÚDO PRINCIPAL DA PÁGINA */}
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 pb-32">
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 pb-10">
             {children}
           </main>
-
-          {/* PLAYER DE ÁUDIO PERSISTENTE NO RODAPÉ */}
-          <Player />
         </AudioProvider>
       </body>
     </html>

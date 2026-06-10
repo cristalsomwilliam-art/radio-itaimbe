@@ -262,44 +262,68 @@ export default function Home() {
                   </p>
                 </div>
 
-                {/* Controles de Play e Compartilhar */}
-                <div className="flex items-center gap-3 mt-6">
-                  <button
-                    onClick={togglePlay}
-                    className={`bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] active:scale-95 transition-all text-white text-xs font-black px-7 py-3.5 rounded-full flex items-center gap-2 shadow-lg shadow-pink-500/25 uppercase tracking-wider ${
-                      isPlaying ? "hover:scale-105" : "animate-play-pulse"
-                    }`}
-                  >
-                    {isPlaying ? (
-                      <>
-                        <Pause className="w-4 h-4 fill-white" />
-                        <span>Pausar Rádio</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 fill-white translate-x-0.5" />
-                        <span>Ouvir Agora</span>
-                      </>
-                    )}
-                  </button>
+                {/* Controles de Play, Compartilhar e Patrocinadores */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5 mt-6 w-full">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <button
+                      onClick={togglePlay}
+                      className={`bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] active:scale-95 transition-all text-white text-xs font-black px-7 py-3.5 rounded-full flex items-center gap-2 shadow-lg shadow-pink-500/25 uppercase tracking-wider ${
+                        isPlaying ? "hover:scale-105" : "animate-play-pulse"
+                      }`}
+                    >
+                      {isPlaying ? (
+                        <>
+                          <Pause className="w-4 h-4 fill-white" />
+                          <span>Pausar Rádio</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 fill-white translate-x-0.5" />
+                          <span>Ouvir Agora</span>
+                        </>
+                      )}
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: "Rádio Itaimbé 87.9 FM",
-                          text: "Ouça a Rádio Itaimbé ao vivo!",
-                          url: window.location.origin,
-                        });
-                      } else {
-                        navigator.clipboard.writeText(window.location.origin);
-                        alert("Link copiado!");
-                      }
-                    }}
-                    className="bg-white/5 hover:bg-white/10 text-white p-3.5 rounded-full border border-white/5 transition-all hover:scale-105 active:scale-95 shadow-md"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({
+                            title: "Rádio Itaimbé 87.9 FM",
+                            text: "Ouça a Rádio Itaimbé ao vivo!",
+                            url: window.location.origin,
+                          });
+                        } else {
+                          navigator.clipboard.writeText(window.location.origin);
+                          alert("Link copiado!");
+                        }
+                      }}
+                      className="bg-white/5 hover:bg-white/10 text-white p-3.5 rounded-full border border-white/5 transition-all hover:scale-105 active:scale-95 shadow-md flex items-center justify-center flex-shrink-0"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Patrocinadores compactos ao lado do play */}
+                  {banners.length > 0 && (
+                    <div className="flex items-center gap-3 overflow-x-auto py-1 pr-2 max-w-full custom-scrollbar">
+                      {banners.map((banner) => (
+                        <a
+                          key={banner.id}
+                          href={banner.link || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative w-28 h-10 md:w-32 md:h-11 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all flex-shrink-0 shadow-md group"
+                          title={banner.title}
+                        >
+                          <img
+                            src={banner.image_url}
+                            alt={banner.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -318,211 +342,11 @@ export default function Home() {
 
             {/* SIDEBAR DA DIREITA (1 coluna) */}
             <div className="lg:col-span-1">
-              <Sidebar songHistory={status.song_history} layout="vertical" />
+              <Sidebar layout="vertical" />
             </div>
 
           </div>
         )}
-      </section>
-
-      {/* 2. SPONSOR/PUBLICIDADE BANNERS */}
-      {banners.length > 0 && (
-        <section className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {banners.map((banner) => (
-              <a
-                key={banner.id}
-                href={banner.link || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative h-28 rounded-2xl overflow-hidden border border-zinc-800/40 group hover:border-zinc-700/50 transition-all shadow-lg"
-              >
-                <img
-                  src={banner.image_url}
-                  alt={banner.title}
-                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 brightness-[0.85]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent flex items-end p-4">
-                  <h4 className="text-[10px] font-black text-white uppercase tracking-wider leading-tight">{banner.title}</h4>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 3. 3 CARDS DE AÇÕES RÁPIDAS (Estilo Mockup) */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Card 1: Rádio ao Vivo */}
-        <div className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group">
-          <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center text-[#e81e4d] group-hover:scale-105 transition-transform duration-300">
-            <Radio className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
-              Rádio Ao Vivo
-            </h4>
-            <p className="text-[9px] text-zinc-500 mt-0.5">
-              24h de programação sem parar
-            </p>
-          </div>
-        </div>
-
-        {/* Card 2: Programação */}
-        <Link
-          href="/programacao"
-          className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform duration-300">
-            <Star className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
-              Programação
-            </h4>
-            <p className="text-[9px] text-zinc-500 mt-0.5">
-              Confira nossa grade completa
-            </p>
-          </div>
-        </Link>
-
-        {/* Card 3: Notícias */}
-        <Link
-          href="/noticias"
-          className="bg-zinc-950/65 border border-white/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform duration-300">
-            <Newspaper className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-[11px] font-black text-white uppercase tracking-wider">
-              Notícias
-            </h4>
-            <p className="text-[9px] text-zinc-500 mt-0.5">
-              Fique por dentro das novidades
-            </p>
-          </div>
-        </Link>
-      </section>
-
-      {/* 4. SEÇÃO DE PORTAIS DE NOTÍCIAS */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-          <h2 className="text-lg font-black tracking-wider text-white uppercase flex items-center gap-2">
-            <span className="w-1 h-5 bg-[#e81e4d] rounded"></span>
-            Portal de Notícias
-          </h2>
-          <Link
-            href="/noticias"
-            className="text-[10px] font-extrabold text-[#e81e4d] hover:text-pink-400 transition-colors uppercase tracking-wider flex items-center gap-0.5"
-          >
-            Ver Detalhes <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Estadão */}
-          <a
-            href="https://www.estadao.com.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="glass-panel rounded-2xl overflow-hidden group hover:border-blue-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
-          >
-            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
-              <img
-                src="/estadao_cover.png"
-                alt="Estadão"
-                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
-              />
-              <div className="absolute top-2.5 left-2.5">
-                <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
-                  Geral & Regional
-                </span>
-              </div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
-                  Estadão
-                </h3>
-                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
-                  Notícias em tempo real sobre o Brasil, o mundo, economia, política, cultura e a cobertura dos acontecimentos gerais e regionais.
-                </p>
-              </div>
-              <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
-                Acessar Portal <ExternalLink className="w-3 h-3" />
-              </div>
-            </div>
-          </a>
-
-          {/* Jovem Pan */}
-          <a
-            href="https://jovempan.com.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="glass-panel rounded-2xl overflow-hidden group hover:border-rose-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
-          >
-            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
-              <img
-                src="/jovem_pan_cover.png"
-                alt="Jovem Pan News"
-                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
-              />
-              <div className="absolute top-2.5 left-2.5">
-                <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
-                  Análises & Economia
-                </span>
-              </div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
-                  Jovem Pan News
-                </h3>
-                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
-                  Análises em tempo real, economia, debates, esportes, entretenimento e transmissões ao vivo da emissora.
-                </p>
-              </div>
-              <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
-                Acessar Portal <ExternalLink className="w-3 h-3" />
-              </div>
-            </div>
-          </a>
-
-          {/* Revista Oeste */}
-          <a
-            href="https://revistaoeste.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="glass-panel rounded-2xl overflow-hidden group hover:border-yellow-500/40 flex flex-col h-full shadow-lg transition-all hover:-translate-y-0.5"
-          >
-            <div className="relative aspect-video bg-zinc-950 overflow-hidden">
-              <img
-                src="/revista_oeste_cover.png"
-                alt="Revista Oeste"
-                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-550 brightness-90"
-              />
-              <div className="absolute top-2.5 left-2.5">
-                <span className="bg-black/70 backdrop-blur-md text-[8px] font-black uppercase text-white px-2 py-0.5 rounded-full tracking-wider border border-white/10">
-                  Política & Opinião
-                </span>
-              </div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs md:text-sm font-bold text-white group-hover:text-[#e81e4d] transition-colors line-clamp-1 leading-tight">
-                  Revista Oeste
-                </h3>
-                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed line-clamp-2 mt-1">
-                  Jornalismo independente com opinião, debates e análises políticas e econômicas em defesa do livre mercado.
-                </p>
-              </div>
-              <div className="text-[9px] text-[#e81e4d] font-bold uppercase tracking-wider mt-3.5 flex items-center gap-1">
-                Acessar Portal <ExternalLink className="w-3 h-3" />
-              </div>
-            </div>
-          </a>
-        </div>
       </section>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Music, Play, MessageCircle, Trash2, LogIn, Loader2 } from "lucide-react";
+import { Music, Play, MessageCircle, Trash2, LogIn, Loader2, Newspaper, Calendar, X, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface SongHistoryItem {
@@ -12,7 +12,7 @@ interface SongHistoryItem {
 }
 
 interface SidebarProps {
-  songHistory: SongHistoryItem[];
+  songHistory?: SongHistoryItem[];
   layout?: "vertical" | "horizontal";
 }
 
@@ -186,6 +186,60 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Estados para Manchetes / Últimas Notícias
+  interface ArticleItem {
+    title: string;
+    link: string;
+    description: string;
+    pubDate: string;
+    imageUrl: string;
+    fullContent?: string;
+    portalName: string;
+    portalId: string;
+  }
+
+  const [articles, setArticles] = useState<ArticleItem[]>([]);
+  const [selectedArticle, setSelectedArticle] = useState<ArticleItem | null>(null);
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
+
+  useEffect(() => {
+    const fetchAllNews = async () => {
+      setIsLoadingNews(true);
+      try {
+        const [estadaoRes, jpRes, oesteRes] = await Promise.all([
+          fetch("/api/news-feed?portal=estadao").then(r => r.json().catch(() => ({ items: [] }))),
+          fetch("/api/news-feed?portal=jovempan").then(r => r.json().catch(() => ({ items: [] }))),
+          fetch("/api/news-feed?portal=oeste").then(r => r.json().catch(() => ({ items: [] })))
+        ]);
+
+        const merged: ArticleItem[] = [
+          ...(estadaoRes.items || []).map((item: any) => ({ ...item, portalName: "Estadão", portalId: "estadao" })),
+          ...(jpRes.items || []).map((item: any) => ({ ...item, portalName: "Jovem Pan", portalId: "jovempan" })),
+          ...(oesteRes.items || []).map((item: any) => ({ ...item, portalName: "Revista Oeste", portalId: "oeste" }))
+        ];
+
+        // Ordenar por data (pubDate desc)
+        merged.sort((a, b) => {
+          const dateA = new Date(a.pubDate).getTime();
+          const dateB = new Date(b.pubDate).getTime();
+          return dateB - dateA;
+        });
+
+        // Pegar as 8 mais recentes
+        setArticles(merged.slice(0, 8));
+      } catch (err) {
+        console.error("Erro ao carregar notícias na Sidebar:", err);
+      } finally {
+        setIsLoadingNews(false);
+      }
+    };
+
+    fetchAllNews();
+    // Atualizar a cada 10 minutos
+    const interval = setInterval(fetchAllNews, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Buscar sugestões de música (debounced)
   useEffect(() => {
@@ -461,68 +515,71 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
   return (
     <div className={containerClass}>
-      {/* Card de Últimas Músicas */}
+      {/* Card de Últimas Notícias */}
       <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 shadow-2xl flex flex-col h-[280px] justify-between">
-        <div>
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
+        <div className="flex flex-col h-full justify-between min-h-0">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Music className="w-4 h-4 text-[#e81e4d]" />
+              <Newspaper className="w-4 h-4 text-[#e81e4d]" />
               <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
-                Últimas Músicas
+                Últimas Notícias
               </h3>
             </div>
 
             <Link
-              href="/programacao"
+              href="/noticias"
               className="text-[9px] font-black bg-[#e81e4d] text-white hover:bg-pink-600 transition-colors px-3 py-1 rounded-full uppercase tracking-widest shadow-md shadow-pink-500/10"
             >
               Ver Todas
             </Link>
           </div>
 
-          {songHistory && songHistory.length > 0 ? (
-            <div className="space-y-3 max-h-[170px] overflow-y-auto pr-1">
-              {songHistory.map((song, idx) => (
+          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar min-h-0 space-y-2.5">
+            {isLoadingNews ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-1.5">
+                <Loader2 className="w-5 h-5 text-[#e81e4d] animate-spin" />
+                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Carregando notícias...</span>
+              </div>
+            ) : articles.length > 0 ? (
+              articles.map((article, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between text-xs py-2 border-b border-white/5 hover:bg-white/5 px-2 rounded-xl transition-all group cursor-pointer"
+                  onClick={() => setSelectedArticle(article)}
+                  className="flex items-center justify-between gap-3 text-xs py-2 border-b border-white/5 hover:bg-white/5 px-2 rounded-xl transition-all group cursor-pointer"
                 >
-                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                      <Play className="w-3 h-3 text-[#e81e4d] opacity-0 group-hover:opacity-100 transition-opacity absolute fill-[#e81e4d]" />
-                      <Music className="w-3.5 h-3.5 text-zinc-600 group-hover:opacity-0 transition-opacity" />
+                      {article.imageUrl ? (
+                        <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <Newspaper className="w-3.5 h-3.5 text-zinc-600" />
+                      )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-zinc-100 truncate text-[11px] group-hover:text-[#e81e4d] transition-colors">
-                        {song.title}
-                      </p>
-                      <p className="text-[9px] text-zinc-500 truncate mt-0.5 font-medium">
-                        {song.artist}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Mini Equalizador animado */}
-                  <div className="flex items-center gap-4">
-                    <span className="text-[9px] text-zinc-500 font-bold whitespace-nowrap">
-                      {song.time}
-                    </span>
-                    <div className="flex items-end gap-[1.5px] h-3 w-3.5">
-                      <span className="w-[1.5px] bg-[#e81e4d] rounded-full animate-[bounce_0.8s_infinite_100ms] h-full"></span>
-                      <span className="w-[1.5px] bg-[#e81e4d] rounded-full animate-[bounce_0.8s_infinite_300ms] h-3/5"></span>
-                      <span className="w-[1.5px] bg-[#e81e4d] rounded-full animate-[bounce_0.8s_infinite_500ms] h-4/5"></span>
+                    <div className="min-w-0 space-y-0.5">
+                      <h4 className="font-bold text-zinc-100 truncate text-[11px] group-hover:text-[#e81e4d] transition-colors leading-tight">
+                        {article.title}
+                      </h4>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[7px] font-black bg-zinc-900 border border-white/10 text-zinc-400 px-1 py-0.2 rounded uppercase">
+                          {article.portalName}
+                        </span>
+                        <span className="text-[8px] text-zinc-500 font-medium">
+                          {formatRequestTime(article.pubDate)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[10px] text-zinc-500 text-center py-8 font-medium">
-              Nenhum histórico disponível.
-            </p>
-          )}
+              ))
+            ) : (
+              <p className="text-[10px] text-zinc-500 text-center py-12 font-medium">
+                Nenhuma notícia disponível no momento.
+              </p>
+            )}
+          </div>
         </div>
       </div>
+
 
       {/* Card Peça Sua Música - Mural de Pedidos */}
       <div className="bg-gradient-to-br from-[#8b5cf6] via-[#4c1d95] to-[#1e1b4b] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group flex flex-col justify-between h-[280px]">
@@ -787,6 +844,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                     <span>Google</span>
                   </button>
                 </div>
+                <p className="text-[9px] text-zinc-500 leading-normal mt-2 text-center">
+                  * Nota: Ao logar com o Facebook, certifique-se de manter a permissão de <strong>E-mail</strong> ativa para que o cadastro seja concluído.
+                </p>
 
                 <div className="pt-4 border-t border-white/5">
                   <button
@@ -802,6 +862,106 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
           </div>
         </div>
       )}
+
+      {/* Modal de Detalhes da Notícia */}
+      {selectedArticle && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative animate-in zoom-in-95 duration-200 overflow-hidden">
+            
+            {/* Topo / Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/5 flex-shrink-0">
+              <span className="bg-[#e81e4d]/10 border border-[#e81e4d]/20 text-[#e81e4d] text-[9px] font-black uppercase px-2.5 py-1 rounded-full tracking-wider">
+                {selectedArticle.portalName}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedArticle(null)}
+                className="text-zinc-400 hover:text-white transition-colors p-1.5 bg-white/5 hover:bg-white/10 rounded-full"
+                title="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Conteúdo com scroll */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar my-4 space-y-4 min-h-0">
+              <h2 className="text-base md:text-xl font-black text-white leading-snug">
+                {selectedArticle.title}
+              </h2>
+              
+              <div className="flex items-center gap-1.5 text-[10px] text-zinc-550 font-bold uppercase">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>
+                  Publicado em {
+                    (() => {
+                      try {
+                        const date = new Date(selectedArticle.pubDate);
+                        if (isNaN(date.getTime())) return selectedArticle.pubDate;
+                        return date.toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "long",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        });
+                      } catch {
+                        return selectedArticle.pubDate;
+                      }
+                    })()
+                  }
+                </span>
+              </div>
+
+              {selectedArticle.imageUrl && (
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-zinc-900 flex-shrink-0">
+                  <img
+                    src={selectedArticle.imageUrl}
+                    alt={selectedArticle.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="border-t border-white/5 pt-4">
+                {selectedArticle.fullContent ? (
+                  <div
+                    className="news-content-body text-xs md:text-sm text-zinc-350 font-normal leading-relaxed space-y-3"
+                    dangerouslySetInnerHTML={{ __html: selectedArticle.fullContent }}
+                  />
+                ) : (
+                  <p className="text-xs md:text-sm text-zinc-355 font-normal leading-relaxed whitespace-pre-line">
+                    {selectedArticle.description || "Nenhum resumo disponível para esta notícia."}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Botões do Rodapé */}
+            <div className="flex gap-3 pt-4 border-t border-white/5 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedArticle(null)}
+                className="flex-1 py-3 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+              >
+                Voltar ao Home
+              </button>
+              <a
+                href={selectedArticle.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 shadow-lg shadow-pink-500/10"
+              >
+                <span>Ver Completa</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification Premium */}
       {toast && (
         <div className="fixed top-5 right-5 left-5 md:left-auto z-[10005] animate-in slide-in-from-top-5 duration-300 md:max-w-sm">

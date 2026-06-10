@@ -444,6 +444,9 @@ export default function CustomChat() {
                 <span>Google</span>
               </button>
             </div>
+            <p className="text-[9px] text-zinc-500 leading-normal mt-2 text-center">
+              * Nota: Ao logar com o Facebook, certifique-se de manter a permissão de <strong>E-mail</strong> ativa para que o cadastro seja concluído.
+            </p>
           </div>
         )}
       </div>
