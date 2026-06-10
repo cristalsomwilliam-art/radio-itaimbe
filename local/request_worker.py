@@ -559,6 +559,58 @@ def insert_song_in_radioboss(filepath, target_pos):
         logger.error(f"Erro ao chamar API de inserção do RadioBOSS: {str(e)}")
         raise e
 
+def cleanup_played_locutions():
+    """Busca locuções já reproduzidas na playlist do RadioBOSS, as remove da playlist e deleta os arquivos do SSD."""
+    try:
+        current_idx = get_current_playing_index()
+        if current_idx <= 0:
+            return
+        
+        tracks = get_playlist_tracks()
+        locucoes_to_delete = []
+        
+        for t in tracks:
+            idx = t.get("index")
+            filename = t.get("filename")
+            if not idx or not filename:
+                continue
+            
+            # Normalizar caminhos para comparação
+            norm_filename = os.path.basename(filename).lower()
+            
+            # Verificar se é um arquivo de locução temporária
+            if norm_filename.startswith("locucao_") and norm_filename.endswith(".mp3"):
+                if idx < current_idx:
+                    locucoes_to_delete.append((idx, filename))
+                    
+        if not locucoes_to_delete:
+            return
+            
+        # Ordenar do maior índice para o menor para evitar que a remoção altere a posição das anteriores
+        locucoes_to_delete.sort(key=lambda x: x[0], reverse=True)
+        
+        for idx, filepath in locucoes_to_delete:
+            logger.info(f"Removendo locução já reproduzida da playlist na posição {idx}: {filepath}")
+            try:
+                # Deletar da playlist do RadioBOSS (1-based index)
+                radioboss_request("delete", {"pos": idx})
+                
+                # Aguardar um instante para o RadioBOSS processar a remoção
+                time.sleep(0.2)
+                
+                # Deletar o arquivo físico do SSD
+                if os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                        logger.info(f"Arquivo físico de locução removido com sucesso: {filepath}")
+                    except Exception as e_file:
+                        logger.warning(f"Não foi possível remover o arquivo físico {filepath}: {str(e_file)}")
+            except Exception as e_track:
+                logger.error(f"Erro ao remover faixa {filepath} na posição {idx} do RadioBOSS: {str(e_track)}")
+                
+    except Exception as e:
+        logger.error(f"Erro ao limpar locuções antigas da playlist: {str(e)}")
+
 # ---------------------------------------------------------
 # MONITOR DE NOVOS PEDIDOS (WORKER LOOP)
 # ---------------------------------------------------------
@@ -820,6 +872,9 @@ def run_worker_loop():
                     process_single_request(req)
             elif status != 200:
                 logger.error(f"Falha ao checar pedidos no Supabase: Status {status}")
+            
+            # Limpar locuções antigas da playlist e do SSD
+            cleanup_played_locutions()
         except KeyboardInterrupt:
             logger.info("Encerrando monitor de pedidos...")
             break
