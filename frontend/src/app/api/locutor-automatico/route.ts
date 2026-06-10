@@ -55,10 +55,10 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
   // 1. Tentar utilizar a API do Gemini com fallback robusto de modelos e versões
   if (geminiApiKey) {
     const models = [
-      "gemini-3.5-flash",
-      "gemini-2.5-flash",
       "gemini-1.5-flash",
-      "gemini-1.5-flash-latest"
+      "gemini-1.5-flash-latest",
+      "gemini-2.5-flash",
+      "gemini-3.5-flash"
     ];
     const versions = ["v1", "v1beta"];
 
