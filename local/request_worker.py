@@ -566,7 +566,25 @@ def insert_song_in_radioboss(filepath, target_pos):
 def speak_text(text, output_path):
     """Gera áudio a partir do texto usando a biblioteca edge-tts (neural) ou fallback para gTTS."""
     import subprocess
+    import site
+    import importlib
     
+    def refresh_imports():
+        try:
+            user_site = site.getusersitepackages()
+            if user_site and user_site not in sys.path:
+                sys.path.append(user_site)
+            site.addsitedir(user_site)
+        except Exception:
+            pass
+        try:
+            importlib.invalidate_caches()
+        except Exception:
+            pass
+
+    # Garantir que pacotes recém-instalados ou instalados no escopo do usuário sejam visíveis
+    refresh_imports()
+
     # 1. Tentar usar edge-tts (voz neural premium da Microsoft)
     try:
         import edge_tts
@@ -579,10 +597,11 @@ def speak_text(text, output_path):
         asyncio.run(amain())
         logger.info(f"Áudio da locução gerado com sucesso via edge-tts em: {output_path}")
         return True
-    except ImportError:
-        logger.info("edge-tts não está instalado. Tentando instalar automaticamente...")
+    except (ImportError, ModuleNotFoundError):
+        logger.info("edge-tts não está instalado ou não foi encontrado. Tentando instalar/atualizar caminhos automaticamente...")
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "edge-tts"])
+            refresh_imports()
             import edge_tts
             import asyncio
             
@@ -599,9 +618,11 @@ def speak_text(text, output_path):
     # 2. Fallback para gTTS (Google TTS)
     try:
         try:
+            refresh_imports()
             import gtts
-        except ImportError:
+        except (ImportError, ModuleNotFoundError):
             subprocess.check_call([sys.executable, "-m", "pip", "install", "gTTS"])
+            refresh_imports()
             import gtts
             
         tts = gtts.gTTS(text=text, lang='pt')
