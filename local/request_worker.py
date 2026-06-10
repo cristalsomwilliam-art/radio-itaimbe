@@ -145,7 +145,7 @@ def radioboss_request(action, params=None):
         if isinstance(e_rest, ValueError) and "Erro da API" in str(e_rest):
             raise e_rest
             
-        logger.warning(f"Chamada REST ao RadioBOSS falhou ({str(e_rest)}). Tentando formato alternativo query...")
+        logger.debug(f"Chamada REST ao RadioBOSS falhou ({str(e_rest)}). Tentando formato alternativo query...")
         
         # Tentar formato de rota alternativa: /?action=action (padrão para ações da API)
         params_fallback = params.copy()
@@ -464,13 +464,13 @@ def get_current_playing_index():
                     playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
                     
                     if state == 'stop':
-                        logger.info("Player do RadioBOSS está parado (state='stop').")
+                        logger.debug("Player do RadioBOSS está parado (state='stop').")
                         return 0
                     
                     if playlistpos_str is not None:
                         # playlistpos é 0-based no RadioBOSS, retornamos 1-based para o index atual
                         idx = int(playlistpos_str) + 1
-                        logger.info(f"Índice atual de reprodução obtido via playbackinfo (estado: '{state}'): {idx}")
+                        logger.debug(f"Índice atual de reprodução obtido via playbackinfo (estado: '{state}'): {idx}")
                         return idx
         except Exception as e_pb:
             logger.warning(f"Falha ao obter índice via 'playbackinfo' ({str(e_pb)}). Tentando fallbacks...")
@@ -481,7 +481,7 @@ def get_current_playing_index():
             # Se a resposta for vazia ou indicar playlist vazia, retornar 0
             raw_str = xml_data.decode('utf-8', errors='ignore').strip()
             if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-                logger.info("Playlist vazia ou inativa no RadioBOSS (Nothing to do).")
+                logger.debug("Playlist vazia ou inativa no RadioBOSS (Nothing to do).")
                 return 0
             root = ET.fromstring(xml_data)
         except Exception as e:
@@ -490,7 +490,7 @@ def get_current_playing_index():
             # Se a resposta for vazia ou indicar playlist vazia, retornar 0
             raw_str = xml_data.decode('utf-8', errors='ignore').strip()
             if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-                logger.info("Playlist vazia ou inativa no RadioBOSS (Nothing to do).")
+                logger.debug("Playlist vazia ou inativa no RadioBOSS (Nothing to do).")
                 return 0
             root = ET.fromstring(xml_data)
         
