@@ -533,12 +533,13 @@ def get_playlist_tracks():
             root = ET.fromstring(xml_data)
         
         tracks = []
-        for track in root.findall('track'):
-            idx = track.attrib.get('index') or track.attrib.get('INDEX')
+        for i, track in enumerate(root.findall('track'), start=1):
+            idx_attr = track.attrib.get('index') or track.attrib.get('INDEX')
+            idx = int(idx_attr) if idx_attr else i
             filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
-            if idx and filename:
+            if filename:
                 tracks.append({
-                    "index": int(idx),
+                    "index": idx,
                     "filename": filename
                 })
         return tracks
@@ -598,7 +599,7 @@ def cleanup_played_locutions():
                 radioboss_request("delete", {"pos": idx})
                 
                 # Aguardar um instante para o RadioBOSS processar a remoção
-                time.sleep(0.2)
+                time.sleep(0.5)
                 
                 # Deletar o arquivo físico do SSD
                 if os.path.exists(filepath):
