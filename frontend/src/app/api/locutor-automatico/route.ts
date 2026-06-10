@@ -50,6 +50,8 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
     throw new Error("Nenhuma chave de API de IA (GEMINI_API_KEY ou OPENAI_API_KEY) configurada no ambiente.");
   }
 
+  let geminiError = "";
+
   // 1. Tentar utilizar a API do Gemini (Gratuita/Acessível por padrão)
   if (geminiApiKey) {
     try {
@@ -84,10 +86,12 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
         if (text) return text.trim();
       } else {
         const errText = await res.text();
-        console.warn(`Erro na API do Gemini (${res.status}): ${errText}. Tentando fallback se configurado...`);
+        geminiError = `Erro da API do Gemini (status ${res.status}): ${errText}`;
+        console.warn(geminiError);
       }
-    } catch (err) {
-      console.error("Falha na chamada principal da API do Gemini:", err);
+    } catch (err: any) {
+      geminiError = `Falha na chamada da API do Gemini: ${err.message || err}`;
+      console.error(geminiError);
     }
   }
 
@@ -126,6 +130,10 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
       console.error("Erro na API do OpenAI:", err);
       throw err;
     }
+  }
+
+  if (!openaiApiKey && geminiError) {
+    throw new Error(geminiError);
   }
 
   throw new Error("Não foi possível processar a requisição com nenhuma das APIs de IA disponíveis.");
