@@ -213,7 +213,7 @@ Você DEVE retornar APENAS um JSON no formato:
 }
 
 REGRAS:
-- Máximo de 20 palavras por signo.
+- Máximo de 12 palavras por signo.
 - NÃO inclua diagnósticos médicos, menções a doenças, conselhos financeiros/investimentos ou promessas garantidas.
 - Mantenha a linguagem amigável, acolhedora e inspiradora.
 
