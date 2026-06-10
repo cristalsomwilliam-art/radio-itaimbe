@@ -59,6 +59,10 @@ export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Estados para o banner de patrocínio rotativo com transição suave
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
+
   // URLs Públicas do Owncast configuradas pelo túnel Cloudflare
   const owncastStreamUrl = "https://tv.radioitaimbe.com.br/hls/stream.m3u8";
   const owncastChatUrl = "https://tv.radioitaimbe.com.br/embed/chat/readwrite";
@@ -80,12 +84,12 @@ export default function Home() {
       }
 
       try {
-        // 2. Carregar Banners
+        // 2. Carregar Banners (limite estendido para rotacionar patrocinadores)
         const { data: bannersData } = await supabase
           .from("banners")
           .select("*")
           .eq("active", true)
-          .limit(3);
+          .limit(20);
 
         if (bannersData) {
           setBanners(bannersData as Banner[]);
@@ -167,6 +171,21 @@ export default function Home() {
     }
     prevTvOnlineRef.current = status.tv_online;
   }, [status.tv_online, isLoading, pauseRadio]);
+
+  // Efeito para rotacionar os banners de patrocínio a cada 12 segundos com um fade-out/fade-in suave
+  useEffect(() => {
+    if (banners.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setIsBannerVisible(false);
+      setTimeout(() => {
+        setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+        setIsBannerVisible(true);
+      }, 500); // tempo correspondente à transição de opacidade CSS (500ms)
+    }, 12000); // 12 segundos de exibição por patrocinador
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
 
   return (
     <div className="space-y-10 md:space-y-14">
@@ -303,25 +322,24 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* Patrocinadores compactos ao lado do play */}
-                  {banners.length > 0 && (
-                    <div className="flex items-center gap-3 overflow-x-auto py-1 pr-2 max-w-full custom-scrollbar">
-                      {banners.map((banner) => (
-                        <a
-                          key={banner.id}
-                          href={banner.link || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative w-28 h-10 md:w-32 md:h-11 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all flex-shrink-0 shadow-md group"
-                          title={banner.title}
-                        >
-                          <img
-                            src={banner.image_url}
-                            alt={banner.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </a>
-                      ))}
+                  {/* Patrocinador rotativo de alta visibilidade ao lado do play */}
+                  {banners.length > 0 && banners[currentBannerIndex] && (
+                    <div className="flex-1 flex items-center justify-start min-w-0">
+                      <a
+                        href={banners[currentBannerIndex].link || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`relative w-48 h-12 md:w-[320px] md:h-[72px] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-md group flex-shrink-0 ${
+                          isBannerVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                        }`}
+                        title={banners[currentBannerIndex].title}
+                      >
+                        <img
+                          src={banners[currentBannerIndex].image_url}
+                          alt={banners[currentBannerIndex].title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </a>
                     </div>
                   )}
                 </div>
