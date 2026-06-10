@@ -60,6 +60,8 @@ RADIOBOSS_API_URL = os.getenv("RADIOBOSS_API_URL", "http://127.0.0.1:9000").rstr
 RADIOBOSS_PASSWORD = os.getenv("RADIOBOSS_PASSWORD", "")
 MUSIC_DIRECTORIES_RAW = os.getenv("MUSIC_DIRECTORIES", "")
 LOOP_INTERVAL_SECONDS = int(os.getenv("LOOP_INTERVAL_SECONDS", "5"))
+TTS_VOICE = os.getenv("TTS_VOICE", "pt-BR-AntonioNeural")
+TTS_RATE = os.getenv("TTS_RATE", "-8%")
 
 # Validar configurações obrigatórias
 if not SUPABASE_URL or not SUPABASE_KEY:
@@ -643,7 +645,7 @@ def speak_text(text, output_path):
         import asyncio
         
         async def amain():
-            communicate = edge_tts.Communicate(text, "pt-BR-AntonioNeural")
+            communicate = edge_tts.Communicate(text, TTS_VOICE, rate=TTS_RATE)
             await communicate.save(output_path)
             
         asyncio.run(amain())
@@ -658,7 +660,7 @@ def speak_text(text, output_path):
             import asyncio
             
             async def amain():
-                communicate = edge_tts.Communicate(text, "pt-BR-AntonioNeural")
+                communicate = edge_tts.Communicate(text, TTS_VOICE, rate=TTS_RATE)
                 await communicate.save(output_path)
                 
             asyncio.run(amain())
@@ -807,8 +809,8 @@ def process_single_request(request):
                 # 2. Obter a playlist do RadioBOSS
                 playlist_tracks = get_playlist_tracks()
                 
-                # 3. Começar a partir de current_idx + 2
-                target_pos = current_idx + 2
+                # 3. Começar a partir de current_idx + 1 (para tocar logo após a música atual terminar)
+                target_pos = current_idx + 1
                 
                 # Criar mapeamento de index -> filename para busca rápida
                 playlist_map = {t["index"]: os.path.normpath(t["filename"]).lower() for t in playlist_tracks}
