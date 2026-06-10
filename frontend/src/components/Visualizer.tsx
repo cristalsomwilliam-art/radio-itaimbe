@@ -52,7 +52,7 @@ export default function Visualizer() {
       particles = [];
       for (let i = 0; i < numParticles; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = 60 + Math.random() * 80;
+        const dist = 50 + Math.random() * 65;
         particles.push({
           x: w / 2 + Math.cos(angle) * dist,
           y: h / 2 + Math.sin(angle) * dist,
@@ -105,10 +105,10 @@ export default function Visualizer() {
       const bgGrad = ctx.createRadialGradient(
         w / 2,
         h / 2,
-        30 + pulse * 10,
+        25 + pulse * 8,
         w / 2,
         h / 2,
-        Math.max(w, h) * 0.55
+        Math.max(w, h) * 0.44
       );
       bgGrad.addColorStop(0, "rgba(40, 7, 56, 0.45)"); // Brilho roxo sutil
       bgGrad.addColorStop(1, "rgba(0, 0, 0, 0)"); // Transparência nas bordas
@@ -148,7 +148,7 @@ export default function Visualizer() {
       // 4. Desenhar Raios de Frequência Radial (Spectrum Analizer Circular)
       ctx.save();
       const numSpikes = 90;
-      const innerRadius = 70 + pulse * 10; // Anel se expande com graves
+      const innerRadius = 60 + pulse * 8; // Anel se expande com graves
 
       ctx.shadowBlur = 8 + pulse * 12;
       ctx.shadowColor = "rgba(34, 211, 238, 0.5)";
@@ -168,7 +168,7 @@ export default function Visualizer() {
           if (!isPlaying) frequencyValue *= 0.1;
         }
 
-        const spikeLength = Math.max(2, frequencyValue * 48 * (1.0 + pulse * 0.45));
+        const spikeLength = Math.max(2, frequencyValue * 36 * (1.0 + pulse * 0.4));
         
         const x1 = w / 2 + Math.cos(angle) * innerRadius;
         const y1 = h / 2 + Math.sin(angle) * innerRadius;
@@ -218,7 +218,7 @@ export default function Visualizer() {
         p.alpha += (Math.random() - 0.5) * 0.02;
         p.alpha = Math.max(0.05, Math.min(0.65, p.alpha));
 
-        if (p.x < 0 || p.x > w || p.y < 0 || p.y > h || dist > Math.max(w, h) * 0.5) {
+        if (p.x < 0 || p.x > w || p.y < 0 || p.y > h || dist > Math.max(w, h) * 0.44) {
           const newAngle = Math.random() * Math.PI * 2;
           const startDist = 40 + Math.random() * 25;
           p.x = w / 2 + Math.cos(newAngle) * startDist;
@@ -250,7 +250,7 @@ export default function Visualizer() {
       ctx.restore();
 
       // 7. Desenhar Logotipo no Centro Pulsante
-      const logoSize = 115 + pulse * 14;
+      const logoSize = 100 + pulse * 12;
       const radius = logoSize / 2;
 
       ctx.save();

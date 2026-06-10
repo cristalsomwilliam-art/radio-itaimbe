@@ -282,7 +282,7 @@ export default function Home() {
                 </div>
 
                 {/* Controles de Play, Compartilhar e Patrocinadores */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5 mt-6 w-full">
+                <div className="flex flex-col gap-5 mt-6 w-full">
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <button
                       onClick={togglePlay}
@@ -322,14 +322,14 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* Patrocinador rotativo de alta visibilidade ao lado do play */}
+                  {/* Patrocinador rotativo de alta visibilidade abaixo do play */}
                   {banners.length > 0 && banners[currentBannerIndex] && (
-                    <div className="flex-1 flex items-center justify-start min-w-0">
+                    <div className="w-full flex items-center justify-start min-w-0">
                       <a
                         href={banners[currentBannerIndex].link || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`relative w-48 h-12 md:w-[320px] md:h-[72px] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-md group flex-shrink-0 ${
+                        className={`relative w-full max-w-[320px] h-14 md:h-[72px] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-md group flex-shrink-0 ${
                           isBannerVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
                         }`}
                         title={banners[currentBannerIndex].title}
