@@ -939,23 +939,14 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
             </div>
 
             {/* Botões do Rodapé */}
-            <div className="flex gap-3 pt-4 border-t border-white/5 flex-shrink-0">
+            <div className="pt-4 border-t border-white/5 flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedArticle(null)}
-                className="flex-1 py-3 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+                className="w-full py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 text-center"
               >
-                Voltar ao Home
+                Voltar à Rádio
               </button>
-              <a
-                href={selectedArticle.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 shadow-lg shadow-pink-500/10"
-              >
-                <span>Ver Completa</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
             </div>
 
           </div>
