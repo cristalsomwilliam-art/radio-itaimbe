@@ -27,6 +27,17 @@ interface MusicRequest {
   created_at: string;
 }
 
+interface ArticleItem {
+  title: string;
+  link: string;
+  description: string;
+  pubDate: string;
+  imageUrl: string;
+  fullContent?: string;
+  portalName: string;
+  portalId: string;
+}
+
 function formatRequestTime(createdAt: string): string {
   try {
     const diffMs = Date.now() - new Date(createdAt).getTime();
@@ -188,17 +199,6 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Estados para Manchetes / Últimas Notícias
-  interface ArticleItem {
-    title: string;
-    link: string;
-    description: string;
-    pubDate: string;
-    imageUrl: string;
-    fullContent?: string;
-    portalName: string;
-    portalId: string;
-  }
-
   const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<ArticleItem | null>(null);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
@@ -214,9 +214,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         ]);
 
         const merged: ArticleItem[] = [
-          ...(estadaoRes.items || []).map((item: any) => ({ ...item, portalName: "Estadão", portalId: "estadao" })),
-          ...(jpRes.items || []).map((item: any) => ({ ...item, portalName: "Jovem Pan", portalId: "jovempan" })),
-          ...(oesteRes.items || []).map((item: any) => ({ ...item, portalName: "Revista Oeste", portalId: "oeste" }))
+          ...((estadaoRes && estadaoRes.items) || []).map((item: any) => ({ ...item, portalName: "Estadão", portalId: "estadao" })),
+          ...((jpRes && jpRes.items) || []).map((item: any) => ({ ...item, portalName: "Jovem Pan", portalId: "jovempan" })),
+          ...((oesteRes && oesteRes.items) || []).map((item: any) => ({ ...item, portalName: "Revista Oeste", portalId: "oeste" }))
         ];
 
         // Ordenar por data (pubDate desc)
