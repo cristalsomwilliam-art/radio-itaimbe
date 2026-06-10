@@ -562,12 +562,62 @@ def insert_song_in_radioboss(filepath, target_pos):
 # MONITOR DE NOVOS PEDIDOS (WORKER LOOP)
 # ---------------------------------------------------------
 
+def speak_text(text, output_path):
+    """Gera áudio a partir do texto usando a biblioteca edge-tts (neural) ou fallback para gTTS."""
+    import subprocess
+    
+    # 1. Tentar usar edge-tts (voz neural premium da Microsoft)
+    try:
+        import edge_tts
+        import asyncio
+        
+        async def amain():
+            communicate = edge_tts.Communicate(text, "pt-BR-AntonioNeural")
+            await communicate.save(output_path)
+            
+        asyncio.run(amain())
+        logger.info(f"Áudio da locução gerado com sucesso via edge-tts em: {output_path}")
+        return True
+    except ImportError:
+        logger.info("edge-tts não está instalado. Tentando instalar automaticamente...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "edge-tts"])
+            import edge_tts
+            import asyncio
+            
+            async def amain():
+                communicate = edge_tts.Communicate(text, "pt-BR-AntonioNeural")
+                await communicate.save(output_path)
+                
+            asyncio.run(amain())
+            logger.info(f"Áudio da locução gerado com sucesso via edge-tts (pós-instalação) em: {output_path}")
+            return True
+        except Exception as e_install:
+            logger.warning(f"Não foi possível instalar ou usar edge-tts: {e_install}. Tentando fallback gTTS...")
+
+    # 2. Fallback para gTTS (Google TTS)
+    try:
+        try:
+            import gtts
+        except ImportError:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "gTTS"])
+            import gtts
+            
+        tts = gtts.gTTS(text=text, lang='pt')
+        tts.save(output_path)
+        logger.info(f"Áudio da locução gerado com sucesso via gTTS (fallback) em: {output_path}")
+        return True
+    except Exception as e_gtts:
+        logger.error(f"Erro ao gerar áudio por todas as alternativas de TTS: {e_gtts}")
+        return False
+
 def process_single_request(request):
     """Processa um pedido individual de música do mural."""
     req_id = request.get("id")
     name = request.get("name")
     song_title = request.get("song_title")
     file_path = request.get("file_path")
+    message = request.get("message")
 
     logger.info(f"Processando pedido #{req_id} de '{name}' pedindo '{song_title}'")
 
@@ -600,6 +650,60 @@ def process_single_request(request):
             "status_message": "Não encontramos o arquivo desta música no SSD do repertório."
         })
         return
+
+    # --- NOVO: GERAR LOCUÇÃO INTELIGENTE (IA) E TTS ---
+    locucao_text = None
+    locucao_file = None
+    
+    try:
+        # Extrair metadados da música resolvida
+        meta_artist, meta_title = extract_media_metadata(resolved_path)
+        
+        payload = {
+            "tipo": "pedido",
+            "nome": name or "Ouvinte",
+            "cidade": "",
+            "mensagem": message or "",
+            "musica": meta_title,
+            "artista": meta_artist
+        }
+        
+        # Chamar API online do site
+        api_url = "https://www.radioitaimbe.com.br/api/locutor-automatico"
+        req_payload = json.dumps(payload).encode('utf-8')
+        
+        req = urllib.request.Request(
+            api_url,
+            data=req_payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        
+        logger.info("Solicitando locução à API do site...")
+        with urllib.request.urlopen(req, timeout=12) as response:
+            resp_data = json.loads(response.read().decode('utf-8'))
+            
+            if resp_data.get("status") == "reprovada":
+                logger.warning(f"Pedido #{req_id} reprovado pela moderação da IA: {payload}")
+                supabase_request(f"music_requests?id=eq.{req_id}", method="PATCH", body={
+                    "status": "error",
+                    "status_message": "Pedido recusado pelas diretrizes de moderação da rádio."
+                })
+                return
+                
+            locucao_text = resp_data.get("locucao")
+            
+        if locucao_text:
+            # Pasta local para salvar as locuções
+            locucoes_dir = os.path.join(os.path.dirname(__file__), 'locucoes')
+            os.makedirs(locucoes_dir, exist_ok=True)
+            output_path = os.path.join(locucoes_dir, f"locucao_{req_id}.mp3")
+            
+            # Gerar TTS neural
+            if speak_text(locucao_text, output_path):
+                locucao_file = output_path
+    except Exception as e_api:
+        logger.error(f"Erro ao obter locução ou gerar TTS: {str(e_api)}. Prosseguindo apenas com a música.")
 
     # 4. Chamar RadioBOSS para inserir a música na playlist
     try:
@@ -647,8 +751,17 @@ def process_single_request(request):
             target_pos = -1  # No RadioBOSS, -1 insere no final da playlist ativa
             status_desc = "Inserido no final da playlist ativa por precaução."
 
-        # Chamar inserção
-        insert_song_in_radioboss(resolved_path, target_pos)
+        # Chamar inserção (Locução + Música, ou apenas Música se a locução falhou)
+        if locucao_file and os.path.exists(locucao_file):
+            if target_pos == -1:
+                insert_song_in_radioboss(locucao_file, -1)
+                insert_song_in_radioboss(resolved_path, -1)
+            else:
+                insert_song_in_radioboss(locucao_file, target_pos)
+                insert_song_in_radioboss(resolved_path, target_pos + 1)
+            status_desc += " com locução do locutor IA incluída antes da música."
+        else:
+            insert_song_in_radioboss(resolved_path, target_pos)
 
         # Atualizar pedido no banco de dados para sucesso
         status_msg = "Aguarde que em breve a sua musica vai tocar na radio itaimbé"
