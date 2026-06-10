@@ -816,14 +816,17 @@ def process_single_request(request):
                 # Criar mapeamento de index -> filename para busca rápida
                 playlist_map = {t["index"]: os.path.normpath(t["filename"]).lower() for t in playlist_tracks}
                 
-                # Avançar a posição para depois de qualquer música já pedida que esteja na fila
+                # Avançar a posição para depois de qualquer música já pedida ou locução que esteja na fila
                 while True:
                     track_path = playlist_map.get(target_pos)
-                    if track_path and track_path in recent_queued_paths:
-                        logger.info(f"Posição {target_pos} contém música já pedida ({track_path}). Avançando...")
-                        target_pos += 1
-                    else:
-                        break
+                    if track_path:
+                        is_recent_request = track_path in recent_queued_paths
+                        is_locucao = "locucao_" in os.path.basename(track_path).lower()
+                        if is_recent_request or is_locucao:
+                            logger.info(f"Posição {target_pos} contém música pedida ou locução ({track_path}). Avançando...")
+                            target_pos += 1
+                            continue
+                    break
                 
                 status_desc = f"Inserido na fila na posição {target_pos} (respeitando ordem cronológica)"
         except Exception as e_idx:
