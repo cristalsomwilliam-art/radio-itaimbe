@@ -18,11 +18,11 @@ echo.
 
 cd /d "%~dp0"
 
-echo [1/3] Iniciando o Tunel do Cloudflare...
+echo [1/4] Iniciando o Tunel do Cloudflare...
 taskkill /f /im cloudflared.exe >nul 2>&1
 start "Tunel Cloudflare - Radio Itaimbe" /min "C:\RadioItaimbeServer\bin\cloudflared.exe" tunnel run --token eyJhIjoiYThiM2U4ZjJjYjU5Y2VkN2U3NTg0NTdhYTIzZjcxYmEiLCJ0IjoiMDAzZWQyNjktOTMzMS00YjkwLWE5MGUtZDBiODJkZmExMTFkIiwicyI6Ik56YzRaalUxTW1VdE9HWmxNeTAwTmpZd0xUZzBPVEV0WWpWak1tVTFOMkUyWkRRMyJ9 --protocol http2
 
-echo [2/3] Iniciando Proxy de Audio...
+echo [2/4] Iniciando Proxy de Audio...
 taskkill /f /im python.exe >nul 2>&1
 taskkill /f /im py.exe >nul 2>&1
 py --version >nul 2>&1
@@ -32,7 +32,7 @@ if %errorlevel% == 0 (
     start "Proxy de Audio - Radio Itaimbe" /min python stream_proxy.py
 )
 
-echo [3/3] Iniciando Integrador RadioBOSS (Pedidos)...
+echo [3/4] Iniciando Integrador RadioBOSS (Pedidos)...
 py --version >nul 2>&1
 if %errorlevel% == 0 (
     start "Integrador RadioBOSS - Radio Itaimbe" /min py request_worker.py
@@ -40,9 +40,12 @@ if %errorlevel% == 0 (
     start "Integrador RadioBOSS - Radio Itaimbe" /min python request_worker.py
 )
 
+echo [4/4] Iniciando Servidor de TV (Docker Owncast)...
+docker compose up -d
+
 echo.
 echo ============================================
-echo   Radio Ligada com Sucesso!
+echo   Radio e TV Ligadas com Sucesso!
 echo   Pode fechar esta janela.
 echo ============================================
 timeout /t 5

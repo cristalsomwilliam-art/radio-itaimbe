@@ -18,15 +18,19 @@ echo.
 
 cd /d "%~dp0"
 
-echo [1/2] Parando o Tunel do Cloudflare (Liberando para a Live)...
-net stop Cloudflared >nul 2>&1
+echo [1/3] Parando Servidor de TV (Docker Owncast)...
+docker compose down
 
-echo [2/2] Fechando o Proxy e o Integrador do RadioBOSS...
+echo [2/3] Parando o Tunel do Cloudflare...
+net stop Cloudflared >nul 2>&1
+taskkill /f /im cloudflared.exe >nul 2>&1
+
+echo [3/3] Fechando o Proxy e o Integrador do RadioBOSS...
 taskkill /f /im python.exe >nul 2>&1
+taskkill /f /im py.exe >nul 2>&1
 
 echo.
 echo ============================================
-echo   Sistemas da Radio parados com sucesso!
-echo   (Tunel liberado para uso no PC da Live)
+echo   Sistemas da Radio e TV parados com sucesso!
 echo ============================================
 timeout /t 3
