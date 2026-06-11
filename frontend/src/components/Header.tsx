@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAudio } from "@/context/AudioContext";
-import { Tv, Calendar, Newspaper } from "lucide-react";
+import { Tv, Calendar, Newspaper, HelpCircle } from "lucide-react";
 
 export default function Header() {
   const { listenersCount } = useAudio();
@@ -14,6 +14,7 @@ export default function Header() {
   const isProgramacao = pathname === "/programacao";
   const isNoticias = pathname.startsWith("/noticias");
   const isAdmin = pathname.startsWith("/admin");
+  const isAjuda = pathname === "/ajuda";
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-zinc-800/60 backdrop-blur-md">
@@ -74,6 +75,18 @@ export default function Header() {
               {isNoticias && (
                 <span className="absolute bottom-[-16px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
               )}
+            </Link>
+
+            <Link
+              href="/ajuda"
+              className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-black rounded-full transition-all border ${
+                isAjuda
+                  ? "bg-[#e81e4d] text-white border-[#e81e4d] shadow-lg shadow-pink-500/25"
+                  : "bg-white/5 hover:bg-[#e81e4d]/10 text-zinc-300 hover:text-[#e81e4d] border-white/5 hover:border-[#e81e4d]/30"
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-[#e81e4d]" />
+              <span>Como Ouvir / Ajuda</span>
             </Link>
 
           </nav>
