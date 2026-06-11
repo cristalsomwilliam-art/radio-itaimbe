@@ -496,13 +496,12 @@ def get_current_playing_index():
                 return 0
             root = ET.fromstring(xml_data)
         
-        # Encontrar a tag de track que está tocando
-        for track in root.findall('track'):
+        # Encontrar a tag de track que está tocando usando o índice sequencial 1-based do loop
+        for i, track in enumerate(root.findall('track'), start=1):
             playing_val = track.attrib.get('playing') or track.attrib.get('PLAYING')
-            index_val = track.attrib.get('index') or track.attrib.get('INDEX')
-            
-            if playing_val in ('1', 'true', 'yes') and index_val:
-                return int(index_val)
+            if playing_val in ('1', 'true', 'yes'):
+                logger.debug(f"Índice atual de reprodução obtido via fallback de playlist: {i}")
+                return i
         
         # Se nenhuma música estiver como ativa/tocando, retornar índice 0
         logger.warning("Nenhuma música marcada como ativa ('playing=1') na playlist do RadioBOSS.")
@@ -534,12 +533,10 @@ def get_playlist_tracks():
         
         tracks = []
         for i, track in enumerate(root.findall('track'), start=1):
-            idx_attr = track.attrib.get('index') or track.attrib.get('INDEX')
-            idx = int(idx_attr) if idx_attr else i
             filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
             if filename:
                 tracks.append({
-                    "index": idx,
+                    "index": i,  # Usar estritamente o índice sequencial 1-based do loop
                     "filename": filename
                 })
         return tracks
