@@ -56,6 +56,50 @@ export default function AjudaPage() {
   // Estado para alternar entre "Simulador Interativo" e "Manual da Rádio" (Roteiros para gravação)
   const [viewMode, setViewMode] = useState<"simulator" | "scripts">("simulator");
 
+  // Estado para controle do Narrador de Voz (Text-to-Speech)
+  const [isNarratorMuted, setIsNarratorMuted] = useState<boolean>(false);
+
+  // Função para falar o texto da narração de forma lenta e clara para idosos
+  const speakText = (text: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    
+    // Cancela qualquer narração anterior em andamento
+    window.speechSynthesis.cancel();
+    
+    if (isNarratorMuted) return;
+
+    const cleanText = text.replace(/[*#]/g, ""); // Limpar marcações de texto
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = "pt-BR";
+    utterance.rate = 0.85; // Velocidade mais lenta para idosos ouvirem com clareza
+    utterance.pitch = 1.0;
+
+    // Buscar vozes em Português do Brasil no sistema do usuário
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(
+      (v) => v.lang.includes("pt-BR") || v.lang.includes("pt_BR")
+    );
+    if (ptVoice) {
+      utterance.voice = ptVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Efeito para disparar a fala da narração ao mudar de passo ou tutorial
+  React.useEffect(() => {
+    if (viewMode === "simulator") {
+      const timer = setTimeout(() => {
+        speakText(currentStep.narration);
+      }, 250);
+      return () => clearTimeout(timer);
+    } else {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    }
+  }, [currentStepIndex, activeTutorialId, viewMode, isNarratorMuted]);
+
   // Lista dos tutoriais com todos os dados solicitados pelo usuário
   const tutorials: Tutorial[] = [
     {
@@ -892,9 +936,41 @@ export default function AjudaPage() {
                 </div>
 
                 {/* 2. LEGENDA DA NARRAÇÃO EM LETRAS GIGANTES (Subtítulos para idosos) */}
-                <div className="bg-black/95 border-t border-white/10 p-5 min-h-[90px] flex flex-col justify-center">
+                <div className="bg-black/95 border-t border-white/10 p-5 min-h-[90px] flex flex-col gap-3 justify-center">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2">
+                    <span className="text-xs text-[#e81e4d] font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-[#e81e4d] rounded-full animate-ping"></span>
+                      🔊 Narração por Voz
+                    </span>
+                    
+                    {/* Botões de Controle de Voz */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => speakText(currentStep.narration)}
+                        className="px-2.5 py-1 bg-zinc-900 border border-white/10 hover:border-white/20 text-[10px] font-black text-white hover:bg-zinc-800 rounded-lg transition-all active:scale-95 uppercase tracking-wider"
+                      >
+                        🔄 Repetir Voz
+                      </button>
+                      <button
+                        onClick={() => {
+                          const nextMuted = !isNarratorMuted;
+                          setIsNarratorMuted(nextMuted);
+                          if (nextMuted && typeof window !== "undefined" && window.speechSynthesis) {
+                            window.speechSynthesis.cancel();
+                          }
+                        }}
+                        className={`px-2.5 py-1 text-[10px] font-black rounded-lg border transition-all active:scale-95 uppercase tracking-wider ${
+                          isNarratorMuted
+                            ? "bg-zinc-900 border-white/10 text-zinc-400 hover:text-white"
+                            : "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
+                        }`}
+                      >
+                        {isNarratorMuted ? "🔇 Voz Desativada" : "🔊 Voz Ativa"}
+                      </button>
+                    </div>
+                  </div>
+                  
                   <div className="flex items-start gap-3">
-                    <span className="text-base text-[#e81e4d] font-black uppercase tracking-wider flex-shrink-0 mt-0.5 animate-pulse">🔊 Voz:</span>
                     <p className="text-zinc-100 font-extrabold text-sm md:text-base leading-relaxed tracking-wide">
                       "{currentStep.narration}"
                     </p>
