@@ -30,7 +30,7 @@ interface TutorialStep {
   narration: string;
   screenText: string;
   actionHighlight: string;
-  highlightType: "play" | "volume" | "mural" | "modal" | "dots" | "share" | "mute" | "refresh" | "keys" | "check" | "modes" | "none";
+  highlightType: "play" | "volume" | "mural" | "modal" | "dots" | "share" | "mute" | "refresh" | "keys" | "check" | "modes" | "login" | "none";
 }
 
 interface Tutorial {
@@ -107,10 +107,10 @@ export default function AjudaPage() {
     {
       id: 2,
       title: "Como pedir uma música",
-      description: "Peça sua música favorita e envie uma dedicatória para o locutor ler ao vivo na programação.",
+      description: "Peça sua música favorita, identifique-se com segurança e envie uma dedicatória ao vivo.",
       icon: <MessageSquare className="w-6 h-6" />,
       color: "from-purple-500 to-indigo-600 border-purple-500/30 text-purple-400",
-      duration: "1 minuto e 10 segundos",
+      duration: "1 minuto e 30 segundos",
       soundtrack: "Piano suave de fundo, ritmo leve e compassado",
       steps: [
         {
@@ -128,16 +128,23 @@ export default function AjudaPage() {
           highlightType: "mural",
         },
         {
+          title: "Identificar-se com Segurança",
+          narration: "Se for o seu primeiro pedido hoje, o site pedirá para você se identificar por segurança. Você verá duas opções na tela: um botão azul escrito 'Facebook' e um botão cinza escrito 'Google'. Dê um clique simples na rede social que você já costuma usar. Uma janelinha vai se abrir para confirmar seu acesso de forma rápida, protegida e sem precisar criar novas senhas!",
+          screenText: "PASSO 3: Clique no botão do Facebook ou Google para se identificar com segurança",
+          actionHighlight: "Selecione a rede social preferida nos botões destacados",
+          highlightType: "login",
+        },
+        {
           title: "Música e Dedicatória",
-          narration: "O seu nome já vem preenchido. No segundo campo, digite o nome da música e do cantor. E no terceiro campo, escreva a sua mensagem ou dedicatória especial para quem você ama — seja um parente, amigo ou um abraço geral. O locutor lerá seu recado ao vivo na rádio!",
-          screenText: "PASSO 3: Digite a música e escreva sua DEDICATÓRIA de carinho para o locutor ler",
+          narration: "Pronto! Agora que você entrou, o seu nome já aparece preenchido. No campo abaixo dele, digite o nome da música e do cantor. E no campo 'Mensagem', escreva uma dedicatória cheia de carinho para quem você ama — para um amigo, parente ou mandar um abraço geral. O locutor lerá seu recado ao vivo na rádio!",
+          screenText: "PASSO 4: Digite a música e escreva sua DEDICATÓRIA de carinho para o locutor ler",
           actionHighlight: "Mande um abraço ou dedicatória no campo de recado",
           highlightType: "modal",
         },
         {
           title: "Enviar e Aguardar",
-          narration: "Clique no botão vermelho 'Pedir Música' no final da janela. Pronto! O seu pedido entra na nossa programação. Agora é só aguardar um pouquinho que a música vai tocar e o locutor vai mandar o seu recado ao vivo para todo mundo ouvir!",
-          screenText: "PASSO 4: Envie o formulário, aguarde tocar e ouça o locutor ler o seu recado ao vivo na rádio!",
+          narration: "Por fim, clique no botão vermelho 'Pedir Música' no final da janela. Seu pedido aparecerá no mural do site. Agora é só aguardar um pouquinho que a sua música vai tocar e o locutor vai mandar a sua dedicatória ao vivo na rádio para todo mundo ouvir!",
+          screenText: "PASSO 5: Envie o formulário, aguarde tocar e ouça o locutor ler o seu recado ao vivo na rádio!",
           actionHighlight: "Clique no botão vermelho para enviar. O locutor lerá seu recado ao vivo!",
           highlightType: "modal",
         }
@@ -830,6 +837,40 @@ export default function AjudaPage() {
                         </div>
                         <p className="text-[9px] text-zinc-350">Quando o locutor entra ao vivo pelo OBS, o site vira uma TV com chat!</p>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Tipo: Botões de Identificação (Login com Redes Sociais) */}
+                  {currentStep.highlightType === "login" && (
+                    <div className="w-full max-w-sm bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-300 relative text-center">
+                      <div className="w-10 h-10 rounded-full bg-[#e81e4d]/10 border border-[#e81e4d]/30 flex items-center justify-center mx-auto text-[#e81e4d] mb-1">
+                        <HelpCircle className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider">Identifique-se com Segurança</h4>
+                      <p className="text-[10px] text-zinc-400 leading-relaxed max-w-[280px] mx-auto">
+                        Para enviar o seu pedido ao mural, escolha uma das suas redes sociais abaixo. É rápido e seguro!
+                      </p>
+                      
+                      <div className="grid grid-cols-1 gap-2 pt-1 relative">
+                        {/* Botão Facebook */}
+                        <div className="bg-[#1877F2]/10 border border-[#1877F2]/20 text-[#1877F2] py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2">
+                          <span>🔵 Facebook</span>
+                        </div>
+
+                        {/* Botão Google com Destaque de Clique */}
+                        <div className="relative z-20">
+                          <div className="bg-white/5 border-2 border-yellow-400 text-white py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2">
+                            <span>🔴 Google</span>
+                          </div>
+                          
+                          {/* Círculo de Destaque */}
+                          <span className="absolute -inset-2.5 rounded-xl border-4 border-yellow-400 animate-ping opacity-75 pointer-events-none"></span>
+                          <div className="absolute top-8 left-2/3 text-yellow-400 text-2xl animate-bounce pointer-events-none">
+                            ☝️
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[8px] text-zinc-550 block pt-1 font-bold">* Não é necessário criar uma nova senha!</span>
                     </div>
                   )}
 
