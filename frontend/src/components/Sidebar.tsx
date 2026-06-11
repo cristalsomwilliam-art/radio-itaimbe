@@ -358,9 +358,16 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
             .select("full_name")
             .eq("id", user.id)
             .single();
-          if (profile) {
-            setFormName(profile.full_name);
+          
+          let nameToSet = "";
+          if (profile && profile.full_name) {
+            nameToSet = profile.full_name;
+          } else if (user.user_metadata && user.user_metadata.full_name) {
+            nameToSet = user.user_metadata.full_name;
+          } else {
+            nameToSet = user.email ? user.email.split("@")[0] : "Ouvinte";
           }
+          setFormName(nameToSet);
         }
       } catch (err) {
         console.error("Erro ao verificar usuário na Sidebar:", err);
@@ -380,9 +387,16 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
           .select("full_name")
           .eq("id", user.id)
           .single();
-        if (profile) {
-          setFormName(profile.full_name);
+        
+        let nameToSet = "";
+        if (profile && profile.full_name) {
+          nameToSet = profile.full_name;
+        } else if (user.user_metadata && user.user_metadata.full_name) {
+          nameToSet = user.user_metadata.full_name;
+        } else {
+          nameToSet = user.email ? user.email.split("@")[0] : "Ouvinte";
         }
+        setFormName(nameToSet);
       } else {
         setFormName("");
       }
@@ -515,7 +529,6 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       showToast("Pedido enviado com sucesso! Aguarde que em breve a sua música vai tocar na rádio Itaimbé.", "success");
 
       // Resetar form e fechar modal
-      setFormName("");
       setFormSong("");
       setFormMessage("");
       setSelectedFilePath(null);
