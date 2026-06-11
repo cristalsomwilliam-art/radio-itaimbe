@@ -42,6 +42,17 @@ interface NewsItem {
 export default function Home() {
   const { isPlaying, togglePlay, pause: pauseRadio, volume, changeVolume, isMuted, toggleMute } = useAudio();
   const prevTvOnlineRef = useRef<boolean | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const [status, setStatus] = useState<StreamStatus>({
     tv_online: false,
     tv_viewers_count: 0,
@@ -221,14 +232,15 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Lado Esquerdo: Player + Sidebar Horizontal */}
+              {/* Lado Esquerdo: Player + Chat Mobile + Sidebar Horizontal */}
               <div className="lg:col-span-2 space-y-6">
                 <TvPlayer streamUrl={owncastStreamUrl} showOverlay={status.show_logo_overlay} />
+                {isMobile && <CustomChat />}
                 <Sidebar songHistory={status.song_history} layout="horizontal" />
               </div>
-              {/* Lado Direito: Chat Customizado */}
+              {/* Lado Direito: Chat Customizado (Desktop) */}
               <div className="lg:col-span-1 h-full">
-                <CustomChat />
+                {!isMobile && <CustomChat />}
               </div>
             </div>
           </div>
