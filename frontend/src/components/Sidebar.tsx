@@ -210,6 +210,18 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
 
+  // Disparar eventos para pausar o visualizador de áudio quando um modal estiver aberto
+  useEffect(() => {
+    if (isModalOpen || !!selectedArticle) {
+      window.dispatchEvent(new CustomEvent("modal-open"));
+    } else {
+      window.dispatchEvent(new CustomEvent("modal-close"));
+    }
+    return () => {
+      window.dispatchEvent(new CustomEvent("modal-close"));
+    };
+  }, [isModalOpen, selectedArticle]);
+
   useEffect(() => {
     const fetchAllNews = async () => {
       setIsLoadingNews(true);
@@ -322,7 +334,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       } finally {
         setIsSearching(false);
       }
-    }, 300);
+    }, 450);
 
     return () => clearTimeout(delayDebounce);
   }, [formSong, selectedFilePath]);
@@ -753,7 +765,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
       {/* Modal de Pedido de Música */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/80 md:backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <div className="space-y-1">
               <h2 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">
@@ -949,7 +961,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
       {/* Modal de Detalhes da Notícia */}
       {selectedArticle && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/85 md:backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative animate-in zoom-in-95 duration-200 overflow-hidden">
             
             {/* Topo / Header */}

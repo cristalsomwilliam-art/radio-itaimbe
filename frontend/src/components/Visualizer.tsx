@@ -8,6 +8,7 @@ export default function Visualizer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | null>(null);
   const logoImgRef = useRef<HTMLImageElement | null>(null);
+  const [isPaused, setIsPaused] = React.useState(false);
 
   // Carregar o logotipo oficial da rádio para o centro
   useEffect(() => {
@@ -15,6 +16,20 @@ export default function Visualizer() {
     img.src = "/logo.jpg";
     img.onload = () => {
       logoImgRef.current = img;
+    };
+  }, []);
+
+  // Escutar eventos de abertura/fechamento de modal para pausar a animação
+  useEffect(() => {
+    const handlePause = () => setIsPaused(true);
+    const handleResume = () => setIsPaused(false);
+
+    window.addEventListener("modal-open", handlePause);
+    window.addEventListener("modal-close", handleResume);
+
+    return () => {
+      window.removeEventListener("modal-open", handlePause);
+      window.removeEventListener("modal-close", handleResume);
     };
   }, []);
 
@@ -35,6 +50,69 @@ export default function Visualizer() {
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
+
+    // Se o visualizador estiver pausado (modal aberto), desenha um quadro estático para economizar 100% de CPU
+    if (isPaused) {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      
+      const drawStatic = () => {
+        ctx.clearRect(0, 0, w, h);
+        
+        // Fundo com brilho roxo sutil
+        const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 25, w / 2, h / 2, Math.max(w, h) * 0.44);
+        bgGrad.addColorStop(0, "rgba(40, 7, 56, 0.45)");
+        bgGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Anel neon estático
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w / 2, h / 2, 60, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(34, 211, 238, 0.45)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        // Desenhar logotipo no centro
+        const logoSize = 100;
+        const radius = logoSize / 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
+        ctx.clip();
+        if (logoImgRef.current) {
+          ctx.drawImage(logoImgRef.current, w / 2 - radius, h / 2 - radius, logoSize, logoSize);
+        } else {
+          ctx.fillStyle = "#160624";
+          ctx.fillRect(w / 2 - radius, h / 2 - radius, logoSize, logoSize);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 11px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("RÁDIO", w / 2, h / 2 - 10);
+          ctx.fillStyle = "#e81e4d";
+          ctx.font = "bold 13px sans-serif";
+          ctx.fillText("ITAIMBÉ", w / 2, h / 2 + 8);
+        }
+        ctx.restore();
+
+        // Borda rosa da logo
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(232, 30, 77, 0.85)";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      drawStatic();
+      return () => {
+        window.removeEventListener("resize", resizeCanvas);
+      };
+    }
 
     // Partículas Radiais Neon
     let particles: Array<{
@@ -319,7 +397,7 @@ export default function Visualizer() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, analyserRef]);
+  }, [isPlaying, analyserRef, isPaused]);
 
   return (
     <div className="relative w-[300px] h-[300px] md:w-[330px] md:h-[330px] flex items-center justify-center bg-transparent">
