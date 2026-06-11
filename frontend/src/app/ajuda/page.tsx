@@ -30,7 +30,7 @@ interface TutorialStep {
   narration: string;
   screenText: string;
   actionHighlight: string;
-  highlightType: "play" | "volume" | "mural" | "modal" | "dots" | "share" | "mute" | "refresh" | "keys" | "check" | "none";
+  highlightType: "play" | "volume" | "mural" | "modal" | "dots" | "share" | "mute" | "refresh" | "keys" | "check" | "modes" | "none";
 }
 
 interface Tutorial {
@@ -61,10 +61,10 @@ export default function AjudaPage() {
     {
       id: 1,
       title: "Como ouvir a Rádio Itaimbé",
-      description: "Aprenda a entrar no site, encontrar o player e dar o play para ouvir a rádio ao vivo.",
+      description: "Aprenda a entrar no site, entender os dois modos (som/vídeo) e ligar a rádio ao vivo.",
       icon: <Radio className="w-6 h-6" />,
       color: "from-pink-500 to-rose-600 border-pink-500/30 text-pink-400",
-      duration: "45 segundos",
+      duration: "1 minuto",
       soundtrack: "Violão acústico suave, melodia alegre e calma (ex: Sunny Days)",
       steps: [
         {
@@ -75,23 +75,30 @@ export default function AjudaPage() {
           highlightType: "none",
         },
         {
+          title: "Rádio 24h vs TV Ao Vivo",
+          narration: "Nosso site funciona de duas formas automáticas: quando não há locutor no estúdio, você ouve música o dia todo no Modo Rádio 24h. Mas quando o locutor inicia a transmissão ao vivo pelo OBS Studio, o site muda sozinho para o Modo TV Ao Vivo com vídeo do estúdio e chat para conversar conosco!",
+          screenText: "PASSO 2: O site muda sozinho entre a Rádio 24h (som) e a TV Ao Vivo (vídeo via OBS)",
+          actionHighlight: "Compare o Modo Rádio (Som) e o Modo TV (Vídeo + Chat) na tela",
+          highlightType: "modes",
+        },
+        {
           title: "Encontrar o Player",
-          narration: "Agora, olhe bem no meio da tela. Você verá um grande cartão escuro com o título 'RÁDIO ITAIMBÉ FM' e um botão vermelho muito chamativo escrito 'Ouvir Agora'.",
-          screenText: "PASSO 2: Encontre o botão vermelho escrito 'Ouvir Agora'",
+          narration: "Para ouvir no Modo Rádio, olhe bem no meio da tela. Você verá um grande cartão com o título da Rádio e um botão vermelho muito chamativo escrito 'Ouvir Agora'.",
+          screenText: "PASSO 3: Encontre o botão vermelho escrito 'Ouvir Agora'",
           actionHighlight: "O botão vermelho 'Ouvir Agora' está destacado com o círculo piscante",
           highlightType: "play",
         },
         {
           title: "Clicar em Play",
-          narration: "Dê um clique simples nesse botão vermelho. O triângulo branco vai virar duas barrinhas verticais e a música vai começar a tocar na hora! Viu como é mágico?",
-          screenText: "PASSO 3: Clique no botão para iniciar a transmissão",
-          actionHighlight: "Clique no botão 'Ouvir Agora'. A música começará a tocar!",
+          narration: "Dê um toque ou clique simples nesse botão vermelho. O triângulo branco vai virar duas barrinhas verticais de pausar, e o som da rádio vai começar a tocar na hora!",
+          screenText: "PASSO 4: Clique no botão vermelho para iniciar o som",
+          actionHighlight: "Clique no botão 'Ouvir Agora'. O som começará a tocar!",
           highlightType: "play",
         },
         {
           title: "Ajustar o Volume",
-          narration: "Se o som estiver muito baixo ou muito alto, não se preocupe! Logo abaixo do botão de tocar, há uma barra de volume. Deslize a bolinha para a direita para aumentar, ou para a esquerda para abaixar o som.",
-          screenText: "PASSO 4: Use a barra de volume para ajustar a altura do som",
+          narration: "Se o som estiver muito baixo ou muito alto, não se preocupe! Logo abaixo do botão de tocar, use a barra de volume. Deslize a bolinha para a direita para aumentar, ou para a esquerda para abaixar o som.",
+          screenText: "PASSO 5: Use a barra de volume para ajustar a altura do som",
           actionHighlight: "Ajuste o volume deslizando a barrinha horizontal",
           highlightType: "volume",
         }
@@ -100,15 +107,15 @@ export default function AjudaPage() {
     {
       id: 2,
       title: "Como pedir uma música",
-      description: "Peça sua música favorita e mande recados no nosso mural para tocar na programação.",
+      description: "Peça sua música favorita e envie uma dedicatória para o locutor ler ao vivo na programação.",
       icon: <MessageSquare className="w-6 h-6" />,
       color: "from-purple-500 to-indigo-600 border-purple-500/30 text-purple-400",
-      duration: "1 minuto",
+      duration: "1 minuto e 10 segundos",
       soundtrack: "Piano suave de fundo, ritmo leve e compassado",
       steps: [
         {
           title: "Ache o Mural de Pedidos",
-          narration: "Quer ouvir a sua música preferida? Nós tocamos para você! No lado direito do site, encontre o quadro roxo escrito 'Mural de Pedidos'.",
+          narration: "Quer ouvir a sua música preferida e mandar um abraço especial? Nós fazemos isso por você! No lado direito do site, encontre o quadro roxo do 'Mural de Pedidos'.",
           screenText: "PASSO 1: Encontre o card roxo 'Mural de Pedidos' na página principal",
           actionHighlight: "Mural de Pedidos destacado na lateral direita",
           highlightType: "mural",
@@ -116,22 +123,22 @@ export default function AjudaPage() {
         {
           title: "Abrir o Formulário",
           narration: "Abaixo das mensagens dos outros ouvintes, clique no botão vermelho escrito 'Pedir Música'. Um quadro menor vai se abrir no meio da sua tela.",
-          screenText: "PASSO 2: Clique no botão 'Pedir Música'",
+          screenText: "PASSO 2: Clique no botão vermelho 'Pedir Música'",
           actionHighlight: "Clique no botão vermelho 'Pedir Música' no card do Mural",
           highlightType: "mural",
         },
         {
-          title: "Preencher os Campos",
-          narration: "O seu nome já aparece preenchido no primeiro campo. No campo abaixo, digite o nome da música e do cantor. Se quiser, escreva uma mensagem mandando um abraço no terceiro campo.",
-          screenText: "PASSO 3: Digite a música/artista e mande sua mensagem",
-          actionHighlight: "Preencha o nome da música e o recado no formulário",
+          title: "Música e Dedicatória",
+          narration: "O seu nome já vem preenchido. No segundo campo, digite o nome da música e do cantor. E no terceiro campo, escreva a sua mensagem ou dedicatória especial para quem você ama — seja um parente, amigo ou um abraço geral. O locutor lerá seu recado ao vivo na rádio!",
+          screenText: "PASSO 3: Digite a música e escreva sua DEDICATÓRIA de carinho para o locutor ler",
+          actionHighlight: "Mande um abraço ou dedicatória no campo de recado",
           highlightType: "modal",
         },
         {
-          title: "Enviar o Pedido",
-          narration: "Confira se escreveu tudo direitinho e clique no botão vermelho 'Pedir Música' no final da janela. Pronto! Seu pedido aparecerá no mural e a nossa programação colocará a sua música para tocar em instantes, logo após as músicas que já estão programadas.",
-          screenText: "PASSO 4: Clique em enviar e acompanhe no mural!",
-          actionHighlight: "Clique no botão vermelho 'Pedir Música' para enviar o formulário",
+          title: "Enviar e Aguardar",
+          narration: "Clique no botão vermelho 'Pedir Música' no final da janela. Pronto! O seu pedido entra na nossa programação. Agora é só aguardar um pouquinho que a música vai tocar e o locutor vai mandar o seu recado ao vivo para todo mundo ouvir!",
+          screenText: "PASSO 4: Envie o formulário, aguarde tocar e ouça o locutor ler o seu recado ao vivo na rádio!",
+          actionHighlight: "Clique no botão vermelho para enviar. O locutor lerá seu recado ao vivo!",
           highlightType: "modal",
         }
       ]
@@ -791,6 +798,37 @@ export default function AjudaPage() {
                       
                       <div className="text-yellow-400 text-2xl mt-2 animate-bounce">
                         ⌨️
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tipo: Modos da Rádio (Rádio 24h vs TV Ao Vivo via OBS) */}
+                  {currentStep.highlightType === "modes" && (
+                    <div className="w-full max-w-lg grid grid-cols-1 md:grid-cols-2 gap-4 animate-in zoom-in-95 duration-300">
+                      {/* Modo Rádio 24h */}
+                      <div className="bg-gradient-to-br from-[#1a0636] to-[#04010b] border-2 border-purple-500/30 rounded-xl p-4 flex flex-col justify-between text-center relative overflow-hidden">
+                        <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[8px] font-black uppercase px-2 py-0.5 rounded-full mx-auto block">
+                          Modo Rádio 24h
+                        </span>
+                        <div className="my-3 flex flex-col items-center">
+                          <Radio className="w-8 h-8 text-purple-400 mb-1 animate-pulse" />
+                          <span className="text-[10px] font-black text-white">Som Automático</span>
+                          <span className="text-[8px] text-zinc-400 mt-1">Funciona sem parar</span>
+                        </div>
+                        <p className="text-[9px] text-zinc-350">Quando não há locutor ao vivo, você ouve música o dia todo.</p>
+                      </div>
+
+                      {/* Modo TV Ao Vivo via OBS */}
+                      <div className="bg-gradient-to-br from-[#400511] to-[#0d0104] border-2 border-[#e81e4d]/40 rounded-xl p-4 flex flex-col justify-between text-center relative overflow-hidden">
+                        <span className="bg-[#e81e4d]/20 text-red-300 border border-[#e81e4d]/30 text-[8px] font-black uppercase px-2 py-0.5 rounded-full mx-auto block animate-pulse">
+                          🔴 TV Ao Vivo (OBS)
+                        </span>
+                        <div className="my-3 flex flex-col items-center">
+                          <Tv className="w-8 h-8 text-[#e81e4d] mb-1 animate-bounce" />
+                          <span className="text-[10px] font-black text-white">Vídeo + Chat ao Vivo</span>
+                          <span className="text-[8px] text-zinc-450 mt-1 font-semibold">Via OBS Studio</span>
+                        </div>
+                        <p className="text-[9px] text-zinc-350">Quando o locutor entra ao vivo pelo OBS, o site vira uma TV com chat!</p>
                       </div>
                     </div>
                   )}
