@@ -68,8 +68,11 @@ export default function AjudaPage() {
     
     if (isNarratorMuted) return;
 
-    const cleanText = text.replace(/[*#]/g, ""); // Limpar marcações de texto
-    const utterance = new SpeechSynthesisUtterance(cleanText);
+    // Substitui a URL do site para uma grafia fonética antes de enviar para a voz artificial
+    let audioPrompt = text.replace(/[*#]/g, "");
+    audioPrompt = audioPrompt.replace(/radioitaimbe\.com\.br/gi, "rádio itaimbé ponto com ponto be r");
+
+    const utterance = new SpeechSynthesisUtterance(audioPrompt);
     utterance.lang = "pt-BR";
     utterance.rate = 0.85; // Velocidade mais lenta para idosos ouvirem com clareza
     utterance.pitch = 1.0;
@@ -113,7 +116,7 @@ export default function AjudaPage() {
       steps: [
         {
           title: "Acessar o Site",
-          narration: "Olá! Ouvir a Rádio Itaimbé é muito fácil. Abra a internet no seu computador ou celular e digite no topo: rádio itaimbé ponto com ponto be r. Pronto, você já está na nossa página principal!",
+          narration: "Olá! Ouvir a Rádio Itaimbé é muito fácil. Abra a internet no seu computador ou celular e digite no topo: radioitaimbe.com.br. Pronto, você já está na nossa página principal!",
           screenText: "PASSO 1: Abra o navegador e digite radioitaimbe.com.br",
           actionHighlight: "Olhe no topo da tela o endereço digitado",
           highlightType: "none",
@@ -212,7 +215,7 @@ export default function AjudaPage() {
         },
         {
           title: "Acessar o Site",
-          narration: "Toque na barra de pesquisas no topo da tela do celular, digite: rádio itaimbé ponto com ponto be r. E depois aperte o botão 'Ir' ou 'Buscar' no teclado.",
+          narration: "Toque na barra de pesquisas no topo da tela do celular, digite: radioitaimbe.com.br e depois aperte o botão 'Ir' ou 'Buscar' no teclado.",
           screenText: "PASSO 2: Digite radioitaimbe.com.br na barra de cima",
           actionHighlight: "Barra de endereço do celular destacada",
           highlightType: "none",
