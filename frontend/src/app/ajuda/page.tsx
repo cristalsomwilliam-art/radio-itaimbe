@@ -129,8 +129,8 @@ export default function AjudaPage() {
         },
         {
           title: "Identificar-se com Segurança",
-          narration: "Se for o seu primeiro pedido hoje, o site pedirá para você se identificar por segurança. Você verá duas opções na tela: um botão azul escrito 'Facebook' e um botão cinza escrito 'Google'. Dê um clique simples na rede social que você já costuma usar. Uma janelinha vai se abrir para confirmar seu acesso de forma rápida, protegida e sem precisar criar novas senhas!",
-          screenText: "PASSO 3: Clique no botão do Facebook ou Google para se identificar com segurança",
+          narration: "Se for o seu primeiro pedido hoje, o site pedirá para você se identificar por segurança. Você verá duas opções na tela: um botão azul escrito 'Facebook' e um botão cinza escrito 'Google'. Dê um clique simples na rede social que você já costuma usar. Por exemplo, o botão do Google usa a mesma conta e o mesmo acesso que você já usa para assistir a vídeos no YouTube! Uma janelinha vai se abrir para confirmar seu acesso de forma rápida, protegida e sem precisar criar novas senhas!",
+          screenText: "PASSO 3: Clique no botão do Facebook ou Google (mesmo login do YouTube) para se identificar",
           actionHighlight: "Selecione a rede social preferida nos botões destacados",
           highlightType: "login",
         },
