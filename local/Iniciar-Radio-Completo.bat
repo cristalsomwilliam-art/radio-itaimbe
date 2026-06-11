@@ -19,8 +19,8 @@ echo.
 cd /d "%~dp0"
 
 echo [1/3] Iniciando o Tunel do Cloudflare...
-sc config Cloudflared start= demand >nul 2>&1
-net start Cloudflared >nul 2>&1
+taskkill /f /im cloudflared.exe >nul 2>&1
+start "Tunel Cloudflare - Radio Itaimbe" /min "C:\RadioItaimbeServer\bin\cloudflared.exe" tunnel run --token eyJhIjoiYThiM2U4ZjJjYjU5Y2VkN2U3NTg0NTdhYTIzZjcxYmEiLCJ0IjoiMDAzZWQyNjktOTMzMS00YjkwLWE5MGUtZDBiODJkZmExMTFkIiwicyI6Ik56YzRaalUxTW1VdE9HWmxNeTAwTmpZd0xUZzBPVEV0WWpWak1tVTFOMkUyWkRRMyJ9 --protocol http2
 
 echo [2/3] Iniciando Proxy de Audio...
 taskkill /f /im python.exe >nul 2>&1
