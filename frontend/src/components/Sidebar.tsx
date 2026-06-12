@@ -247,6 +247,9 @@ function isDoubleMeaningName(name: string): boolean {
     "chupaseios",
     "chupacu",
     "xupacu",
+    "beindorapinto",
+    "alanbeindorapinto",
+    "beindora",
     // Blacklist padrão original
     "powerguido",
     "powerguydo",
@@ -871,9 +874,18 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
     }
     if (!formName.trim() || !formSong.trim()) return;
 
-    // Auto-moderação de nomes de duplo sentido (trolls)
-    if (isDoubleMeaningName(formName)) {
-      showToast("Por favor, use um nome válido para fazer o seu pedido.", "error");
+    // Auto-moderação de nomes, cidades e mensagens de duplo sentido (trolls)
+    if (
+      isDoubleMeaningName(formName) ||
+      isDoubleMeaningName(formCity) ||
+      isDoubleMeaningName(formName + formCity)
+    ) {
+      showToast("Por favor, preencha um nome e cidade válidos.", "error");
+      return;
+    }
+
+    if (formMessage.trim() && isDoubleMeaningName(formMessage)) {
+      showToast("Sua mensagem contém termos ou brincadeiras não permitidos.", "error");
       return;
     }
 
