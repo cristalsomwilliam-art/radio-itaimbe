@@ -154,10 +154,10 @@ export default function AjudaPage() {
     {
       id: 2,
       title: "Como pedir uma música",
-      description: "Peça sua música favorita, identifique-se com segurança e envie uma dedicatória ao vivo.",
+      description: "Peça sua música favorita, entre com redes sociais ou use a opção simplificada Sem Login.",
       icon: <MessageSquare className="w-6 h-6" />,
       color: "from-purple-500 to-indigo-600 border-purple-500/30 text-purple-400",
-      duration: "1 minuto e 30 segundos",
+      duration: "1 minuto e 40 segundos",
       soundtrack: "Piano suave de fundo, ritmo leve e compassado",
       steps: [
         {
@@ -175,17 +175,17 @@ export default function AjudaPage() {
           highlightType: "mural",
         },
         {
-          title: "Identificar-se com Segurança",
-          narration: "Se for o seu primeiro pedido hoje, o site pedirá para você se identificar por segurança. Você verá duas opções na tela: um botão azul escrito 'Facebook' e um botão cinza escrito 'Google'. Dê um clique simples na rede social que você já costuma usar. Por exemplo, o botão do Google usa a mesma conta e o mesmo acesso que você já usa para assistir a vídeos no YouTube! Uma janelinha vai se abrir para confirmar seu acesso de forma rápida, protegida e sem precisar criar novas senhas!",
-          screenText: "PASSO 3: Clique no botão do Facebook ou Google (mesmo login do YouTube) para se identificar",
-          actionHighlight: "Selecione a rede social preferida nos botões destacados",
+          title: "Opção Sem Login (Fácil)",
+          narration: "Se for o seu primeiro pedido hoje, o site perguntará como deseja se identificar por segurança. Você pode entrar usando Facebook ou Google. Mas se você achar muito complicado ou tiver dificuldades, clique no botão verde escrito 'Pedir como Visitante'. Ele permite que você peça sua música de forma rápida e sem precisar digitar nenhuma senha!",
+          screenText: "PASSO 3: Clique no botão verde 'Pedir como Visitante' para pedir sem precisar de login",
+          actionHighlight: "O botão verde 'Pedir como Visitante (Sem Login)' está destacado",
           highlightType: "login",
         },
         {
-          title: "Música e Dedicatória",
-          narration: "Pronto! Agora que você entrou, o seu nome já aparece preenchido. No campo abaixo dele, digite o nome da música e do cantor. E no campo 'Mensagem', escreva uma dedicatória cheia de carinho para quem você ama — para um amigo, parente ou mandar um abraço geral. O locutor lerá seu recado ao vivo na rádio!",
-          screenText: "PASSO 4: Digite a música e escreva sua DEDICATÓRIA de carinho para o locutor ler",
-          actionHighlight: "Mande um abraço ou dedicatória no campo de recado",
+          title: "Nome, Cidade e Música",
+          narration: "Agora que o formulário abriu, preencha os dados: digite seu Nome no primeiro campo, e a sua Cidade no segundo campo (por exemplo, Cambará do Sul). Depois, digite a música e o cantor. No último campo, escreva a sua mensagem ou dedicatória especial para quem você ama. O locutor lerá seu recado ao vivo na rádio!",
+          screenText: "PASSO 4: Digite seu Nome, sua Cidade, a Música e a sua Dedicatória",
+          actionHighlight: "Preencha os dados e escreva sua dedicatória de carinho para o locutor ler",
           highlightType: "modal",
         },
         {
@@ -676,32 +676,40 @@ export default function AjudaPage() {
 
                   {/* Tipo: Formulário Modal de Pedido */}
                   {currentStep.highlightType === "modal" && (
-                    <div className="w-full max-w-sm bg-zinc-950 border border-white/15 rounded-2xl p-5 shadow-2xl space-y-3 animate-in zoom-in-95 duration-300 relative">
-                      <h5 className="text-[10px] font-black text-white uppercase tracking-wider">Pedir Música</h5>
+                    <div className="w-full max-w-sm bg-zinc-950 border border-white/15 rounded-2xl p-4.5 shadow-2xl space-y-2 animate-in zoom-in-95 duration-300 relative text-left">
+                      <h5 className="text-[10px] font-black text-white uppercase tracking-wider border-b border-white/5 pb-1">Pedir Música</h5>
                       
-                      <div className="space-y-2 text-[9px]">
+                      <div className="space-y-1.5 text-[9px]">
                         <div>
-                          <label className="text-zinc-400 block mb-1">Seu Nome:</label>
-                          <input type="text" readOnly value="Ouvinte da Rádio" className="w-full bg-zinc-900 border border-white/5 p-2 rounded text-zinc-350 cursor-not-allowed" />
+                          <label className="text-zinc-400 block mb-0.5">Seu Nome:</label>
+                          <input type="text" readOnly value="Ouvinte Visitante (Ex: José da Silva)" className="w-full bg-zinc-900 border border-white/5 p-1.5 rounded text-zinc-300 focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-zinc-450 block mb-0.5">Sua Cidade (Obrigatório):</label>
+                          <input type="text" readOnly value="Cambará do Sul" className="w-full bg-zinc-900 border border-white/5 p-1.5 rounded text-zinc-300 focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-zinc-450 block mb-0.5">Música & Cantor:</label>
+                          <input type="text" readOnly value="Como é Grande o Meu Amor por Você - Roberto Carlos" className="w-full bg-zinc-900 border border-white/5 p-1.5 rounded text-zinc-300 focus:outline-none" />
                         </div>
                         <div className="relative">
-                          <label className="text-zinc-450 block mb-1">Música & Cantor:</label>
-                          <input type="text" readOnly value="Como é Grande o Meu Amor por Você - Roberto Carlos" className="w-full bg-zinc-900 border-2 border-yellow-400 p-2 rounded text-white" />
+                          <label className="text-zinc-450 block mb-0.5">Recado / Dedicatória (Opcional):</label>
+                          <textarea readOnly rows={1} value="Mande um abraço especial para toda a minha família..." className="w-full bg-zinc-900 border-2 border-yellow-400 p-1.5 rounded text-white resize-none focus:outline-none" />
                           <span className="absolute -inset-1 rounded border-2 border-yellow-400 animate-pulse pointer-events-none"></span>
                         </div>
                       </div>
 
                       {/* Botão de Enviar no Formulário */}
-                      <div className="pt-2 relative">
-                        <button className="w-full bg-[#e81e4d] text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider">
+                      <div className="pt-1.5 relative">
+                        <button className="w-full bg-[#e81e4d] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider">
                           ENVIAR PEDIDO
                         </button>
                         
                         {/* Seta se destacando no envio */}
-                        {currentStep.title === "Enviar o Pedido" && (
+                        {currentStep.title === "Enviar e Aguardar" && (
                           <>
                             <span className="absolute -inset-2 rounded-xl border-4 border-yellow-400 animate-ping opacity-75 pointer-events-none"></span>
-                            <div className="absolute -top-8 left-2/3 text-yellow-400 text-2xl animate-bounce pointer-events-none">
+                            <div className="absolute -top-6 left-2/3 text-yellow-400 text-2xl animate-bounce pointer-events-none">
                               👇
                             </div>
                           </>
@@ -889,25 +897,37 @@ export default function AjudaPage() {
 
                   {/* Tipo: Botões de Identificação (Login com Redes Sociais) */}
                   {currentStep.highlightType === "login" && (
-                    <div className="w-full max-w-sm bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-300 relative text-center">
-                      <div className="w-10 h-10 rounded-full bg-[#e81e4d]/10 border border-[#e81e4d]/30 flex items-center justify-center mx-auto text-[#e81e4d] mb-1">
+                    <div className="w-full max-w-sm bg-zinc-950 border border-white/10 rounded-2xl p-5 shadow-2xl space-y-3.5 animate-in zoom-in-95 duration-300 relative text-center">
+                      <div className="w-10 h-10 rounded-full bg-[#e81e4d]/10 border border-[#e81e4d]/30 flex items-center justify-center mx-auto text-[#e81e4d] mb-0.5">
                         <HelpCircle className="w-5 h-5 animate-pulse" />
                       </div>
-                      <h4 className="text-xs font-black text-white uppercase tracking-wider">Identifique-se com Segurança</h4>
-                      <p className="text-[10px] text-zinc-400 leading-relaxed max-w-[280px] mx-auto">
-                        Para enviar o seu pedido ao mural, escolha uma das suas redes sociais abaixo. É rápido e seguro!
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider">Identifique-se ou Entre sem Login</h4>
+                      <p className="text-[9.5px] text-zinc-450 leading-relaxed max-w-[280px] mx-auto">
+                        Para enviar o seu pedido, entre com o Facebook, Google ou clique no botão verde para pedir sem login.
                       </p>
                       
                       <div className="grid grid-cols-1 gap-2 pt-1 relative">
                         {/* Botão Facebook */}
-                        <div className="bg-[#1877F2]/10 border border-[#1877F2]/20 text-[#1877F2] py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2">
+                        <div className="bg-[#1877F2]/10 border border-[#1877F2]/20 text-[#1877F2] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 opacity-60">
                           <span>🔵 Facebook</span>
                         </div>
 
-                        {/* Botão Google com Destaque de Clique */}
+                        {/* Botão Google */}
+                        <div className="bg-white/5 border border-white/10 text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 opacity-60">
+                          <span>🔴 Google (Login do YouTube)</span>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="relative flex py-0.5 items-center">
+                          <div className="flex-grow border-t border-white/5"></div>
+                          <span className="flex-shrink mx-2 text-[7px] text-zinc-600 font-bold uppercase tracking-wider">ou</span>
+                          <div className="flex-grow border-t border-white/5"></div>
+                        </div>
+
+                        {/* Botão Visitante com Destaque de Clique */}
                         <div className="relative z-20">
-                          <div className="bg-white/5 border-2 border-yellow-400 text-white py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2">
-                            <span>🔴 Google</span>
+                          <div className="bg-emerald-500/10 border-2 border-yellow-400 text-emerald-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5">
+                            <span>🎵 Pedir como Visitante (Sem Login)</span>
                           </div>
                           
                           {/* Círculo de Destaque */}
@@ -917,7 +937,7 @@ export default function AjudaPage() {
                           </div>
                         </div>
                       </div>
-                      <span className="text-[8px] text-zinc-550 block pt-1 font-bold">* Não é necessário criar uma nova senha!</span>
+                      <span className="text-[8px] text-zinc-550 block pt-0.5 font-bold">* Rápido, seguro e não precisa digitar senhas!</span>
                     </div>
                   )}
 
