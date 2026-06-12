@@ -733,10 +733,18 @@ def process_single_request(request):
         # Extrair metadados da música resolvida
         meta_artist, meta_title = extract_media_metadata(resolved_path)
         
+        # Tratar caso de visitante (nome no formato "Nome - Cidade")
+        nome_val = name or "Ouvinte"
+        cidade_val = ""
+        if " - " in nome_val:
+            parts = nome_val.split(" - ", 1)
+            nome_val = parts[0].strip()
+            cidade_val = parts[1].strip()
+
         payload = {
             "tipo": "pedido",
-            "nome": name or "Ouvinte",
-            "cidade": "",
+            "nome": nome_val,
+            "cidade": cidade_val,
             "mensagem": message or "",
             "musica": meta_title,
             "artista": meta_artist

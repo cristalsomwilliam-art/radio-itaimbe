@@ -801,8 +801,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
               </p>
             </div>
 
-             {currentUser ? (
-              cooldownRemaining > 0 ? (
+             {cooldownRemaining > 0 ? (
                 <div className="space-y-6 py-4 text-center animate-in fade-in duration-200">
                   <div className="mx-auto w-16 h-16 rounded-full bg-[#e81e4d]/10 border border-[#e81e4d]/20 flex items-center justify-center text-[#e81e4d] animate-pulse">
                     <Music className="w-8 h-8 animate-bounce" />
@@ -831,17 +830,34 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                     Voltar ao Mural
                   </button>
                 </div>
-              ) : (
+              ) : (currentUser || isGuest) ? (
                 <form onSubmit={handleRequestSubmit} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Seu Nome (Autenticado)</label>
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">
+                      {isGuest ? "Seu Nome (Obrigatório)" : "Seu Nome (Autenticado)"}
+                    </label>
                     <input
                       type="text"
                       required
-                      readOnly
+                      readOnly={!isGuest}
                       value={formName}
-                      placeholder="Nome do perfil"
-                      className="w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-xs text-zinc-450 cursor-not-allowed focus:outline-none"
+                      onChange={(e) => setFormName(e.target.value)}
+                      placeholder={isGuest ? "Digite seu nome" : "Nome do perfil"}
+                      className={`w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors ${
+                        !isGuest ? "text-zinc-450 cursor-not-allowed bg-zinc-900/50" : ""
+                      }`}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Sua Cidade (Obrigatório)</label>
+                    <input
+                      type="text"
+                      required
+                      value={formCity}
+                      onChange={(e) => setFormCity(e.target.value)}
+                      placeholder="Digite sua cidade (ex: Cambará do Sul)"
+                      className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors"
                     />
                   </div>
 
@@ -927,59 +943,87 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                     </button>
                   </div>
                 </form>
-              )
-            ) : (
-              <div className="space-y-4 py-2 text-center">
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Para pedir músicas e mandar recados no mural, identifique-se de forma segura usando sua rede social.
-                </p>
-                
-                <div className="grid grid-cols-1 gap-2 pt-2">
-                  {/* Botão Facebook */}
-                  <button
-                    type="button"
-                    onClick={() => handleSocialLogin("facebook")}
-                    disabled={loginLoading !== null}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 text-[#1877F2] font-black text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-98"
-                  >
-                    {loginLoading === "facebook" ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <LogIn className="w-3.5 h-3.5" />
-                    )}
-                    <span>Facebook</span>
-                  </button>
+              ) : (
+                <div className="space-y-4 py-2 text-center">
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Para pedir músicas e mandar recados no mural, identifique-se usando sua rede social ou clique abaixo para pedir sem login.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 gap-2 pt-1">
+                    {/* Botão Facebook */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialLogin("facebook")}
+                      disabled={loginLoading !== null}
+                      className="flex items-center justify-center gap-2 py-3 px-4 bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 text-[#1877F2] font-black text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-98"
+                    >
+                      {loginLoading === "facebook" ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <LogIn className="w-3.5 h-3.5" />
+                      )}
+                      <span>Facebook</span>
+                    </button>
 
-                  {/* Botão Google */}
-                  <button
-                    type="button"
-                    onClick={() => handleSocialLogin("google")}
-                    disabled={loginLoading !== null}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-98"
-                  >
-                    {loginLoading === "google" ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <LogIn className="w-3.5 h-3.5" />
-                    )}
-                    <span>Google</span>
-                  </button>
-                </div>
-                <p className="text-[9px] text-zinc-500 leading-normal mt-2 text-center">
-                  * Nota: Ao logar com o Facebook, certifique-se de manter a permissão de <strong>E-mail</strong> ativa para que o cadastro seja concluído.
-                </p>
+                    {/* Botão Google */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialLogin("google")}
+                      disabled={loginLoading !== null}
+                      className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 active:scale-98"
+                    >
+                      {loginLoading === "google" ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <LogIn className="w-3.5 h-3.5" />
+                      )}
+                      <span>Google</span>
+                    </button>
 
-                <div className="pt-4 border-t border-white/5">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-450 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
-                  >
-                    Fechar
-                  </button>
+                    {/* Divider */}
+                    <div className="relative flex py-1 items-center">
+                      <div className="flex-grow border-t border-white/5"></div>
+                      <span className="flex-shrink mx-3 text-[8px] text-zinc-600 font-bold uppercase tracking-wider">ou</span>
+                      <div className="flex-grow border-t border-white/5"></div>
+                    </div>
+
+                    {/* Botão Visitante */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsGuest(true);
+                        setFormName("");
+                      }}
+                      className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all active:scale-98"
+                    >
+                      <Music className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Pedir como Visitante (Sem Login)</span>
+                    </button>
+                  </div>
+                  
+                  {localStorage.getItem("login_attempted") === "true" && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 text-left mt-2 animate-in fade-in duration-200">
+                      <p className="text-[10px] text-amber-400 font-bold leading-normal">
+                        Teve dificuldades para entrar com a rede social? Não se preocupe! Você pode clicar no botão "Pedir como Visitante" acima para pedir sua música sem precisar de login.
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-[9px] text-zinc-500 leading-normal mt-2 text-center">
+                    * Nota: Ao logar com o Facebook, certifique-se de manter a permissão de <strong>E-mail</strong> ativa para que o cadastro seja concluído.
+                  </p>
+
+                  <div className="pt-4 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-450 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+                    >
+                      Fechar
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
       )}
