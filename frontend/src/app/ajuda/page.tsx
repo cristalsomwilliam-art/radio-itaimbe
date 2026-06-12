@@ -961,12 +961,6 @@ export default function AjudaPage() {
                         <p className="text-[9px] text-zinc-350 mt-2 leading-relaxed">Quando o locutor entra ao vivo pelo OBS, o site vira uma TV com chat!</p>
                       </div>
                     </div>
-                  )}ite">Vídeo + Chat ao Vivo</span>
-                          <span className="text-[8px] text-zinc-450 mt-1 font-semibold">Via OBS Studio</span>
-                        </div>
-                        <p className="text-[9px] text-zinc-350">Quando o locutor entra ao vivo pelo OBS, o site vira uma TV com chat!</p>
-                      </div>
-                    </div>
                   )}
 
                   {/* Tipo: Botões de Identificação (Login com Redes Sociais) */}
