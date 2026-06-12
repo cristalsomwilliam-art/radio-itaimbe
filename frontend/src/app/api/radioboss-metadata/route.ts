@@ -19,14 +19,32 @@ const supabaseAdmin = createClient(
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const token = searchParams.get("pass");
+  
+  // Obter token de autenticação dos headers ou fallback para query parameter
+  let token = request.headers.get("X-API-Secret");
+  
+  if (!token) {
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader) {
+      token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    }
+  }
+  
+  if (!token) {
+    token = searchParams.get("pass");
+  }
+
   const artist = searchParams.get("artist") || "Rádio Itaimbé";
   const title = searchParams.get("title") || "Programação Musical";
   const albumart = searchParams.get("albumart");
   const listenersStr = searchParams.get("listeners") || "0";
   const nextSong = searchParams.get("next");
 
-  const expectedToken = process.env.RADIOBOSS_SECRET_TOKEN || "itaimbe_secret_token_879";
+  const expectedToken = process.env.RADIOBOSS_SECRET_TOKEN;
+  if (!expectedToken) {
+    console.error("RADIOBOSS_SECRET_TOKEN não configurado no ambiente!");
+    return NextResponse.json({ error: "Configuração do servidor ausente" }, { status: 500 });
+  }
 
   // 1. Validar Token de Segurança
   if (token !== expectedToken) {

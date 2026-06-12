@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { AudioProvider } from "@/context/AudioContext";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.radioitaimbe.com.br"),
   title: "Rádio Itaimbé 87.9 FM | Rádio + TV Web",
   description:
     "Acompanhe a Rádio Itaimbé 87.9 FM ao vivo com transmissão de áudio e a TV Itaimbé com programação ao vivo em vídeo, notícias e eventos locais.",
   keywords: "rádio, tv web, itaimbé, 87.9 fm, rádio ao vivo, owncast, rádio boss",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: "https://radioitaimbe.com.br",
+    url: "https://www.radioitaimbe.com.br",
     title: "Rádio Itaimbé 87.9 FM | Rádio + TV Web",
     description: "Transmissão ao vivo de áudio e vídeo, notícias, programação e interação em tempo real.",
     siteName: "Rádio Itaimbé",
@@ -50,6 +55,9 @@ export default function RootLayout({
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 pb-10">
             {children}
           </main>
+
+          {/* RODAPÉ DO SITE */}
+          <Footer />
         </AudioProvider>
       </body>
     </html>

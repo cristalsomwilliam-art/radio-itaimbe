@@ -86,13 +86,17 @@ export default function WeeklySchedule() {
       </div>
 
       {/* Tabs dos dias da semana */}
-      <div className="flex overflow-x-auto gap-2 pb-3 mb-6 scrollbar-thin border-b border-zinc-800">
+      <div role="tablist" aria-label="Dias da semana" className="flex overflow-x-auto gap-2 pb-3 mb-6 scrollbar-thin border-b border-zinc-800">
         {DAYS_OF_WEEK.map((dayName, idx) => {
           const isToday = new Date().getDay() === idx;
           const isSelected = selectedDay === idx;
           return (
             <button
               key={idx}
+              role="tab"
+              aria-selected={isSelected}
+              id={`tab-${idx}`}
+              aria-controls={`panel-${idx}`}
               onClick={() => setSelectedDay(idx)}
               className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 isSelected
@@ -120,7 +124,12 @@ export default function WeeklySchedule() {
           <span className="text-xs text-zinc-500 font-medium">Carregando programação...</span>
         </div>
       ) : filteredSchedule.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div
+          role="tabpanel"
+          id={`panel-${selectedDay}`}
+          aria-labelledby={`tab-${selectedDay}`}
+          className="grid gap-4 md:grid-cols-2"
+        >
           {filteredSchedule.map((item) => (
             <div
               key={item.id}
@@ -164,7 +173,12 @@ export default function WeeklySchedule() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-zinc-950/20 border border-dashed border-zinc-800 rounded-xl">
+        <div
+          role="tabpanel"
+          id={`panel-${selectedDay}`}
+          aria-labelledby={`tab-${selectedDay}`}
+          className="text-center py-12 bg-zinc-950/20 border border-dashed border-zinc-800 rounded-xl"
+        >
           <p className="text-sm text-zinc-500 font-medium">Nenhum programa agendado para este dia.</p>
         </div>
       )}

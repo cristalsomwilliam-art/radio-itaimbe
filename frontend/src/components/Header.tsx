@@ -37,9 +37,10 @@ export default function Header() {
 
         {/* Menu de Navegação e Contador de Ouvintes */}
         <div className="flex items-center gap-4">
-          <nav className="flex items-center gap-1 md:gap-2">
+          <nav aria-label="Navegação principal" className="flex items-center gap-1 md:gap-2">
             <Link
               href="/"
+              aria-current={isHome ? "page" : undefined}
               className={`relative flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
                 isHome ? "text-white" : "text-zinc-400 hover:text-white"
               }`}
@@ -53,6 +54,7 @@ export default function Header() {
             
             <Link
               href="/programacao"
+              aria-current={isProgramacao ? "page" : undefined}
               className={`relative flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
                 isProgramacao ? "text-white" : "text-zinc-400 hover:text-white"
               }`}
@@ -66,6 +68,7 @@ export default function Header() {
 
             <Link
               href="/noticias"
+              aria-current={isNoticias ? "page" : undefined}
               className={`relative flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
                 isNoticias ? "text-white" : "text-zinc-400 hover:text-white"
               }`}
@@ -79,6 +82,7 @@ export default function Header() {
 
             <Link
               href="/ajuda"
+              aria-current={isAjuda ? "page" : undefined}
               className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-black rounded-full transition-all border ${
                 isAjuda
                   ? "bg-[#e81e4d] text-white border-[#e81e4d] shadow-lg shadow-pink-500/25"

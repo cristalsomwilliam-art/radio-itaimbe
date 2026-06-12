@@ -17,9 +17,26 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("secret");
+  
+  // Obter token de autenticação dos headers ou fallback para query parameter
+  let secret = request.headers.get("X-Webhook-Secret");
+  
+  if (!secret) {
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader) {
+      secret = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+    }
+  }
+  
+  if (!secret) {
+    secret = searchParams.get("secret");
+  }
 
-  const expectedSecret = process.env.OWNCAST_WEBHOOK_SECRET || "itaimbe_owncast_secret_879";
+  const expectedSecret = process.env.OWNCAST_WEBHOOK_SECRET;
+  if (!expectedSecret) {
+    console.error("OWNCAST_WEBHOOK_SECRET não configurado no ambiente!");
+    return NextResponse.json({ error: "Configuração do servidor ausente" }, { status: 500 });
+  }
 
   // 1. Validar Webhook Secret
   if (secret !== expectedSecret) {

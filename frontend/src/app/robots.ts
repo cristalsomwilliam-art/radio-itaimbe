@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/admin/', // Não indexar o painel administrativo no Google
+      disallow: ['/admin/', '/api/'], // Não indexar o painel administrativo e rotas de API
     },
     sitemap: 'https://www.radioitaimbe.com.br/sitemap.xml',
   };

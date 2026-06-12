@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 interface RequestBody {
   tipo: "pedido" | "previsao" | "horoscopo";
@@ -40,6 +41,57 @@ function cleanJsonResponse(rawText: string): any {
   }
   cleaned = cleaned.trim();
   return JSON.parse(cleaned);
+}
+
+// Helper para verificar autenticação (JWT Supabase admin ou X-API-Secret)
+async function verifyAuth(request: NextRequest): Promise<{ authorized: boolean; error?: string }> {
+  // Opção 1: Verificar X-API-Secret header
+  const apiSecret = request.headers.get("x-api-secret");
+  const expectedSecret = process.env.LOCUTOR_API_SECRET;
+
+  if (apiSecret && expectedSecret && apiSecret === expectedSecret) {
+    return { authorized: true };
+  }
+
+  // Opção 2: Verificar JWT Bearer token do Supabase (somente admin)
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Variáveis do Supabase não configuradas no ambiente!");
+      return { authorized: false, error: "Configuração do servidor ausente" };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false },
+      global: {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    });
+
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return { authorized: false, error: "Token inválido ou expirado" };
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+      console.error("ADMIN_EMAIL não configurado no ambiente!");
+      return { authorized: false, error: "Configuração do servidor ausente" };
+    }
+
+    if (user.email !== adminEmail) {
+      return { authorized: false, error: "Acesso restrito a administradores" };
+    }
+
+    return { authorized: true };
+  }
+
+  return { authorized: false, error: "Autenticação necessária. Forneça um Bearer token ou X-API-Secret." };
 }
 
 // Helper para invocar LLM (Gemini com fallback para OpenAI)
@@ -166,10 +218,12 @@ OU
 }
 
 REGRAS DE MODERAÇÃO:
-Reprove IMEDIATAMENTE (retornando {"status":"reprovada"}) qualquer pedido que contenha:
-- Palavrões, insultos, ofensas, conteúdo sexual ou termos vulgares
-- Divulgação comercial, propaganda de concorrentes, propaganda política, spam, links, URLs, telefones, e-mails, PIX
-- Conteúdo de ódio, violência ou discriminação de qualquer tipo
+Seja tolerante e amigável. Aprove gírias regionais e brincadeiras saudáveis.
+Reprove (retornando {"status":"reprovada"}) apenas se houver:
+- Palavrões pesados, ofensas reais direcionadas para ferir, conteúdo explícito/sexual ou agressões gratuitas.
+- Divulgação comercial explícita, propaganda de concorrentes ou política, spam, links, URLs, telefones, e-mails, PIX.
+- Conteúdo de ódio, violência ou preconceito.
+ATENÇÃO: Gírias gaúchas (como "esgualepado", "loko", "bagual", "vivente") e brincadeiras carinhosas ou provocações amigáveis ao DJ (ex: "abraço pro esgualepado do dj", "loko do dj") NÃO são ofensas e devem ser APROVADAS normalmente!
 
 REGRAS DE FORMATAÇÃO DO TEXTO:
 - ESTILO HUMANO E COLOQUIAL: Escreva exatamente como um locutor humano e simpático de rádio FM falaria no microfone de verdade.
@@ -224,6 +278,12 @@ LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \
 
 
 export async function POST(request: NextRequest) {
+  // Verificar autenticação antes de processar a requisição
+  const auth = await verifyAuth(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error || "Não autorizado" }, { status: 401 });
+  }
+
   try {
     const body: RequestBody = await request.json();
     const { tipo } = body;

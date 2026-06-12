@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Newspaper, ExternalLink, ArrowLeft, Loader2, Calendar } from "lucide-react";
+import DOMPurify from 'dompurify';
 
 interface PortalItem {
   id: string;
@@ -145,7 +146,11 @@ export default function NoticiasPage() {
               {selectedArticle.fullContent ? (
                 <div 
                   className="news-content-body text-sm md:text-base text-zinc-300 font-normal leading-relaxed space-y-4"
-                  dangerouslySetInnerHTML={{ __html: selectedArticle.fullContent }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedArticle.fullContent, {
+                    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img', 'blockquote', 'figure', 'figcaption', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'caption', 'sup', 'sub', 'pre', 'code', 'hr'],
+                    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel', 'title', 'width', 'height', 'loading'],
+                    ALLOW_DATA_ATTR: false,
+                  }) }}
                 />
               ) : (
                 <p className="text-sm md:text-base text-zinc-300 font-normal leading-relaxed whitespace-pre-line">

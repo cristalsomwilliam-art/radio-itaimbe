@@ -40,7 +40,7 @@ interface NewsItem {
 }
 
 export default function Home() {
-  const { isPlaying, togglePlay, pause: pauseRadio, volume, changeVolume, isMuted, toggleMute } = useAudio();
+  const { isPlaying, togglePlay, pause: pauseRadio, volume, changeVolume, isMuted, toggleMute, streamStatus } = useAudio();
   const prevTvOnlineRef = useRef<boolean | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -53,18 +53,8 @@ export default function Home() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const [status, setStatus] = useState<StreamStatus>({
-    tv_online: false,
-    tv_viewers_count: 0,
-    tv_stream_title: "Transmissão Especial",
-    current_song: "Programação Musical",
-    current_artist: "Rádio Itaimbé 87.9 FM",
-    album_art: null,
-    listeners_count: 0,
-    next_song: null,
-    song_history: [],
-    show_logo_overlay: true,
-  });
+  // Consumir o status global unificado do AudioContext
+  const status = streamStatus;
 
   const [banners, setBanners] = useState<Banner[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -79,23 +69,10 @@ export default function Home() {
   const owncastChatUrl = "https://tv.radioitaimbe.com.br/embed/chat/readwrite";
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBanners = async () => {
       setIsLoading(true);
       try {
-        // 1. Carregar status do streaming
-        const res = await fetch(`/api/stream-status?t=${Date.now()}`, { cache: "no-store" });
-        if (res.ok) {
-          const statusData = await res.json();
-          if (statusData) {
-            setStatus(statusData as StreamStatus);
-          }
-        }
-      } catch (err) {
-        console.error("Erro ao carregar status inicial:", err);
-      }
-
-      try {
-        // 2. Carregar Banners (limite estendido para rotacionar patrocinadores)
+        // Carregar Banners (limite estendido para rotacionar patrocinadores)
         const { data: bannersData } = await supabase
           .from("banners")
           .select("*")
@@ -108,63 +85,10 @@ export default function Home() {
       } catch (err) {
         console.error("Erro ao carregar banners iniciais:", err);
       }
-
       setIsLoading(false);
     };
 
-    fetchData();
-
-    // 4. Inscrição em tempo real para mudanças de status de transmissão
-    const statusSubscription = supabase
-      .channel("stream_status_home")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "stream_status",
-          filter: "id=eq.main",
-        },
-        (payload) => {
-          console.log("Status atualizado via Realtime:", payload.new);
-          setStatus(payload.new as StreamStatus);
-        }
-      )
-      .subscribe();
-
-    // 5. Polling de Fallback a cada 5 segundos para caso de falha no Realtime
-    const pollingInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/stream-status?t=${Date.now()}`, { cache: "no-store" });
-        if (res.ok) {
-          const statusData = await res.json();
-          if (statusData) {
-            setStatus((prev) => {
-              // Só atualizar se houver mudanças para evitar re-renderizações desnecessárias
-              if (
-                prev.tv_online !== statusData.tv_online ||
-                prev.tv_viewers_count !== statusData.tv_viewers_count ||
-                prev.tv_stream_title !== statusData.tv_stream_title ||
-                prev.current_song !== statusData.current_song ||
-                prev.current_artist !== statusData.current_artist ||
-                JSON.stringify(prev.song_history) !== JSON.stringify(statusData.song_history)
-              ) {
-                console.log("Status atualizado via Polling:", statusData);
-                return statusData as StreamStatus;
-              }
-              return prev;
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Erro no polling de status:", err);
-      }
-    }, 5000);
-
-    return () => {
-      supabase.removeChannel(statusSubscription);
-      clearInterval(pollingInterval);
-    };
+    fetchBanners();
   }, []);
 
   // Monitorar início e fim da TV ao vivo para controle de transição automática
@@ -200,6 +124,31 @@ export default function Home() {
 
   return (
     <div className="space-y-10 md:space-y-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "RadioStation",
+            "name": "Rádio Itaimbé",
+            "alternateName": "Rádio Itaimbé 87.9 FM",
+            "url": "https://www.radioitaimbe.com.br",
+            "logo": "https://www.radioitaimbe.com.br/favicon.png",
+            "image": "https://images.unsplash.com/photo-1610116306796-6ebd30d779c6?q=80&w=1200",
+            "description": "Acompanhe a Rádio Itaimbé 87.9 FM ao vivo com transmissão de áudio e a TV Itaimbé com programação ao vivo em vídeo, notícias e eventos locais.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Cambará do Sul",
+              "addressRegion": "RS",
+              "addressCountry": "BR"
+            },
+            "location": {
+              "@type": "Place",
+              "name": "Rádio Itaimbé 87.9 FM"
+            }
+          })
+        }}
+      />
       {/* 1. SEÇÃO DE TRANSMISSÃO PRINCIPAL */}
       <section className="w-full">
         {isLoading ? (

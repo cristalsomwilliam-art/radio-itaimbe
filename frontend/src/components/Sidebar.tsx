@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Music, Play, MessageCircle, Trash2, LogIn, Loader2, Newspaper, Calendar, X, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import DOMPurify from 'dompurify';
 
 interface SongHistoryItem {
   title: string;
@@ -311,10 +312,12 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         const longestWord = (searchWords.length > 0 ? searchWords : words)
           .reduce((a, b) => (a.length > b.length ? a : b), "");
 
+        const sanitizedWord = longestWord.replace(/[%_\\]/g, '\\$&');
+
         const { data, error } = await supabase
           .from("music_catalog")
           .select("artist, title, file_path")
-          .or(`title.ilike.%${longestWord}%,artist.ilike.%${longestWord}%`)
+          .or(`title.ilike.%${sanitizedWord}%,artist.ilike.%${sanitizedWord}%`)
           .limit(80); // Buscar mais para podermos filtrar no client
 
         if (error) throw error;
@@ -746,6 +749,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
           {cooldownRemaining > 0 ? (
             <button
               onClick={() => setIsModalOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={isModalOpen}
+              aria-label="Ver status de cooldown do pedido de música"
               className="bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-white transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
             >
               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#e81e4d]" />
@@ -754,6 +760,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
           ) : (
             <button
               onClick={() => setIsModalOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={isModalOpen}
+              aria-label="Pedir música e mandar recado"
               className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
             >
               <MessageCircle className="w-3.5 h-3.5 fill-current" />
@@ -766,9 +775,14 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       {/* Modal de Pedido de Música */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 md:backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-request-title"
+            className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-200"
+          >
             <div className="space-y-1">
-              <h2 className="text-lg md:text-xl font-black text-white uppercase tracking-wider">
+              <h2 id="modal-request-title" className="text-lg md:text-xl font-black text-white uppercase tracking-wider">
                 Pedir Música & Mandar Recado
               </h2>
               <p className="text-xs text-zinc-400">
@@ -962,7 +976,12 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       {/* Modal de Detalhes da Notícia */}
       {selectedArticle && (
         <div className="fixed inset-0 bg-black/85 md:backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative animate-in zoom-in-95 duration-200 overflow-hidden">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-news-title"
+            className="bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative animate-in zoom-in-95 duration-200 overflow-hidden"
+          >
             
             {/* Topo / Header */}
             <div className="flex items-center justify-between pb-4 border-b border-white/5 flex-shrink-0">
@@ -972,6 +991,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
               <button
                 type="button"
                 onClick={() => setSelectedArticle(null)}
+                aria-label="Fechar modal de notícia"
                 className="text-zinc-400 hover:text-white transition-colors p-1.5 bg-white/5 hover:bg-white/10 rounded-full"
                 title="Fechar"
               >
@@ -981,7 +1001,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
             {/* Conteúdo com scroll */}
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar my-4 space-y-4 min-h-0">
-              <h2 className="text-base md:text-xl font-black text-white leading-snug">
+              <h2 id="modal-news-title" className="text-base md:text-xl font-black text-white leading-snug">
                 {selectedArticle.title}
               </h2>
               
@@ -1024,7 +1044,11 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 {selectedArticle.fullContent ? (
                   <div
                     className="news-content-body text-xs md:text-sm text-zinc-350 font-normal leading-relaxed space-y-3"
-                    dangerouslySetInnerHTML={{ __html: selectedArticle.fullContent }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedArticle.fullContent, {
+                      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img', 'blockquote', 'figure', 'figcaption', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'caption', 'sup', 'sub', 'pre', 'code', 'hr'],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel', 'title', 'width', 'height', 'loading'],
+                      ALLOW_DATA_ATTR: false,
+                    }) }}
                   />
                 ) : (
                   <p className="text-xs md:text-sm text-zinc-355 font-normal leading-relaxed whitespace-pre-line">
