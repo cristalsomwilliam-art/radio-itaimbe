@@ -77,6 +77,18 @@ function isDoubleMeaningName(name: string): boolean {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z]/g, "");
 
+  // Versão fonética para capturar substituições comuns de letras (K->C, Y->I, Z->S) e duplicações (RR->R, SS->S)
+  const toPhonetic = (str: string) => {
+    return str
+      .replace(/k/g, "c")
+      .replace(/y/g, "i")
+      .replace(/z/g, "s")
+      .replace(/r{2,}/g, "r")
+      .replace(/s{2,}/g, "s");
+  };
+
+  const phonetic = toPhonetic(normalized);
+
   // Lista de padrões bloqueados (strings normalizadas sem espaços)
   const blacklist = [
     // Trolls e nomes de duplo sentido solicitados
@@ -468,26 +480,42 @@ function isDoubleMeaningName(name: string): boolean {
     "kikolind",
   ];
 
-  // 1. Checar correspondência exata ou parcial da string sem espaços
-  if (blacklist.some((blocked) => normalized.includes(blocked))) {
+  // 1. Checar correspondência exata ou parcial da string sem espaços ou versão fonética
+  if (
+    blacklist.some(
+      (blocked) => normalized.includes(blocked) || phonetic.includes(toPhonetic(blocked))
+    )
+  ) {
     return true;
   }
 
-  // 2. Checar palavras-chave específicas na string normalizada
-  if (blacklistKeywords.some((keyword) => normalized.includes(keyword))) {
+  // 2. Checar palavras-chave específicas na string normalizada ou versão fonética
+  if (
+    blacklistKeywords.some(
+      (keyword) => normalized.includes(keyword) || phonetic.includes(toPhonetic(keyword))
+    )
+  ) {
     return true;
   }
 
   // 3. Checar combinações fonéticas específicas
-  const hasJacinto = normalized.includes("jacinto");
-  const hasRego = normalized.includes("rego");
-  const hasPinto = normalized.includes("pinto");
-  const hasTejano = normalized.includes("tejano") || normalized.includes("tejando");
-  const hasPaula = normalized.includes("paula");
-  const hasTomas = normalized.includes("tomas");
-  const hasTurbando = normalized.includes("turbando") || normalized.includes("turbano");
-  const hasCuca = normalized.includes("cuca");
-  const hasBeludo = normalized.includes("beludo");
+  const hasJacinto = normalized.includes("jacinto") || phonetic.includes("jacinto");
+  const hasRego = normalized.includes("rego") || phonetic.includes("rego");
+  const hasPinto = normalized.includes("pinto") || phonetic.includes("pinto");
+  const hasTejano =
+    normalized.includes("tejano") ||
+    normalized.includes("tejando") ||
+    phonetic.includes("tejano") ||
+    phonetic.includes("tejando");
+  const hasPaula = normalized.includes("paula") || phonetic.includes("paula");
+  const hasTomas = normalized.includes("tomas") || phonetic.includes("tomas");
+  const hasTurbando =
+    normalized.includes("turbando") ||
+    normalized.includes("turbano") ||
+    phonetic.includes("turbando") ||
+    phonetic.includes("turbano");
+  const hasCuca = normalized.includes("cuca") || phonetic.includes("cuca");
+  const hasBeludo = normalized.includes("beludo") || phonetic.includes("beludo");
 
   if (hasJacinto && (hasRego || hasPinto)) return true;
   if (hasPaula && hasTejano) return true;
