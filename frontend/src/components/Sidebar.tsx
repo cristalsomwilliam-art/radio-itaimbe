@@ -15,6 +15,7 @@ interface SongHistoryItem {
 interface SidebarProps {
   songHistory?: SongHistoryItem[];
   layout?: "vertical" | "horizontal";
+  hideRequests?: boolean;
 }
 
 interface MusicRequest {
@@ -537,10 +538,12 @@ function isDoubleMeaningName(name: string): boolean {
   return false;
 }
 
-export default function Sidebar({ songHistory, layout = "vertical" }: SidebarProps) {
+export default function Sidebar({ songHistory, layout = "vertical", hideRequests = false }: SidebarProps) {
   const containerClass =
     layout === "horizontal"
-      ? "grid grid-cols-1 md:grid-cols-2 gap-5 w-full"
+      ? hideRequests
+        ? "w-full"
+        : "grid grid-cols-1 md:grid-cols-2 gap-5 w-full"
       : "flex flex-col justify-between gap-5 h-full";
 
   // Mural de pedidos
@@ -1051,137 +1054,139 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
 
       {/* Card Peça Sua Música - Mural de Pedidos */}
-      <div className="bg-gradient-to-br from-[#8b5cf6] via-[#4c1d95] to-[#1e1b4b] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group flex flex-col justify-between h-[280px]">
-        {/* Decorações neon */}
-        <div className="absolute right-[-20px] top-[-20px] w-24 h-24 bg-pink-500/25 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-        <div className="absolute left-[-30px] bottom-[-30px] w-28 h-28 bg-[#22d3ee]/20 rounded-full blur-2xl"></div>
+      {!hideRequests && (
+        <div className="bg-gradient-to-br from-[#8b5cf6] via-[#4c1d95] to-[#1e1b4b] border border-white/5 rounded-3xl p-5 shadow-2xl relative overflow-hidden group flex flex-col justify-between h-[280px]">
+          {/* Decorações neon */}
+          <div className="absolute right-[-20px] top-[-20px] w-24 h-24 bg-pink-500/25 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+          <div className="absolute left-[-30px] bottom-[-30px] w-28 h-28 bg-[#22d3ee]/20 rounded-full blur-2xl"></div>
 
-        <div className="z-10 flex flex-col h-full justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-pink-400 fill-pink-500/10" />
-                <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
-                  Mural de Pedidos
-                </h3>
+          <div className="z-10 flex flex-col h-full justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-pink-400 fill-pink-500/10" />
+                  <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-wider">
+                    Mural de Pedidos
+                  </h3>
+                </div>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
               </div>
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-            </div>
 
-            {requests && requests.length > 0 ? (
-              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                {requests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1 transition-all hover:bg-white/10 relative group/item"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-extrabold text-[10px] text-pink-400 truncate max-w-[100px]">
-                        {req.name}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        {/* Indicador de Status do Pedido no Mural */}
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                          req.status === 'queued' ? 'bg-emerald-400' :
-                          req.status === 'processing' ? 'bg-blue-400 animate-pulse' :
-                          req.status === 'not_found' ? 'bg-zinc-400' :
-                          req.status === 'error' ? 'bg-red-400' :
-                          'bg-yellow-400 animate-pulse'
-                        }`} title={
-                          req.status === 'queued' ? (req.status_message || 'Na fila do RadioBOSS') :
-                          req.status === 'processing' ? (req.status_message || 'Processando...') :
-                          req.status === 'not_found' ? (req.status_message || 'Música não encontrada no SSD') :
-                          req.status === 'error' ? (req.status_message || 'Erro ao processar') :
-                          'Aguardando o robô...'
-                        }></span>
-                        <span className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">
-                          {formatRequestTime(req.created_at)}
+              {requests && requests.length > 0 ? (
+                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                  {requests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="bg-white/5 border border-white/5 rounded-xl p-2.5 space-y-1 transition-all hover:bg-white/10 relative group/item"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-extrabold text-[10px] text-pink-400 truncate max-w-[100px]">
+                          {req.name}
                         </span>
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleDeleteRequest(req.id)}
-                            className="text-red-400 hover:text-red-500 transition-colors p-0.5 bg-black/40 rounded border border-white/5 hover:bg-red-950/20 active:scale-90"
-                            title="Apagar pedido"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {/* Indicador de Status do Pedido no Mural */}
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            req.status === 'queued' ? 'bg-emerald-400' :
+                            req.status === 'processing' ? 'bg-blue-400 animate-pulse' :
+                            req.status === 'not_found' ? 'bg-zinc-400' :
+                            req.status === 'error' ? 'bg-red-400' :
+                            'bg-yellow-400 animate-pulse'
+                          }`} title={
+                            req.status === 'queued' ? (req.status_message || 'Na fila do RadioBOSS') :
+                            req.status === 'processing' ? (req.status_message || 'Processando...') :
+                            req.status === 'not_found' ? (req.status_message || 'Música não encontrada no SSD') :
+                            req.status === 'error' ? (req.status_message || 'Erro ao processar') :
+                            'Aguardando o robô...'
+                          }></span>
+                          <span className="text-[8px] text-zinc-400 font-bold whitespace-nowrap">
+                            {formatRequestTime(req.created_at)}
+                          </span>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteRequest(req.id)}
+                              className="text-red-400 hover:text-red-500 transition-colors p-0.5 bg-black/40 rounded border border-white/5 hover:bg-red-950/20 active:scale-90"
+                              title="Apagar pedido"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-[9px] text-cyan-300 font-bold">
+                        <Music className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span className="truncate">{req.song_title}</span>
+                      </div>
+                      {req.message && (
+                        <p className="text-[9px] text-zinc-350 italic font-medium leading-normal break-words">
+                          "{req.message}"
+                        </p>
+                      )}
+                      
+                      {/* Status e aviso visíveis para o ouvinte */}
+                      <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-white/5">
+                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                          req.status === 'queued' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          req.status === 'processing' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse' :
+                          req.status === 'not_found' ? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20' :
+                          req.status === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                          'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse'
+                        }`}>
+                          {req.status === 'queued' ? 'Na Fila' :
+                           req.status === 'processing' ? 'Processando' :
+                           req.status === 'not_found' ? 'Não Encontrada' :
+                           req.status === 'error' ? 'Erro' :
+                           'Pendente'}
+                        </span>
+                        <span className="text-[8px] text-zinc-400 font-medium truncate max-w-[170px]" title={req.status_message || ''}>
+                          {req.status_message || (
+                            req.status === 'queued' ? 'Aguarde que em breve a sua musica vai tocar na radio itaimbé' :
+                            req.status === 'processing' ? 'Verificando arquivos no SSD...' :
+                            req.status === 'not_found' ? 'Música não encontrada no SSD' :
+                            req.status === 'error' ? 'Erro de comunicação local' :
+                            'Aguardando processamento...'
+                          )}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-[9px] text-cyan-300 font-bold">
-                      <Music className="w-2.5 h-2.5 flex-shrink-0" />
-                      <span className="truncate">{req.song_title}</span>
-                    </div>
-                    {req.message && (
-                      <p className="text-[9px] text-zinc-350 italic font-medium leading-normal break-words">
-                        "{req.message}"
-                      </p>
-                    )}
-                    
-                    {/* Status e aviso visíveis para o ouvinte */}
-                    <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-white/5">
-                      <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
-                        req.status === 'queued' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                        req.status === 'processing' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse' :
-                        req.status === 'not_found' ? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20' :
-                        req.status === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                        'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse'
-                      }`}>
-                        {req.status === 'queued' ? 'Na Fila' :
-                         req.status === 'processing' ? 'Processando' :
-                         req.status === 'not_found' ? 'Não Encontrada' :
-                         req.status === 'error' ? 'Erro' :
-                         'Pendente'}
-                      </span>
-                      <span className="text-[8px] text-zinc-400 font-medium truncate max-w-[170px]" title={req.status_message || ''}>
-                        {req.status_message || (
-                          req.status === 'queued' ? 'Aguarde que em breve a sua musica vai tocar na radio itaimbé' :
-                          req.status === 'processing' ? 'Verificando arquivos no SSD...' :
-                          req.status === 'not_found' ? 'Música não encontrada no SSD' :
-                          req.status === 'error' ? 'Erro de comunicação local' :
-                          'Aguardando processamento...'
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center space-y-1">
+                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Mural Vazio</p>
+                  <p className="text-[9px] text-zinc-500 font-medium">Seja o primeiro a pedir uma música!</p>
+                </div>
+              )}
+            </div>
+
+            {cooldownRemaining > 0 ? (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={isModalOpen}
+                aria-label="Ver status de cooldown do pedido de música"
+                className="bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-white transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
+              >
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#e81e4d]" />
+                Liberado em {formatCooldownTime(cooldownRemaining)}
+              </button>
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 text-center space-y-1">
-                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Mural Vazio</p>
-                <p className="text-[9px] text-zinc-500 font-medium">Seja o primeiro a pedir uma música!</p>
-              </div>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={isModalOpen}
+                aria-label="Pedir música e mandar recado"
+                className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
+              >
+                <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                Pedir Música
+              </button>
             )}
           </div>
-
-          {cooldownRemaining > 0 ? (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={isModalOpen}
-              aria-label="Ver status de cooldown do pedido de música"
-              className="bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/80 hover:text-white transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
-            >
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#e81e4d]" />
-              Liberado em {formatCooldownTime(cooldownRemaining)}
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={isModalOpen}
-              aria-label="Pedir música e mandar recado"
-              className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
-            >
-              <MessageCircle className="w-3.5 h-3.5 fill-current" />
-              Pedir Música
-            </button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Modal de Pedido de Música */}
       {isModalOpen && (

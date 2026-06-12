@@ -185,7 +185,7 @@ export default function Home() {
               <div className="lg:col-span-2 space-y-6">
                 <TvPlayer streamUrl={owncastStreamUrl} showOverlay={status.show_logo_overlay} />
                 {isMobile && <CustomChat />}
-                <Sidebar songHistory={status.song_history} layout="horizontal" />
+                <Sidebar songHistory={status.song_history} layout="horizontal" hideRequests={true} />
               </div>
               {/* Lado Direito: Chat Customizado (Desktop) */}
               <div className="lg:col-span-1 h-full">
