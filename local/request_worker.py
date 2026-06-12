@@ -766,7 +766,7 @@ def process_single_request(request):
         )
         
         logger.info("Solicitando locução à API do site...")
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=60) as response:
             resp_data = json.loads(response.read().decode('utf-8'))
             
             if resp_data.get("status") == "reprovada":

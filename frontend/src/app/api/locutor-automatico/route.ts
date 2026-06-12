@@ -121,6 +121,7 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
     ];
     const versions = ["v1", "v1beta"];
 
+    gemini_loop:
     for (const version of versions) {
       for (const model of models) {
         try {
@@ -152,10 +153,22 @@ async function callLLM(prompt: string, systemInstruction: string): Promise<strin
             const data = await res.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (text) return text.trim();
+
+            // Se a requisição deu OK mas não gerou texto, verificar se foi bloqueado por segurança
+            const candidate = data.candidates?.[0];
+            if (candidate && (candidate.finishReason === "SAFETY" || candidate.finishReason === "OTHER")) {
+              console.warn(`Gemini bloqueou o prompt por regras de segurança: finishReason=${candidate.finishReason}`);
+              return JSON.stringify({ status: "reprovada" });
+            }
           } else {
             const errText = await res.text();
             geminiError = `Erro da API do Gemini (${model} em ${version} - status ${res.status}): ${errText}`;
             console.warn(geminiError);
+
+            // Se for erro de credenciais ou limite de cota, sai do loop do Gemini para poupar tempo
+            if (res.status === 401 || res.status === 403 || res.status === 429) {
+              break gemini_loop;
+            }
           }
         } catch (err: any) {
           geminiError = `Falha na chamada da API do Gemini (${model} em ${version}): ${err.message || err}`;
