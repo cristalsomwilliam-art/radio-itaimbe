@@ -79,6 +79,11 @@ function isDoubleMeaningName(name: string): boolean {
 
   // Lista de padrões bloqueados (strings normalizadas sem espaços)
   const blacklist = [
+    "jalinrab",
+    "jalinrrab",
+    "jamilk",
+    "deidemel",
+    "sandygue",
     "jacintoleite",
     "jacintopinto",
     "paulatejano",
@@ -139,6 +144,11 @@ function isDoubleMeaningName(name: string): boolean {
   ];
 
   const blacklistKeywords = [
+    "jalinrab",
+    "jalinrrab",
+    "jamilk",
+    "deidemel",
+    "sandygue",
     "cucabeludo",
     "tomasturb",
     "paulatejan",
