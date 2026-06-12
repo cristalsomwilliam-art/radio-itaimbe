@@ -60,7 +60,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com http://morcast.caster.fm https://morcast.caster.fm",
+              "img-src 'self' data: blob: https: http://morcast.caster.fm",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://stream.radioitaimbe.com.br https://tv.radioitaimbe.com.br https://api.open-meteo.com https://generativelanguage.googleapis.com https://api.openai.com https://static.cloudflareinsights.com https://io.socialstream.ninja",
               "media-src 'self' https://*.supabase.co https://stream.radioitaimbe.com.br https://tv.radioitaimbe.com.br http://morcast.caster.fm https://morcast.caster.fm blob:",
