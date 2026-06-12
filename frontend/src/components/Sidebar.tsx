@@ -54,6 +54,13 @@ function formatRequestTime(createdAt: string): string {
   }
 }
 
+function getFallbackImageUrl(portalId?: string): string {
+  if (portalId === "jovempan") return "/jovem_pan_cover.png";
+  if (portalId === "estadao") return "/estadao_cover.png";
+  if (portalId === "oeste") return "/revista_oeste_cover.png";
+  return "/estadao_cover.png";
+}
+
 function formatCooldownTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -607,11 +614,15 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 >
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                      {article.imageUrl ? (
-                        <img src={article.imageUrl} alt={article.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                      ) : (
-                        <Newspaper className="w-3.5 h-3.5 text-zinc-600" />
-                      )}
+                      <img
+                        src={article.imageUrl || getFallbackImageUrl(article.portalId)}
+                        alt={article.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = getFallbackImageUrl(article.portalId);
+                        }}
+                      />
                     </div>
                     <div className="min-w-0 space-y-0.5">
                       <h4 className="font-bold text-zinc-100 truncate text-[11px] group-hover:text-[#e81e4d] transition-colors leading-tight">
@@ -1027,19 +1038,17 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                 </span>
               </div>
 
-              {selectedArticle.imageUrl && (
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-zinc-900 flex-shrink-0">
-                  <img
-                    src={selectedArticle.imageUrl}
-                    alt={selectedArticle.title}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
+              <div className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-zinc-900 flex-shrink-0">
+                <img
+                  src={selectedArticle.imageUrl || getFallbackImageUrl(selectedArticle.portalId)}
+                  alt={selectedArticle.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = getFallbackImageUrl(selectedArticle.portalId);
+                  }}
+                />
+              </div>
 
               <div className="border-t border-white/5 pt-4">
                 {selectedArticle.fullContent ? (

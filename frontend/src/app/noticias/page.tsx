@@ -129,19 +129,17 @@ export default function NoticiasPage() {
               </div>
             </div>
 
-            {selectedArticle.imageUrl && (
-              <div className="relative aspect-video rounded-2xl overflow-hidden border border-zinc-800/50 bg-zinc-950">
-                <img
-                  src={selectedArticle.imageUrl}
-                  alt={selectedArticle.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
-                  }}
-                />
-              </div>
-            )}
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-zinc-800/50 bg-zinc-950">
+              <img
+                src={selectedArticle.imageUrl || selectedPortal?.image_url || "/estadao_cover.png"}
+                alt={selectedArticle.title}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
+                }}
+              />
+            </div>
 
             <div className="space-y-6 border-t border-zinc-800/60 pt-6">
               {selectedArticle.fullContent ? (
@@ -231,19 +229,17 @@ export default function NoticiasPage() {
                     onClick={() => setSelectedArticle(article)}
                     className="glass-panel p-4 rounded-xl border border-zinc-900/50 hover:border-zinc-800/60 hover:bg-zinc-900/20 transition-all duration-300 cursor-pointer flex gap-4 items-center group"
                   >
-                    {article.imageUrl && (
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-zinc-800/60 bg-zinc-950 flex-shrink-0">
-                        <img 
-                          src={article.imageUrl} 
-                          alt={article.title} 
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
-                          onError={(e) => {
-                            e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
-                          }}
-                        />
-                      </div>
-                    )}
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-zinc-800/60 bg-zinc-950 flex-shrink-0">
+                      <img 
+                        src={article.imageUrl || selectedPortal?.image_url || "/estadao_cover.png"} 
+                        alt={article.title} 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
+                        onError={(e) => {
+                          e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
+                        }}
+                      />
+                    </div>
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <span className="text-[9px] font-bold text-zinc-500 uppercase">
                         {formatDate(article.pubDate)}
