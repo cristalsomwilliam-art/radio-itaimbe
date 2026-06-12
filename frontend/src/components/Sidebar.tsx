@@ -79,6 +79,10 @@ function isDoubleMeaningName(name: string): boolean {
 
   // Lista de padrões bloqueados (strings normalizadas sem espaços)
   const blacklist = [
+    "powerguido",
+    "powerguydo",
+    "pauerguido",
+    "pauerguydo",
     "jalinrab",
     "jalinrrab",
     "jamilk",
@@ -144,6 +148,10 @@ function isDoubleMeaningName(name: string): boolean {
   ];
 
   const blacklistKeywords = [
+    "powerguido",
+    "powerguydo",
+    "pauerguido",
+    "pauerguydo",
     "jalinrab",
     "jalinrrab",
     "jamilk",
