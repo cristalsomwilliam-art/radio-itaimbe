@@ -77,14 +77,19 @@ function isDoubleMeaningName(name: string): boolean {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z]/g, "");
 
-  // Versão fonética para capturar substituições comuns de letras (K->C, Y->I, Z->S) e duplicações (RR->R, SS->S)
+  // Versão fonética para capturar substituições comuns de letras, duplicações e reduções homófonas
   const toPhonetic = (str: string) => {
     return str
+      .replace(/sh/g, "x")
+      .replace(/ch/g, "x")
+      .replace(/ph/g, "f")
       .replace(/k/g, "c")
       .replace(/y/g, "i")
+      .replace(/w/g, "u")
       .replace(/z/g, "s")
-      .replace(/r{2,}/g, "r")
-      .replace(/s{2,}/g, "s");
+      .replace(/([^cslnp])h/g, "$1")
+      .replace(/^h/, "")
+      .replace(/([a-z])\1+/g, "$1");
   };
 
   const phonetic = toPhonetic(normalized);
@@ -240,6 +245,8 @@ function isDoubleMeaningName(name: string): boolean {
     "twopaypal",
     "chupasseios",
     "chupaseios",
+    "chupacu",
+    "xupacu",
     // Blacklist padrão original
     "powerguido",
     "powerguydo",
