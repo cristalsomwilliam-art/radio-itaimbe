@@ -48,9 +48,15 @@ async function verifyAuth(request: NextRequest): Promise<{ authorized: boolean; 
   // Opção 1: Verificar X-API-Secret header
   const apiSecret = request.headers.get("x-api-secret");
   const expectedSecret = process.env.LOCUTOR_API_SECRET;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
-  if (apiSecret && expectedSecret && apiSecret === expectedSecret) {
-    return { authorized: true };
+  if (apiSecret) {
+    if (expectedSecret && apiSecret === expectedSecret) {
+      return { authorized: true };
+    }
+    if (supabaseServiceKey && apiSecret === supabaseServiceKey) {
+      return { authorized: true };
+    }
   }
 
   // Opção 2: Verificar JWT Bearer token do Supabase (somente admin)
