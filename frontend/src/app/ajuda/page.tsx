@@ -59,6 +59,11 @@ export default function AjudaPage() {
   // Estado para controle do Narrador de Voz (Text-to-Speech)
   const [isNarratorMuted, setIsNarratorMuted] = useState<boolean>(false);
 
+  // Estados para ampliação de imagens (Lightbox) e controle de erro de carregamento
+  const [lightboxImage, setLightboxImage] = useState<"radio" | "live" | null>(null);
+  const [radioImgError, setRadioImgError] = useState<boolean>(false);
+  const [liveImgError, setLiveImgError] = useState<boolean>(false);
+
   // Função para falar o texto da narração de forma lenta e clara para idosos
   const speakText = (text: string) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -868,26 +873,95 @@ export default function AjudaPage() {
                   {currentStep.highlightType === "modes" && (
                     <div className="w-full max-w-lg grid grid-cols-1 md:grid-cols-2 gap-4 animate-in zoom-in-95 duration-300">
                       {/* Modo Rádio 24h */}
-                      <div className="bg-gradient-to-br from-[#1a0636] to-[#04010b] border-2 border-purple-500/30 rounded-xl p-4 flex flex-col justify-between text-center relative overflow-hidden">
-                        <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[8px] font-black uppercase px-2 py-0.5 rounded-full mx-auto block">
+                      <div 
+                        onClick={() => setLightboxImage("radio")}
+                        className="bg-gradient-to-br from-[#1a0636] to-[#04010b] border-2 border-purple-500/20 hover:border-purple-500/60 rounded-xl p-3 flex flex-col justify-between text-center relative overflow-hidden cursor-zoom-in group transition-all"
+                      >
+                        <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[8px] font-black uppercase px-2 py-0.5 rounded-full mx-auto block mb-2">
                           Modo Rádio 24h
                         </span>
-                        <div className="my-3 flex flex-col items-center">
-                          <Radio className="w-8 h-8 text-purple-400 mb-1 animate-pulse" />
-                          <span className="text-[10px] font-black text-white">Som Automático</span>
-                          <span className="text-[8px] text-zinc-400 mt-1">Funciona sem parar</span>
+                        
+                        {/* Imagem Real ou Mockup CSS */}
+                        <div className="w-full aspect-video rounded-lg overflow-hidden border border-white/5 relative bg-zinc-950 flex items-center justify-center">
+                          {!radioImgError ? (
+                            <img 
+                              src="/modo_radio.png" 
+                              alt="Modo Rádio 24h"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={() => setRadioImgError(true)}
+                            />
+                          ) : (
+                            /* Fallback Mockup CSS */
+                            <div className="absolute inset-0 p-2 flex flex-col justify-between text-left text-[6px]">
+                              <div className="flex items-center justify-between border-b border-white/5 pb-1">
+                                <span className="font-bold text-white">ITAIMBÉ FM 87.9</span>
+                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                              </div>
+                              <div className="my-1 flex items-center justify-between gap-2">
+                                {/* Player Mock */}
+                                <div className="flex-1 bg-purple-950/40 border border-purple-500/20 p-1.5 rounded space-y-1">
+                                  <div className="w-8 h-1 bg-white/20 rounded"></div>
+                                  <div className="w-10 py-1 bg-[#e81e4d] rounded-full text-[4px] text-center text-white font-bold">PLAY</div>
+                                </div>
+                                {/* Visualizer Mock */}
+                                <div className="w-6 h-6 rounded-full border border-purple-500/30 flex items-center justify-center relative animate-pulse">
+                                  <div className="w-4 h-4 rounded-full bg-purple-500/10"></div>
+                                </div>
+                              </div>
+                              <div className="text-[5px] text-zinc-500 text-center font-bold">Clique para ampliar 🔍</div>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-[9px] text-zinc-350">Quando não há locutor ao vivo, você ouve música o dia todo.</p>
+                        
+                        <p className="text-[9px] text-zinc-350 mt-2 leading-relaxed">Quando não há locutor ao vivo, você ouve música o dia todo.</p>
                       </div>
 
                       {/* Modo TV Ao Vivo via OBS */}
-                      <div className="bg-gradient-to-br from-[#400511] to-[#0d0104] border-2 border-[#e81e4d]/40 rounded-xl p-4 flex flex-col justify-between text-center relative overflow-hidden">
-                        <span className="bg-[#e81e4d]/20 text-red-300 border border-[#e81e4d]/30 text-[8px] font-black uppercase px-2 py-0.5 rounded-full mx-auto block animate-pulse">
+                      <div 
+                        onClick={() => setLightboxImage("live")}
+                        className="bg-gradient-to-br from-[#400511] to-[#0d0104] border-2 border-[#e81e4d]/20 hover:border-[#e81e4d]/60 rounded-xl p-3 flex flex-col justify-between text-center relative overflow-hidden cursor-zoom-in group transition-all"
+                      >
+                        <span className="bg-[#e81e4d]/20 text-red-300 border border-[#e81e4d]/30 text-[8px] font-black uppercase px-2 py-0.5 rounded-full mx-auto block mb-2 animate-pulse">
                           🔴 TV Ao Vivo (OBS)
                         </span>
-                        <div className="my-3 flex flex-col items-center">
-                          <Tv className="w-8 h-8 text-[#e81e4d] mb-1 animate-bounce" />
-                          <span className="text-[10px] font-black text-white">Vídeo + Chat ao Vivo</span>
+                        
+                        {/* Imagem Real ou Mockup CSS */}
+                        <div className="w-full aspect-video rounded-lg overflow-hidden border border-white/5 relative bg-zinc-950 flex items-center justify-center">
+                          {!liveImgError ? (
+                            <img 
+                              src="/modo_live.png" 
+                              alt="Modo TV Ao Vivo"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={() => setLiveImgError(true)}
+                            />
+                          ) : (
+                            /* Fallback Mockup CSS */
+                            <div className="absolute inset-0 p-2 flex flex-col justify-between text-left text-[6px]">
+                              <div className="flex items-center justify-between border-b border-white/5 pb-1">
+                                <span className="font-bold text-red-400 text-[5px]">🔴 TV ITAIMBÉ AO VIVO</span>
+                                <span className="text-zinc-550 text-[4px]">24 assistindo</span>
+                              </div>
+                              <div className="my-1 grid grid-cols-3 gap-1 flex-1">
+                                {/* Video area */}
+                                <div className="col-span-2 bg-zinc-900 border border-zinc-800 rounded flex items-center justify-center">
+                                  <Tv className="w-4 h-4 text-[#e81e4d] animate-pulse" />
+                                </div>
+                                {/* Chat area */}
+                                <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded p-0.5 space-y-0.5 flex flex-col justify-end">
+                                  <div className="w-full h-0.5 bg-white/10 rounded"></div>
+                                  <div className="w-full h-0.5 bg-white/10 rounded"></div>
+                                  <div className="w-full h-1 bg-[#e81e4d] rounded-full"></div>
+                                </div>
+                              </div>
+                              <div className="text-[5px] text-zinc-550 text-center font-bold">Clique para ampliar 🔍</div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-[9px] text-zinc-350 mt-2 leading-relaxed">Quando o locutor entra ao vivo pelo OBS, o site vira uma TV com chat!</p>
+                      </div>
+                    </div>
+                  )}ite">Vídeo + Chat ao Vivo</span>
                           <span className="text-[8px] text-zinc-450 mt-1 font-semibold">Via OBS Studio</span>
                         </div>
                         <p className="text-[9px] text-zinc-350">Quando o locutor entra ao vivo pelo OBS, o site vira uma TV com chat!</p>
@@ -1173,6 +1247,155 @@ export default function AjudaPage() {
         </div>
       </div>
 
+      {/* LIGHTBOX MODAL PARA AMPLIAÇÃO DE IMAGENS/MOCKUPS */}
+      {lightboxImage !== null && (
+        <div 
+          className="fixed inset-0 bg-black/95 z-[99999] flex flex-col items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Botão Fechar no Topo */}
+          <button 
+            className="absolute top-5 right-5 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-full border border-white/10 transition-all hover:scale-105 active:scale-95 z-[100000] text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+            onClick={() => setLightboxImage(null)}
+          >
+            <span>❌ Fechar</span>
+          </button>
+
+          {/* Container Principal */}
+          <div 
+            className="w-full max-w-4xl max-h-[80vh] flex flex-col items-center justify-center relative p-2"
+            onClick={(e) => e.stopPropagation()} // impede fechar ao clicar no modal
+          >
+            {lightboxImage === "radio" ? (
+              // MODO RÁDIO
+              !radioImgError ? (
+                <img 
+                  src="/modo_radio.png" 
+                  alt="Modo Rádio 24h Ampliado"
+                  className="max-w-full max-h-[75vh] object-contain rounded-2xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200"
+                  onError={() => setRadioImgError(true)}
+                />
+              ) : (
+                // Mockup Rádio Ampliado (Fallback)
+                <div className="w-full aspect-video bg-gradient-to-br from-[#270b47] via-[#110423] to-[#04010b] border-2 border-purple-500/30 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+                  <div className="absolute top-10 left-1/4 w-32 h-32 bg-[#e81e4d]/10 rounded-full blur-3xl"></div>
+                  <div className="absolute bottom-10 right-1/4 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
+                  
+                  {/* Cabeçalho */}
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center overflow-hidden">
+                        <Radio className="w-4 h-4 text-[#e81e4d]" />
+                      </div>
+                      <span className="text-xs font-black text-white tracking-widest">RÁDIO ITAIMBÉ 87.9 FM</span>
+                    </div>
+                    <span className="bg-[#e81e4d]/10 border border-[#e81e4d]/30 text-[#e81e4d] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                      Modo Rádio 24h (Automático)
+                    </span>
+                  </div>
+
+                  {/* Centro Layout */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center my-4">
+                    <div className="space-y-4">
+                      <h2 className="text-2xl md:text-3xl font-black text-white">ITAIMBÉ FM</h2>
+                      <p className="text-xs text-zinc-400 font-medium leading-relaxed">Você está ouvindo nossa programação automática 24 horas por dia com a melhor qualidade de som. Este modo é exibido sempre que a rádio funciona de forma automática.</p>
+                      
+                      {/* Player e Volume */}
+                      <div className="bg-zinc-900/60 border border-white/5 p-4 rounded-2xl space-y-3">
+                        <div className="flex items-center gap-3">
+                          <button className="bg-[#e81e4d] text-white px-5 py-2.5 rounded-full text-xs font-black tracking-wider uppercase">
+                            ▶️ OUVE AGORA
+                          </button>
+                          <span className="text-[10px] text-zinc-400 font-medium">Status: Conectado</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                          <Volume2 className="w-4 h-4 text-zinc-400" />
+                          <div className="flex-1 h-1.5 bg-zinc-800 rounded-full">
+                            <div className="w-2/3 h-full bg-[#e81e4d] rounded-full"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lado Direito Visualizer */}
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-32 h-32 rounded-full border border-purple-500/20 flex items-center justify-center relative animate-pulse">
+                        <div className="w-24 h-24 rounded-full border border-purple-500/30 flex items-center justify-center">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#e81e4d] to-purple-600 flex items-center justify-center shadow-lg">
+                            <Radio className="w-6 h-6 text-white animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-zinc-400 font-black uppercase mt-4 tracking-wider">Ondas de Áudio Circular</span>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-zinc-500 text-center border-t border-white/5 pt-2 font-medium">
+                    (Esta é uma simulação visual. Para exibir sua foto real, adicione o arquivo "modo_radio.png" na pasta public do site).
+                  </div>
+                </div>
+              )
+            ) : (
+              // MODO LIVE
+              !liveImgError ? (
+                <img 
+                  src="/modo_live.png" 
+                  alt="Modo TV Ao Vivo Ampliado"
+                  className="max-w-full max-h-[75vh] object-contain rounded-2xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200"
+                  onError={() => setLiveImgError(true)}
+                />
+              ) : (
+                // Mockup TV Ao Vivo Ampliado (Fallback)
+                <div className="w-full aspect-video bg-zinc-950 border-2 border-zinc-800 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+                  
+                  {/* Cabeçalho */}
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                      <span className="text-xs font-black text-white uppercase tracking-widest text-red-500">🔴 TV ITAIMBÉ AO VIVO</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-400">
+                      <span className="bg-zinc-900 border border-white/5 px-3 py-1 rounded-full text-red-400">32 Ouvintes assistindo</span>
+                    </div>
+                  </div>
+
+                  {/* Centro Layout */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 my-4 items-stretch">
+                    {/* Vídeo Player */}
+                    <div className="md:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl flex flex-col items-center justify-center p-4 relative overflow-hidden">
+                      <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg cursor-pointer hover:scale-105 transition-transform">
+                        <Tv className="w-7 h-7 text-white" />
+                      </div>
+                      <span className="text-[11px] text-zinc-400 mt-3 font-black uppercase tracking-wider">Transmissão em Vídeo via OBS Studio</span>
+                      <span className="text-[9px] text-zinc-500 mt-1">Exibida quando o locutor entra ao vivo de nosso estúdio!</span>
+                    </div>
+
+                    {/* Chat do Site */}
+                    <div className="md:col-span-1 bg-zinc-900 border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+                      <span className="text-[10px] font-black text-white uppercase border-b border-white/5 pb-1 block">Chat de Ouvintes</span>
+                      <div className="flex-1 my-2 overflow-y-auto space-y-2 text-[9px] flex flex-col justify-end">
+                        <div className="bg-white/5 p-2 rounded">
+                          <span className="text-pink-400 font-bold block">Pedro de Cambará:</span>
+                          <span className="text-zinc-350">Muito boa a transmissão ao vivo, parabéns!</span>
+                        </div>
+                        <div className="bg-[#e81e4d]/10 border border-[#e81e4d]/20 p-2 rounded">
+                          <span className="text-[#e81e4d] font-bold block">Você:</span>
+                          <span className="text-zinc-300">Toca Roberto Carlos e manda um abraço!</span>
+                        </div>
+                      </div>
+                      <input type="text" readOnly placeholder="Digite sua mensagem..." className="w-full bg-zinc-950 border border-white/5 p-1.5 rounded-lg text-[9px] text-zinc-400 outline-none" />
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-zinc-550 text-center border-t border-white/5 pt-2 font-medium">
+                    (Esta é uma simulação visual. Para exibir sua foto real, adicione o arquivo "modo_live.png" na pasta public do site).
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
