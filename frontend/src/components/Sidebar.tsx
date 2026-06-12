@@ -608,7 +608,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                       {article.imageUrl ? (
-                        <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+                        <img src={article.imageUrl} alt={article.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                       ) : (
                         <Newspaper className="w-3.5 h-3.5 text-zinc-600" />
                       )}
@@ -1032,6 +1032,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                   <img
                     src={selectedArticle.imageUrl}
                     alt={selectedArticle.title}
+                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';

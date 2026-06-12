@@ -134,6 +134,7 @@ export default function NoticiasPage() {
                 <img
                   src={selectedArticle.imageUrl}
                   alt={selectedArticle.title}
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";
@@ -235,6 +236,7 @@ export default function NoticiasPage() {
                         <img 
                           src={article.imageUrl} 
                           alt={article.title} 
+                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
                           onError={(e) => {
                             e.currentTarget.src = selectedPortal?.image_url || "/estadao_cover.png";

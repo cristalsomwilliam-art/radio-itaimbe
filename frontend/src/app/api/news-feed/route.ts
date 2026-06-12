@@ -113,6 +113,8 @@ export async function GET(request: NextRequest) {
           .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
           .replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "")
           .replace(/<form[^>]*>([\s\S]*?)<\/form>/gi, "")
+          // Adicionar política de referer para ignorar bloqueio de hotlinking de imagens
+          .replace(/<img\s+/gi, '<img referrerpolicy="no-referrer" ')
           // Remover atributos inline de eventos Javascript (ex: onerror, onload, onclick)
           .replace(/\s+on[a-z]+\s*=\s*["'][\s\S]*?["']/gi, "")
           // Substituir links com protocolo javascript: por links vazios
