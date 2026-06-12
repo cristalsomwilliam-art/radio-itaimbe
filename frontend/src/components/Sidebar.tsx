@@ -80,6 +80,8 @@ function isDoubleMeaningName(name: string): boolean {
   // Versão fonética para capturar substituições comuns de letras, duplicações e reduções homófonas
   const toPhonetic = (str: string) => {
     return str
+      .replace(/c([ei])/g, "s$1")
+      .replace(/qu([ei])/g, "c$1")
       .replace(/sh/g, "x")
       .replace(/ch/g, "x")
       .replace(/ph/g, "f")
