@@ -197,6 +197,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loginLoading, setLoginLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [formCity, setFormCity] = useState("");
+  const [isGuest, setIsGuest] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
     setToast({ message, type });
@@ -375,6 +378,11 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         setCurrentUser(user);
         setIsAdmin(user?.email === "cristalsomwilliam@gmail.com");
         if (user) {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("login_attempted");
+          }
+          setLoginAttempted(false);
+          setIsGuest(false);
           const { data: profile } = await supabase
             .from("profiles")
             .select("full_name")
@@ -390,6 +398,11 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
             nameToSet = user.email ? user.email.split("@")[0] : "Ouvinte";
           }
           setFormName(nameToSet);
+        } else {
+          if (typeof window !== "undefined") {
+            const attempted = localStorage.getItem("login_attempted") === "true";
+            setLoginAttempted(attempted);
+          }
         }
       } catch (err) {
         console.error("Erro ao verificar usuário na Sidebar:", err);
@@ -404,6 +417,11 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       setCurrentUser(user);
       setIsAdmin(user?.email === "cristalsomwilliam@gmail.com");
       if (user) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("login_attempted");
+        }
+        setLoginAttempted(false);
+        setIsGuest(false);
         const { data: profile } = await supabase
           .from("profiles")
           .select("full_name")
@@ -421,6 +439,10 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         setFormName(nameToSet);
       } else {
         setFormName("");
+        if (typeof window !== "undefined") {
+          const attempted = localStorage.getItem("login_attempted") === "true";
+          setLoginAttempted(attempted);
+        }
       }
     });
 
@@ -473,6 +495,9 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
   const handleSocialLogin = async (provider: "facebook" | "google") => {
     setLoginLoading(provider);
     try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("login_attempted", "true");
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
@@ -488,8 +513,8 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
 
   const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) {
-      showToast("Você precisa estar autenticado para pedir músicas.", "error");
+    if (!currentUser && !isGuest) {
+      showToast("Você precisa estar autenticado ou preencher os dados como visitante para pedir músicas.", "error");
       return;
     }
     if (!formName.trim() || !formSong.trim()) return;
@@ -522,7 +547,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         .from("music_requests")
         .select("id, song_title, file_path, status, created_at")
         .or(`status.eq.pending,status.eq.processing,and(status.eq.queued,created_at.gte.${fifteenMinutesAgo})`);
-        
+      
       const { data: duplicateRequests, error: dupError } = await (selectedFilePath
         ? baseQuery.eq("file_path", selectedFilePath)
         : baseQuery.ilike("song_title", `%${formSong.trim()}%`));
@@ -532,10 +557,15 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
         return;
       }
 
+      // format name to "Name - City" if city is present
+      const nameToSend = isGuest
+        ? `${formName.trim()} - ${formCity.trim()}`
+        : (formCity.trim() ? `${formName.trim()} - ${formCity.trim()}` : formName.trim());
+
       // 3. Inserir no Supabase (atualiza o mural via realtime na hora)
       const { error } = await supabase.from("music_requests").insert([
         {
-          name: formName.trim(),
+          name: nameToSend,
           song_title: formSong.trim(),
           message: formMessage.trim() || null,
           file_path: selectedFilePath || null,
@@ -553,6 +583,10 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
       // Resetar form e fechar modal
       setFormSong("");
       setFormMessage("");
+      if (isGuest) {
+        setFormName("");
+        setFormCity("");
+      }
       setSelectedFilePath(null);
       setIsModalOpen(false);
     } catch (err) {
@@ -993,6 +1027,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                       onClick={() => {
                         setIsGuest(true);
                         setFormName("");
+                        setFormCity("");
                       }}
                       className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all active:scale-98"
                     >
@@ -1001,7 +1036,7 @@ export default function Sidebar({ songHistory, layout = "vertical" }: SidebarPro
                     </button>
                   </div>
                   
-                  {localStorage.getItem("login_attempted") === "true" && (
+                  {loginAttempted && (
                     <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 text-left mt-2 animate-in fade-in duration-200">
                       <p className="text-[10px] text-amber-400 font-bold leading-normal">
                         Teve dificuldades para entrar com a rede social? Não se preocupe! Você pode clicar no botão "Pedir como Visitante" acima para pedir sua música sem precisar de login.
