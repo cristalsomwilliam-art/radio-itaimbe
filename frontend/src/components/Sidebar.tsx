@@ -16,6 +16,7 @@ interface SidebarProps {
   songHistory?: SongHistoryItem[];
   layout?: "vertical" | "horizontal";
   hideRequests?: boolean;
+  hideNews?: boolean;
 }
 
 interface MusicRequest {
@@ -538,10 +539,10 @@ function isDoubleMeaningName(name: string): boolean {
   return false;
 }
 
-export default function Sidebar({ songHistory, layout = "vertical", hideRequests = false }: SidebarProps) {
+export default function Sidebar({ songHistory, layout = "vertical", hideRequests = false, hideNews = false }: SidebarProps) {
   const containerClass =
     layout === "horizontal"
-      ? hideRequests
+      ? (hideRequests || hideNews)
         ? "w-full"
         : "grid grid-cols-1 md:grid-cols-2 gap-5 w-full"
       : "flex flex-col justify-between gap-5 h-full";
@@ -1009,7 +1010,8 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
   return (
     <div className={containerClass}>
       {/* Card de Últimas Notícias */}
-      <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 shadow-2xl flex flex-col h-[280px] justify-between">
+      {!hideNews && (
+        <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 shadow-2xl flex flex-col h-[280px] justify-between">
         <div className="flex flex-col h-full justify-between min-h-0">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5 flex-shrink-0">
             <div className="flex items-center gap-2">
@@ -1075,7 +1077,7 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
             )}
           </div>
         </div>
-      </div>
+      )}
 
 
       {/* Card Peça Sua Música - Mural de Pedidos */}

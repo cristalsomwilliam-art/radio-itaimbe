@@ -184,8 +184,24 @@ export default function Home() {
               {/* Lado Esquerdo: Player + Chat Mobile + Sidebar Horizontal */}
               <div className="lg:col-span-2 space-y-6">
                 <TvPlayer streamUrl={owncastStreamUrl} showOverlay={status.show_logo_overlay} />
-                {isMobile && <CustomChat />}
-                <Sidebar songHistory={status.song_history} layout="horizontal" hideRequests={false} />
+                
+                {isMobile ? (
+                  <>
+                    {/* No Celular: Mural de Pedidos fica imediatamente abaixo do Player de Vídeo */}
+                    <Sidebar songHistory={status.song_history} layout="horizontal" hideNews={true} hideRequests={false} />
+                    
+                    {/* Depois vem o Chat */}
+                    <CustomChat />
+                    
+                    {/* E por último as Últimas Notícias */}
+                    <Sidebar songHistory={status.song_history} layout="horizontal" hideNews={false} hideRequests={true} />
+                  </>
+                ) : (
+                  <>
+                    {/* No Desktop: Chat Mobile ocultado e Sidebar completo (Notícias + Mural lado a lado) */}
+                    <Sidebar songHistory={status.song_history} layout="horizontal" hideRequests={false} />
+                  </>
+                )}
               </div>
               {/* Lado Direito: Chat Customizado (Desktop) */}
               <div className="lg:col-span-1 h-full">
