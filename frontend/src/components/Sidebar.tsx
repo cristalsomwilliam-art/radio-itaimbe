@@ -684,8 +684,9 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
 
         const sanitizedWord = longestWord.replace(/[%_\\]/g, '\\$&');
 
+        const catalogTable = layout === "horizontal" ? "video_catalog" : "music_catalog";
         const { data, error } = await supabase
-          .from("music_catalog")
+          .from(catalogTable)
           .select("artist, title, file_path")
           .or(`title.ilike.%${sanitizedWord}%,artist.ilike.%${sanitizedWord}%`)
           .limit(80); // Buscar mais para podermos filtrar no client
