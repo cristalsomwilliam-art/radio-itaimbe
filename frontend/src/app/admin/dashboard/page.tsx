@@ -153,6 +153,20 @@ export default function AdminDashboardPage() {
   };
 
   // --- Ações de Alteração ---
+  const toggleTvOnline = async () => {
+    const newTvOnline = !streamStatus.tv_online;
+    setStreamStatus((prev: any) => ({ ...prev, tv_online: newTvOnline }));
+
+    const { error } = await supabase
+      .from("stream_status")
+      .update({ tv_online: newTvOnline })
+      .eq("id", "main");
+
+    if (error) {
+      alert("Erro ao alterar sinal da TV: " + error.message);
+      setStreamStatus((prev: any) => ({ ...prev, tv_online: !newTvOnline }));
+    }
+  };
   const saveStreamSettings = async () => {
     const { error: streamError } = await supabase
       .from("stream_status")
@@ -377,7 +391,7 @@ export default function AdminDashboardPage() {
                     <p className="text-[10px] text-zinc-500">Alterna manualmente a home entre Rádio Automática e sinal da TV.</p>
                   </div>
                   <button
-                    onClick={() => setStreamStatus({ ...streamStatus, tv_online: !streamStatus.tv_online })}
+                    onClick={toggleTvOnline}
                     className={`p-2 rounded-lg border transition-all ${
                       streamStatus.tv_online
                         ? "bg-red-500/10 border-red-500/20 text-red-500"
@@ -897,6 +911,11 @@ export default function AdminDashboardPage() {
                              req.status === 'not_found' ? 'Não Encontrada' :
                              req.status === 'error' ? 'Erro' : 'Pendente'}
                           </span>
+                          {req.message?.startsWith("[TV]") ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#e81e4d]/10 text-[#e81e4d] border border-[#e81e4d]/20">TV</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">Rádio</span>
+                          )}
                         </div>
                         <p className="text-cyan-400 font-bold text-[11px] flex items-center gap-1.5 mt-1">
                           <Music className="w-3.5 h-3.5 text-cyan-400" /> {req.song_title}
@@ -913,7 +932,7 @@ export default function AdminDashboardPage() {
                         )}
                         {req.message && (
                           <p className="text-zinc-400 mt-2 italic bg-zinc-950/40 p-2.5 rounded-lg border border-white/5 whitespace-pre-wrap leading-relaxed">
-                            "{req.message}"
+                            "{req.message.startsWith("[TV]") ? req.message.replace(/^\[TV\]\s*/, "") : req.message}"
                           </p>
                         )}
                       </div>

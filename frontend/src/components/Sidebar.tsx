@@ -714,12 +714,22 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
   }, [formSong, selectedFilePath]);
 
   useEffect(() => {
-    // 1. Carregar os últimos 10 pedidos do banco
+    // 1. Carregar os últimos 10 pedidos do banco (filtrados por modo TV/Rádio)
     const fetchRequests = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from("music_requests")
-          .select("*")
+          .select("*");
+        
+        if (layout === "horizontal") {
+          // Modo TV: apenas mensagens com prefixo [TV]
+          query = query.like("message", "[TV]%");
+        } else {
+          // Modo Rádio: mensagens nulas ou que NÃO começam com [TV]
+          query = query.or("message.is.null,not.message.like.[TV]%");
+        }
+
+        const { data, error } = await query
           .order("created_at", { ascending: false })
           .limit(10);
         
@@ -818,7 +828,11 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
           table: "music_requests",
         },
         (payload) => {
-          setRequests((prev) => [payload.new as MusicRequest, ...prev.slice(0, 9)]);
+          const newReq = payload.new as MusicRequest;
+          const isTv = newReq.message?.startsWith("[TV]");
+          if (layout === "horizontal" ? isTv : !isTv) {
+            setRequests((prev) => [newReq, ...prev.slice(0, 9)]);
+          }
         }
       )
       .on(
@@ -829,9 +843,15 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
           table: "music_requests",
         },
         (payload) => {
-          setRequests((prev) =>
-            prev.map((r) => (r.id === payload.new.id ? (payload.new as MusicRequest) : r))
-          );
+          const updatedReq = payload.new as MusicRequest;
+          const isTv = updatedReq.message?.startsWith("[TV]");
+          if (layout === "horizontal" ? isTv : !isTv) {
+            setRequests((prev) =>
+              prev.map((r) => (r.id === updatedReq.id ? updatedReq : r))
+            );
+          } else {
+            setRequests((prev) => prev.filter((r) => r.id !== updatedReq.id));
+          }
         }
       )
       .on(
@@ -1126,7 +1146,7 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
                       </div>
                       {req.message && (
                         <p className="text-[9px] text-zinc-350 italic font-medium leading-normal break-words">
-                          "{req.message}"
+                          "{req.message.startsWith("[TV]") ? req.message.replace(/^\[TV\]\s*/, "") : req.message}"
                         </p>
                       )}
                       

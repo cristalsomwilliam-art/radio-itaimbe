@@ -353,7 +353,7 @@ export default function Home() {
 
             {/* SIDEBAR DA DIREITA (1 coluna) */}
             <div className="lg:col-span-1">
-              <Sidebar layout="vertical" hideRequests={true} />
+              <Sidebar layout="vertical" hideRequests={false} />
             </div>
 
           </div>
