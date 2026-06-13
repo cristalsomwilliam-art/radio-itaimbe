@@ -7,7 +7,8 @@ import { useAudio } from "@/context/AudioContext";
 import TvPlayer from "@/components/TvPlayer";
 import CustomChat from "@/components/CustomChat";
 import Visualizer from "@/components/Visualizer";
-import Sidebar from "@/components/Sidebar";
+import NewsCard from "@/components/NewsCard";
+import RequestsCard from "@/components/RequestsCard";
 import Link from "next/link";
 
 interface StreamStatus {
@@ -188,19 +189,20 @@ export default function Home() {
                 {isMobile ? (
                   <>
                     {/* No Celular: Mural de Pedidos fica imediatamente abaixo do Player de Vídeo */}
-                    <Sidebar songHistory={status.song_history} layout="horizontal" hideNews={true} hideRequests={false} />
+                    <RequestsCard mode="tv" />
                     
                     {/* Depois vem o Chat */}
                     <CustomChat />
                     
                     {/* E por último as Últimas Notícias */}
-                    <Sidebar songHistory={status.song_history} layout="horizontal" hideNews={false} hideRequests={true} />
+                    <NewsCard />
                   </>
                 ) : (
-                  <>
-                    {/* No Desktop: Chat Mobile ocultado e Sidebar completo (Notícias + Mural lado a lado) */}
-                    <Sidebar songHistory={status.song_history} layout="horizontal" hideRequests={false} />
-                  </>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                    {/* No Desktop: Notícias e Mural lado a lado */}
+                    <NewsCard />
+                    <RequestsCard mode="tv" />
+                  </div>
                 )}
               </div>
               {/* Lado Direito: Chat Customizado (Desktop) */}
@@ -372,13 +374,17 @@ export default function Home() {
               {isMobile ? (
                 <>
                   {/* No Celular: Mural de Pedidos fica imediatamente abaixo do Player da Rádio */}
-                  <Sidebar layout="vertical" hideNews={true} hideRequests={false} />
+                  <RequestsCard mode="radio" />
                   
                   {/* E por último as Últimas Notícias */}
-                  <Sidebar layout="vertical" hideNews={false} hideRequests={true} />
+                  <NewsCard />
                 </>
               ) : (
-                <Sidebar layout="vertical" hideRequests={false} />
+                <div className="flex flex-col gap-5 h-full">
+                  {/* No Desktop: Notícias e Mural empilhados */}
+                  <NewsCard />
+                  <RequestsCard mode="radio" />
+                </div>
               )}
             </div>
 
