@@ -1077,7 +1077,8 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
             )}
           </div>
         </div>
-      )}
+      </div>
+    )}
 
 
       {/* Card Peça Sua Música - Mural de Pedidos */}
