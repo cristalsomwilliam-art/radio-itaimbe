@@ -369,7 +369,17 @@ export default function Home() {
 
             {/* SIDEBAR DA DIREITA (1 coluna) */}
             <div className="lg:col-span-1">
-              <Sidebar layout="vertical" hideRequests={false} />
+              {isMobile ? (
+                <>
+                  {/* No Celular: Mural de Pedidos fica imediatamente abaixo do Player da Rádio */}
+                  <Sidebar layout="vertical" hideNews={true} hideRequests={false} />
+                  
+                  {/* E por último as Últimas Notícias */}
+                  <Sidebar layout="vertical" hideNews={false} hideRequests={true} />
+                </>
+              ) : (
+                <Sidebar layout="vertical" hideRequests={false} />
+              )}
             </div>
 
           </div>
