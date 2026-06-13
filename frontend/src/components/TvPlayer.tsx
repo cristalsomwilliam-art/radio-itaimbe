@@ -173,6 +173,59 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
     };
   }, [streamUrl]);
 
+  // Detector de congelamento silencioso (Freeze Detector / "Cutucada" Automática)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let lastTime = video.currentTime;
+    let freezeCount = 0;
+
+    const interval = setInterval(() => {
+      // Se estiver pausado ou carregando, reiniciar contador de congelamento
+      if (video.paused || video.ended || isLoading) {
+        freezeCount = 0;
+        if (video.paused) {
+          lastTime = video.currentTime;
+        }
+        return;
+      }
+
+      if (video.currentTime === lastTime) {
+        // O tempo não andou, mas o vídeo não está pausado: possível congelamento
+        freezeCount += 1;
+        if (freezeCount >= 3) { // 3 verificações consecutivas (6 segundos congelado)
+          console.log("Congelamento detectado no player da TV! Dando uma 'cutucada'...");
+          freezeCount = 0;
+          
+          try {
+            if (video.buffered && video.buffered.length > 0) {
+              const end = video.buffered.end(video.buffered.length - 1);
+              // Se tiver buffer acumulado à frente, pula para o final dele menos 0.5s
+              if (end - video.currentTime > 0.5) {
+                video.currentTime = end - 0.5;
+              } else {
+                // Apenas move o tempo ligeiramente para forçar o player a acordar
+                video.currentTime = video.currentTime + 0.1;
+              }
+            } else {
+              // Sem buffer: move o tempo ou recarrega a fonte para forçar re-conexão
+              video.currentTime = video.currentTime; 
+            }
+            video.play().catch(() => {});
+          } catch (e) {
+            console.warn("Erro ao tentar descolar player congelado:", e);
+          }
+        }
+      } else {
+        freezeCount = 0;
+        lastTime = video.currentTime;
+      }
+    }, 2000); // Verificar a cada 2 segundos
+
+    return () => clearInterval(interval);
+  }, [streamUrl, isPlaying, isLoading]);
+
   // Controle de Volume e Mute
   useEffect(() => {
     if (videoRef.current) {
