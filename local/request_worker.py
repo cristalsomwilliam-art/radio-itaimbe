@@ -691,7 +691,11 @@ def process_single_request(request):
     name = request.get("name")
     song_title = request.get("song_title")
     file_path = request.get("file_path")
-    message = request.get("message")
+    message = request.get("message") or ""
+
+    if message.startswith("[TV]"):
+        logger.info(f"Ignorando pedido #{req_id} no robô de rádio (pedido direcionado à TV).")
+        return
 
     logger.info(f"Processando pedido #{req_id} de '{name}' pedindo '{song_title}'")
 
@@ -876,6 +880,19 @@ def run_worker_loop():
     
     while True:
         try:
+            # 0. Verificar se a TV está Ao Vivo no Supabase (tv_online)
+            # Se a TV estiver ativa, o robô de rádio hiberna temporariamente para evitar conflito de pedidos
+            try:
+                status_s, status_resp = supabase_request("stream_status?id=eq.main")
+                if status_s == 200 and isinstance(status_resp, list) and len(status_resp) > 0:
+                    tv_online = status_resp[0].get("tv_online", False)
+                    if tv_online:
+                        logger.info("Sinal da TV ao Vivo esta LIGADO no site. Robo da Radio em modo de espera (hibernando)...")
+                        time.sleep(30)
+                        continue
+            except Exception as e_tv:
+                logger.warning(f"Nao foi possivel checar status da TV no Supabase: {e_tv}")
+
             # Buscar pedidos pendentes (ordenados pelo mais antigo criado primeiro)
             status, requests_list = supabase_request("music_requests?status=eq.pending&order=created_at.asc")
             if status == 200 and isinstance(requests_list, list) and len(requests_list) > 0:

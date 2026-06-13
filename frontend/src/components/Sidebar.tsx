@@ -931,12 +931,16 @@ export default function Sidebar({ songHistory, layout = "vertical", hideRequests
         ? `${formName.trim()} - ${formCity.trim()}`
         : (formCity.trim() ? `${formName.trim()} - ${formCity.trim()}` : formName.trim());
 
+      const finalMessage = layout === "horizontal"
+        ? `[TV] ${formMessage.trim()}`.trim()
+        : (formMessage.trim() || null);
+
       // 3. Inserir no Supabase (atualiza o mural via realtime na hora)
       const { error } = await supabase.from("music_requests").insert([
         {
           name: nameToSend,
           song_title: formSong.trim(),
-          message: formMessage.trim() || null,
+          message: finalMessage,
           file_path: selectedFilePath || null,
         },
       ]);
