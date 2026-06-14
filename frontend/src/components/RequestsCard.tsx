@@ -657,19 +657,28 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
     try {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-      const baseQuery = supabase
+      // Busca otimizada baseada em data de criação (usa o índice de created_at)
+      const { data: recentRequests, error: dupError } = await supabase
         .from("music_requests")
         .select("id, song_title, file_path, status, created_at")
-        .or(`status.eq.pending,status.eq.processing,and(status.eq.queued,created_at.gte.${fifteenMinutesAgo})`);
+        .gte("created_at", fifteenMinutesAgo);
 
-      const { data: duplicateRequests, error: dupError } = await (selectedFilePath
-        ? baseQuery.eq("file_path", selectedFilePath)
-        : baseQuery.ilike("song_title", `%${formSong.trim()}%`));
+      if (!dupError && recentRequests) {
+        const isDuplicate = recentRequests.some((req) => {
+          const isSameSong = selectedFilePath
+            ? req.file_path === selectedFilePath
+            : req.song_title.toLowerCase().includes(formSong.trim().toLowerCase()) ||
+              formSong.trim().toLowerCase().includes(req.song_title.toLowerCase());
+          
+          const isActiveStatus = ["pending", "processing", "queued"].includes(req.status);
+          return isSameSong && isActiveStatus;
+        });
 
-      if (!dupError && duplicateRequests && duplicateRequests.length > 0) {
-        showToast("Esta música já foi pedida recentemente e está na fila para tocar. Por favor, escolha outra música!", "error");
-        setIsSubmitting(false);
-        return;
+        if (isDuplicate) {
+          showToast("Esta música já foi pedida recentemente e está na fila para tocar. Por favor, escolha outra música!", "error");
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const nameToSend = isGuest
