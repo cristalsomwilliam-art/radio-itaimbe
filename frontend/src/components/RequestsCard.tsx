@@ -686,6 +686,7 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
           song_title: formSong.trim(),
           message: finalMessage,
           file_path: selectedFilePath || null,
+          status: mode === "tv" ? "processing" : "pending",
         },
       ]);
 
