@@ -453,9 +453,9 @@ def get_current_playing_filename():
         raw_str = xml_data.decode('utf-8', errors='ignore').strip()
         if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
             root = ET.fromstring(xml_data)
-            current_track = root.find('CurrentTrack') or root.find('CURRENTTRACK') or root.find('currenttrack')
+            current_track = root.find('.//CurrentTrack') or root.find('.//CURRENTTRACK') or root.find('.//currenttrack')
             if current_track is not None:
-                track = current_track.find('TRACK') or current_track.find('track')
+                track = current_track.find('.//TRACK') or current_track.find('.//track')
                 if track is None:
                     # Fallback: se os atributos de metadados estiverem no próprio CurrentTrack
                     track = current_track
@@ -477,11 +477,8 @@ def get_current_playing_index():
     """Lê a playlist ativa do RadioBOSS e retorna o índice 1-based da música tocando atualmente."""
     playing_file = get_current_playing_filename()
     tracks = get_playlist_tracks()
-    if not tracks:
-        logger.warning("[DEBUG] Nenhuma faixa retornada por get_playlist_tracks()")
-        return 0
-        
-    if playing_file:
+    
+    if playing_file and tracks:
         for t in tracks:
             idx = t.get("index")
             filename = t.get("filename")
@@ -490,15 +487,18 @@ def get_current_playing_index():
                 return idx
         logger.warning(f"[DEBUG] Caminho do arquivo tocando '{playing_file}' não encontrado nas faixas da playlist.")
     else:
-        logger.warning("[DEBUG] playing_file obtido é None.")
+        if not playing_file:
+            logger.warning("[DEBUG] playing_file obtido é None.")
+        if not tracks:
+            logger.warning("[DEBUG] Nenhuma faixa retornada por get_playlist_tracks()")
                 
-    # Fallback caso não encontre correspondência exata de arquivo
+    # Fallback caso não encontre correspondência exata de arquivo (ou playlist vazia/não parseada)
     try:
         xml_data = radioboss_request("playbackinfo")
         raw_str = xml_data.decode('utf-8', errors='ignore').strip()
         if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
             root = ET.fromstring(xml_data)
-            playback = root.find('Playback') or root.find('PLAYBACK') or root.find('playback')
+            playback = root.find('.//Playback') or root.find('.//PLAYBACK') or root.find('.//playback')
             if playback is not None:
                 state = (playback.attrib.get('state') or playback.attrib.get('STATE') or '').lower()
                 playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
@@ -507,7 +507,7 @@ def get_current_playing_index():
                     return 0
                 if playlistpos_str is not None:
                     idx = int(playlistpos_str) + 1
-                    logger.info(f"[DEBUG] Fallback: playlistpos obtido via playbackinfo: {idx}")
+                    logger.info(f"[DEBUG] Fallback bem-sucedido: playlistpos obtido via playbackinfo: {idx}")
                     return idx
                 else:
                     logger.warning(f"[DEBUG] playlistpos não encontrado em Playback: {ET.tostring(playback).decode('utf-8')}")
@@ -537,12 +537,10 @@ def get_playlist_tracks():
             root = ET.fromstring(xml_data)
         
         tracks = []
-        track_list = root.findall('track') or root.findall('TRACK')
+        track_list = root.findall('.//track') or root.findall('.//TRACK') or root.findall('.//Track')
         if not track_list:
-            track_list = root.findall('.//track') or root.findall('.//TRACK')
-            if not track_list:
-                tags = [child.tag for child in root]
-                logger.warning(f"[DEBUG] Nenhuma tag TRACK/track encontrada no root. Tags filhas do root: {tags}")
+            tags = [child.tag for child in root]
+            logger.warning(f"[DEBUG] Nenhuma tag TRACK/track/Track encontrada no root. Tags filhas do root: {tags}")
                 
         for i, track in enumerate(track_list, start=1):
             filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
