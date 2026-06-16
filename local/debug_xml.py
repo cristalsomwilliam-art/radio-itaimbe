@@ -26,7 +26,6 @@ def radioboss_request(action, params=None):
     if RADIOBOSS_PASSWORD:
         params['pass'] = RADIOBOSS_PASSWORD
     
-    # Usar formato de query para compatibilidade
     params_fallback = params.copy()
     params_fallback['action'] = action
     query_fallback = urllib.parse.urlencode(params_fallback)
@@ -36,31 +35,47 @@ def radioboss_request(action, params=None):
     with urllib.request.urlopen(req, timeout=5) as response:
         return response.read()
 
-try:
-    print("=== TESTE DE DIAGNÓSTICO XML ===")
-    xml_data = radioboss_request("playbackinfo")
-    print("1. XML bruto obtido:")
-    raw_str = xml_data.decode('utf-8', errors='ignore').strip()
-    print(raw_str)
-    print("\n2. Tentando fazer parse do XML...")
-    root = ET.fromstring(xml_data)
-    print(f"Sucesso! Root tag: '{root.tag}'")
-    
-    print("\n3. Buscando tag 'Playback' (método find padrão):")
-    pb = root.find('Playback')
-    print("Encontrado:", pb is not None)
-    
-    print("\n4. Buscando tag './/Playback' (método find profundo):")
-    pb_deep = root.find('.//Playback')
-    print("Encontrado:", pb_deep is not None)
-    if pb_deep is not None:
-        print("Atributos de Playback:", pb_deep.attrib)
+def debug_action(action):
+    try:
+        print(f"\n=== TESTANDO AÇÃO: {action} ===")
+        xml_data = radioboss_request(action)
+        raw_str = xml_data.decode('utf-8', errors='ignore').strip()
+        print(f"XML bruto ({len(raw_str)} caracteres):")
+        print(raw_str[:800])
+        if len(raw_str) > 800:
+            print("... [TRUNCADO]")
+            
+        root = ET.fromstring(xml_data)
+        print(f"Parse OK! Root tag: '{root.tag}'")
         
-    print("\n5. Listando todas as tags filhas diretas do root:")
-    for child in root:
-        print(f" - Tag: '{child.tag}' | Atributos: {list(child.attrib.keys())}")
-        for subchild in child:
-            print(f"    * Subtag: '{subchild.tag}' | Atributos: {list(subchild.attrib.keys())}")
+        # Testar buscas comuns
+        tracks_standard = root.findall('track')
+        tracks_standard_upper = root.findall('TRACK')
+        tracks_deep = root.findall('.//track')
+        tracks_deep_upper = root.findall('.//TRACK')
+        tracks_deep_camel = root.findall('.//Track')
+        
+        print(f"Buscas direct child:")
+        print(f" - 'track': {len(tracks_standard)}")
+        print(f" - 'TRACK': {len(tracks_standard_upper)}")
+        print(f"Buscas profundas (deep/any depth):")
+        print(f" - './/track': {len(tracks_deep)}")
+        print(f" - './/TRACK': {len(tracks_deep_upper)}")
+        print(f" - './/Track': {len(tracks_deep_camel)}")
+        
+        # Listar as primeiras tags filhas
+        children = list(root)
+        print(f"Total de filhos diretos do root: {len(children)}")
+        for i, child in enumerate(children[:5]):
+            print(f"  * Filho #{i+1}: Tag='{child.tag}' | Atributos={list(child.attrib.keys())}")
+            
+    except Exception as e:
+        print(f"Erro na ação {action}: {e}")
 
+try:
+    print("=== INICIANDO DIAGNÓSTICO COMPLETO DE APIs ===")
+    debug_action("playbackinfo")
+    debug_action("getplaylist2")
+    debug_action("getplaylist")
 except Exception as e:
-    print("\nOcorreu um erro no diagnóstico:", e)
+    print("Erro geral:", e)
