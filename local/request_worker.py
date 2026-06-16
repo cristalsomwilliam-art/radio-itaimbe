@@ -446,73 +446,59 @@ def search_fuzzy_in_catalog(song_query):
     logger.warning("Nenhuma correspondência fuzzy aceitável encontrada nos candidatos.")
     return None
 
-# ---------------------------------------------------------
-# INTEGRAÇÃO COM RADIOBOSS HTTP API
-# ---------------------------------------------------------
-
-def get_current_playing_index():
+# ---------------def get_current_playing_index():
     """Lê a playlist ativa do RadioBOSS e retorna o índice 1-based da música tocando atualmente."""
     xml_data = b""
+    # 1. Tentar obter via 'playbackinfo'
     try:
-        # 1. Tentar obter via 'playbackinfo' (método mais leve, rápido e confiável para RadioBOSS 6.x)
-        try:
-            xml_data = radioboss_request("playbackinfo")
-            raw_str = xml_data.decode('utf-8', errors='ignore').strip()
-            if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
-                root = ET.fromstring(xml_data)
-                playback = root.find('Playback')
-                if playback is not None:
-                    state = (playback.attrib.get('state') or playback.attrib.get('STATE') or '').lower()
-                    playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
-                    
-                    if state == 'stop':
-                        logger.debug("Player do RadioBOSS está parado (state='stop').")
-                        return 0
-                    
-                    if playlistpos_str is not None:
-                        # playlistpos é 0-based no RadioBOSS, retornamos 1-based para o index atual
-                        idx = int(playlistpos_str) + 1
-                        logger.debug(f"Índice atual de reprodução obtido via playbackinfo (estado: '{state}'): {idx}")
-                        return idx
-        except Exception as e_pb:
-            logger.warning(f"Falha ao obter índice via 'playbackinfo' ({str(e_pb)}). Tentando fallbacks...")
+        xml_data = radioboss_request("playbackinfo")
+        raw_str = xml_data.decode('utf-8', errors='ignore').strip()
+        if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
+            root = ET.fromstring(xml_data)
+            playback = root.find('Playback') or root.find('PLAYBACK') or root.find('playback')
+            if playback is not None:
+                state = (playback.attrib.get('state') or playback.attrib.get('STATE') or '').lower()
+                playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
+                
+                if state == 'stop':
+                    logger.debug("Player do RadioBOSS está parado (state='stop').")
+                    return 0
+                
+                if playlistpos_str is not None:
+                    idx = int(playlistpos_str) + 1
+                    logger.debug(f"Índice atual de reprodução obtido via playbackinfo: {idx}")
+                    return idx
+    except Exception as e_pb:
+        logger.warning(f"Falha ao obter índice via 'playbackinfo' ({str(e_pb)}). Tentando fallbacks...")
 
-        # 2. Fallback: Tentar getplaylist2 / getplaylist clássicos se playbackinfo falhar
+    # 2. Fallback: Tentar getplaylist2 / getplaylist clássicos se playbackinfo falhar
+    try:
+        xml_data = radioboss_request("getplaylist2")
+        raw_str = xml_data.decode('utf-8', errors='ignore').strip()
+        if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
+            logger.debug("getplaylist2 indicou Nothing to do, tentando getplaylist...")
+            raise ValueError("Nothing to do")
+        root = ET.fromstring(xml_data)
+    except Exception:
         try:
-            xml_data = radioboss_request("getplaylist2")
-            # Se a resposta for vazia ou indicar playlist vazia, retornar 0
+            xml_data = radioboss_request("getplaylist")
             raw_str = xml_data.decode('utf-8', errors='ignore').strip()
             if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-                logger.debug("Playlist vazia ou inativa no RadioBOSS (Nothing to do).")
+                logger.debug("Playlist vazia ou inativa no RadioBOSS.")
                 return 0
             root = ET.fromstring(xml_data)
         except Exception as e:
-            logger.warning(f"Falha ao usar 'getplaylist2' ({str(e)}). Tentando 'getplaylist' clássico...")
-            xml_data = radioboss_request("getplaylist")
-            # Se a resposta for vazia ou indicar playlist vazia, retornar 0
-            raw_str = xml_data.decode('utf-8', errors='ignore').strip()
-            if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-                logger.debug("Playlist vazia ou inativa no RadioBOSS (Nothing to do).")
-                return 0
-            root = ET.fromstring(xml_data)
-        
-        # Encontrar a tag de track que está tocando usando o índice sequencial 1-based do loop
-        for i, track in enumerate(root.findall('track'), start=1):
-            playing_val = track.attrib.get('playing') or track.attrib.get('PLAYING')
-            if playing_val in ('1', 'true', 'yes'):
-                logger.debug(f"Índice atual de reprodução obtido via fallback de playlist: {i}")
-                return i
-        
-        # Se nenhuma música estiver como ativa/tocando, retornar índice 0
-        logger.warning("Nenhuma música marcada como ativa ('playing=1') na playlist do RadioBOSS.")
-        return 0
-    except ET.ParseError as e:
-        raw_resp = xml_data.decode('utf-8', errors='ignore') if xml_data else "Vazio"
-        logger.error(f"Erro de formato XML do RadioBOSS. Resposta recebida: '{raw_resp}'")
-        raise ValueError(f"Resposta do RadioBOSS inválida: {raw_resp}")
-    except Exception as e:
-        logger.error(f"Erro ao obter índice de reprodução do RadioBOSS: {str(e)}")
-        raise e
+            logger.error(f"Erro ao obter playlist em get_current_playing_index: {str(e)}")
+            return 0
+            
+    track_list = root.findall('track') or root.findall('TRACK')
+    for i, track in enumerate(track_list, start=1):
+        playing_val = track.attrib.get('playing') or track.attrib.get('PLAYING')
+        if playing_val in ('1', 'true', 'yes'):
+            logger.debug(f"Índice atual de reprodução obtido via fallback de playlist: {i}")
+            return i
+            
+    return 0
 
 def get_playlist_tracks():
     """Retorna a lista de faixas da playlist ativa do RadioBOSS com seus caminhos."""
@@ -522,7 +508,7 @@ def get_playlist_tracks():
             xml_data = radioboss_request("getplaylist2")
             raw_str = xml_data.decode('utf-8', errors='ignore').strip()
             if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-                return []
+                raise ValueError("Nothing to do")
             root = ET.fromstring(xml_data)
         except Exception:
             xml_data = radioboss_request("getplaylist")
@@ -532,7 +518,8 @@ def get_playlist_tracks():
             root = ET.fromstring(xml_data)
         
         tracks = []
-        for i, track in enumerate(root.findall('track'), start=1):
+        track_list = root.findall('track') or root.findall('TRACK')
+        for i, track in enumerate(track_list, start=1):
             filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
             if filename:
                 tracks.append({
