@@ -446,6 +446,14 @@ def search_fuzzy_in_catalog(song_query):
     logger.warning("Nenhuma correspondência fuzzy aceitável encontrada nos candidatos.")
     return None
 
+def find_element(parent, tags):
+    """Procura por um elemento no parent testando várias tags sequencialmente (seguro contra truthiness de Element)."""
+    for tag in tags:
+        el = parent.find(tag)
+        if el is not None:
+            return el
+    return None
+
 def get_current_playing_filename():
     """Retorna o caminho do arquivo da música tocando atualmente no RadioBOSS."""
     try:
@@ -453,9 +461,9 @@ def get_current_playing_filename():
         raw_str = xml_data.decode('utf-8', errors='ignore').strip()
         if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
             root = ET.fromstring(xml_data)
-            current_track = root.find('.//CurrentTrack') or root.find('.//CURRENTTRACK') or root.find('.//currenttrack')
+            current_track = find_element(root, ['.//CurrentTrack', './/CURRENTTRACK', './/currenttrack'])
             if current_track is not None:
-                track = current_track.find('.//TRACK') or current_track.find('.//track')
+                track = find_element(current_track, ['.//TRACK', './/track'])
                 if track is None:
                     # Fallback: se os atributos de metadados estiverem no próprio CurrentTrack
                     track = current_track
@@ -498,7 +506,7 @@ def get_current_playing_index():
         raw_str = xml_data.decode('utf-8', errors='ignore').strip()
         if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
             root = ET.fromstring(xml_data)
-            playback = root.find('.//Playback') or root.find('.//PLAYBACK') or root.find('.//playback')
+            playback = find_element(root, ['.//Playback', './/PLAYBACK', './/playback'])
             if playback is not None:
                 state = (playback.attrib.get('state') or playback.attrib.get('STATE') or '').lower()
                 playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
