@@ -592,24 +592,79 @@ def cleanup_played_locutions():
         for idx, filepath in locucoes_to_delete:
             logger.info(f"Removendo locução já reproduzida da playlist na posição {idx}: {filepath}")
             try:
-                # Deletar da playlist do RadioBOSS (1-based index)
-                radioboss_request("delete", {"pos": idx})
-                
-                # Aguardar um instante para o RadioBOSS processar a remoção
-                time.sleep(0.5)
-                
-                # Deletar o arquivo físico do SSD
-                if os.path.exists(filepath):
+                # Deletar da playlist do RadioBOSS (tenta action=delete e cmd=delete)
+                deleted_from_playlist = False
+                try:
+                    radioboss_request("delete", {"pos": idx})
+                    deleted_from_playlist = True
+                except Exception as e_action:
+                    logger.warning(f"Falha ao deletar via action=delete na posição {idx} ({str(e_action)}). Tentando via comando do agendador...")
                     try:
-                        os.remove(filepath)
-                        logger.info(f"Arquivo físico de locução removido com sucesso: {filepath}")
-                    except Exception as e_file:
-                        logger.warning(f"Não foi possível remover o arquivo físico {filepath}: {str(e_file)}")
+                        # Tentar formato de comando do agendador: ?cmd=delete POS
+                        params = {"cmd": f"delete {idx}"}
+                        if RADIOBOSS_PASSWORD:
+                            params['pass'] = RADIOBOSS_PASSWORD
+                        query = urllib.parse.urlencode(params)
+                        url = f"{RADIOBOSS_API_URL}/?{query}"
+                        req = urllib.request.Request(url, method='GET')
+                        with urllib.request.urlopen(req, timeout=5) as response:
+                            resp_str = response.read().decode('utf-8', errors='ignore').strip()
+                            if resp_str and re.match(r'^E\d{3}', resp_str):
+                                raise ValueError(f"Erro da API no comando cmd=delete: {resp_str}")
+                            logger.info(f"Comando cmd=delete enviado com sucesso para a posição {idx}.")
+                            deleted_from_playlist = True
+                    except Exception as e_cmd:
+                        logger.error(f"Falha ao deletar via comando do agendador na posição {idx}: {str(e_cmd)}")
+
+                if deleted_from_playlist:
+                    # Aguardar um instante para o RadioBOSS processar a remoção
+                    time.sleep(0.5)
+                    
+                    # Deletar o arquivo físico do SSD
+                    if os.path.exists(filepath):
+                        try:
+                            os.remove(filepath)
+                            logger.info(f"Arquivo físico de locução removido com sucesso: {filepath}")
+                        except Exception as e_file:
+                            logger.warning(f"Não foi possível remover o arquivo físico {filepath}: {str(e_file)}")
             except Exception as e_track:
-                logger.error(f"Erro ao remover faixa {filepath} na posição {idx} do RadioBOSS: {str(e_track)}")
+                logger.error(f"Erro no fluxo de remoção da faixa {filepath} na posição {idx} do RadioBOSS: {str(e_track)}")
                 
     except Exception as e:
         logger.error(f"Erro ao limpar locuções antigas da playlist: {str(e)}")
+
+def cleanup_orphaned_locution_files():
+    """Varre a pasta de locuções e remove arquivos físicos que não estão mais na playlist do RadioBOSS."""
+    try:
+        # Obter os caminhos das músicas na playlist atual
+        tracks = get_playlist_tracks()
+        if not tracks:
+            # Se não conseguimos obter as faixas, ou a playlist está vazia, não apagamos nada por segurança
+            return
+
+        playlist_files = {os.path.normpath(t.get("filename")).lower() for t in tracks if t.get("filename")}
+
+        # Obter a pasta de locuções
+        locucoes_dir = os.path.join(os.path.dirname(__file__), 'locucoes')
+        if not os.path.exists(locucoes_dir):
+            return
+
+        # Listar todos os arquivos da pasta
+        for filename in os.listdir(locucoes_dir):
+            if filename.startswith("locucao_") and filename.endswith(".mp3"):
+                filepath = os.path.join(locucoes_dir, filename)
+                norm_filepath = os.path.normpath(filepath).lower()
+
+                # Se o arquivo físico não está na playlist, podemos deletá-lo
+                if norm_filepath not in playlist_files:
+                    try:
+                        os.remove(filepath)
+                        logger.info(f"Arquivo físico de locução órfã removido com sucesso: {filepath}")
+                    except Exception as e:
+                        # Silencioso se estiver bloqueado, tentará na próxima iteração
+                        logger.debug(f"Ainda não foi possível remover o arquivo de locução órfã {filepath}: {str(e)}")
+    except Exception as e:
+        logger.error(f"Erro ao limpar arquivos físicos de locução órfãos: {str(e)}")
 
 # ---------------------------------------------------------
 # MONITOR DE NOVOS PEDIDOS (WORKER LOOP)
@@ -904,6 +959,7 @@ def run_worker_loop():
             
             # Limpar locuções antigas da playlist e do SSD
             cleanup_played_locutions()
+            cleanup_orphaned_locution_files()
         except KeyboardInterrupt:
             logger.info("Encerrando monitor de pedidos...")
             break
