@@ -446,10 +446,40 @@ def search_fuzzy_in_catalog(song_query):
     logger.warning("Nenhuma correspondência fuzzy aceitável encontrada nos candidatos.")
     return None
 
-# ---------------def get_current_playing_index():
+def get_current_playing_filename():
+    """Retorna o caminho do arquivo da música tocando atualmente no RadioBOSS."""
+    try:
+        xml_data = radioboss_request("playbackinfo")
+        raw_str = xml_data.decode('utf-8', errors='ignore').strip()
+        if raw_str and "Nothing to do" not in raw_str and "E003" not in raw_str:
+            root = ET.fromstring(xml_data)
+            current_track = root.find('CurrentTrack') or root.find('CURRENTTRACK') or root.find('currenttrack')
+            if current_track is not None:
+                track = current_track.find('TRACK') or current_track.find('track')
+                if track is not None:
+                    filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
+                    if filename:
+                        return os.path.normpath(filename).lower()
+    except Exception as e:
+        logger.warning(f"Erro ao obter filename tocando via playbackinfo: {e}")
+    return None
+
+def get_current_playing_index():
     """Lê a playlist ativa do RadioBOSS e retorna o índice 1-based da música tocando atualmente."""
-    xml_data = b""
-    # 1. Tentar obter via 'playbackinfo'
+    playing_file = get_current_playing_filename()
+    tracks = get_playlist_tracks()
+    if not tracks:
+        return 0
+        
+    if playing_file:
+        for t in tracks:
+            idx = t.get("index")
+            filename = t.get("filename")
+            if filename and os.path.normpath(filename).lower() == playing_file:
+                logger.info(f"Índice atual de reprodução obtido via correspondência de arquivo: {idx}")
+                return idx
+                
+    # Fallback caso não encontre correspondência exata de arquivo
     try:
         xml_data = radioboss_request("playbackinfo")
         raw_str = xml_data.decode('utf-8', errors='ignore').strip()
@@ -459,45 +489,13 @@ def search_fuzzy_in_catalog(song_query):
             if playback is not None:
                 state = (playback.attrib.get('state') or playback.attrib.get('STATE') or '').lower()
                 playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
-                
                 if state == 'stop':
-                    logger.debug("Player do RadioBOSS está parado (state='stop').")
                     return 0
-                
                 if playlistpos_str is not None:
-                    idx = int(playlistpos_str) + 1
-                    logger.debug(f"Índice atual de reprodução obtido via playbackinfo: {idx}")
-                    return idx
-    except Exception as e_pb:
-        logger.warning(f"Falha ao obter índice via 'playbackinfo' ({str(e_pb)}). Tentando fallbacks...")
-
-    # 2. Fallback: Tentar getplaylist2 / getplaylist clássicos se playbackinfo falhar
-    try:
-        xml_data = radioboss_request("getplaylist2")
-        raw_str = xml_data.decode('utf-8', errors='ignore').strip()
-        if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-            logger.debug("getplaylist2 indicou Nothing to do, tentando getplaylist...")
-            raise ValueError("Nothing to do")
-        root = ET.fromstring(xml_data)
+                    return int(playlistpos_str) + 1
     except Exception:
-        try:
-            xml_data = radioboss_request("getplaylist")
-            raw_str = xml_data.decode('utf-8', errors='ignore').strip()
-            if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
-                logger.debug("Playlist vazia ou inativa no RadioBOSS.")
-                return 0
-            root = ET.fromstring(xml_data)
-        except Exception as e:
-            logger.error(f"Erro ao obter playlist em get_current_playing_index: {str(e)}")
-            return 0
-            
-    track_list = root.findall('track') or root.findall('TRACK')
-    for i, track in enumerate(track_list, start=1):
-        playing_val = track.attrib.get('playing') or track.attrib.get('PLAYING')
-        if playing_val in ('1', 'true', 'yes'):
-            logger.debug(f"Índice atual de reprodução obtido via fallback de playlist: {i}")
-            return i
-            
+        pass
+        
     return 0
 
 def get_playlist_tracks():
