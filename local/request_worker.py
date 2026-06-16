@@ -456,10 +456,19 @@ def get_current_playing_filename():
             current_track = root.find('CurrentTrack') or root.find('CURRENTTRACK') or root.find('currenttrack')
             if current_track is not None:
                 track = current_track.find('TRACK') or current_track.find('track')
-                if track is not None:
-                    filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
-                    if filename:
-                        return os.path.normpath(filename).lower()
+                if track is None:
+                    # Fallback: se os atributos de metadados estiverem no próprio CurrentTrack
+                    track = current_track
+                
+                filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
+                if filename:
+                    return os.path.normpath(filename).lower()
+                else:
+                    logger.warning(f"[DEBUG] Atributo filename/FILENAME não encontrado em: {ET.tostring(track).decode('utf-8')}")
+            else:
+                logger.warning(f"[DEBUG] Elemento CurrentTrack/CURRENTTRACK não encontrado no XML de playbackinfo: {raw_str}")
+        else:
+            logger.warning(f"[DEBUG] playbackinfo retornou resposta vazia ou erro E003: {raw_str}")
     except Exception as e:
         logger.warning(f"Erro ao obter filename tocando via playbackinfo: {e}")
     return None
@@ -469,6 +478,7 @@ def get_current_playing_index():
     playing_file = get_current_playing_filename()
     tracks = get_playlist_tracks()
     if not tracks:
+        logger.warning("[DEBUG] Nenhuma faixa retornada por get_playlist_tracks()")
         return 0
         
     if playing_file:
@@ -478,6 +488,9 @@ def get_current_playing_index():
             if filename and os.path.normpath(filename).lower() == playing_file:
                 logger.info(f"Índice atual de reprodução obtido via correspondência de arquivo: {idx}")
                 return idx
+        logger.warning(f"[DEBUG] Caminho do arquivo tocando '{playing_file}' não encontrado nas faixas da playlist.")
+    else:
+        logger.warning("[DEBUG] playing_file obtido é None.")
                 
     # Fallback caso não encontre correspondência exata de arquivo
     try:
@@ -490,11 +503,18 @@ def get_current_playing_index():
                 state = (playback.attrib.get('state') or playback.attrib.get('STATE') or '').lower()
                 playlistpos_str = playback.attrib.get('playlistpos') or playback.attrib.get('PLAYLISTPOS')
                 if state == 'stop':
+                    logger.info("[DEBUG] Player do RadioBOSS está parado.")
                     return 0
                 if playlistpos_str is not None:
-                    return int(playlistpos_str) + 1
-    except Exception:
-        pass
+                    idx = int(playlistpos_str) + 1
+                    logger.info(f"[DEBUG] Fallback: playlistpos obtido via playbackinfo: {idx}")
+                    return idx
+                else:
+                    logger.warning(f"[DEBUG] playlistpos não encontrado em Playback: {ET.tostring(playback).decode('utf-8')}")
+            else:
+                logger.warning(f"[DEBUG] Elemento Playback não encontrado no XML fallback: {raw_str}")
+    except Exception as e:
+        logger.warning(f"[DEBUG] Erro no fallback de get_current_playing_index: {e}")
         
     return 0
 
@@ -512,11 +532,18 @@ def get_playlist_tracks():
             xml_data = radioboss_request("getplaylist")
             raw_str = xml_data.decode('utf-8', errors='ignore').strip()
             if not raw_str or "Nothing to do" in raw_str or "E003" in raw_str:
+                logger.warning(f"[DEBUG] getplaylist/getplaylist2 retornaram resposta vazia ou erro E003: {raw_str}")
                 return []
             root = ET.fromstring(xml_data)
         
         tracks = []
         track_list = root.findall('track') or root.findall('TRACK')
+        if not track_list:
+            track_list = root.findall('.//track') or root.findall('.//TRACK')
+            if not track_list:
+                tags = [child.tag for child in root]
+                logger.warning(f"[DEBUG] Nenhuma tag TRACK/track encontrada no root. Tags filhas do root: {tags}")
+                
         for i, track in enumerate(track_list, start=1):
             filename = track.attrib.get('filename') or track.attrib.get('FILENAME')
             if filename:
