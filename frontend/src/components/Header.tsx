@@ -1,14 +1,34 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAudio } from "@/context/AudioContext";
 import { Tv, Calendar, Newspaper, HelpCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function Header() {
   const { listenersCount } = useAudio();
   const pathname = usePathname();
+  const [isAdminUser, setIsAdminUser] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAdminUser(session?.user?.email === "cristalsomwilliam@gmail.com");
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsAdminUser(session?.user?.email === "cristalsomwilliam@gmail.com");
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const isHome = pathname === "/";
   const isProgramacao = pathname === "/programacao";
@@ -95,11 +115,13 @@ export default function Header() {
 
           </nav>
 
-          {/* Pill Badge: Ouvintes Online (Mockup Style) */}
-          <div className="hidden sm:flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800/80 px-3 py-1.5 rounded-full text-[9px] font-black text-zinc-300 uppercase tracking-widest shadow-md">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-            <span>{listenersCount} ouvintes online</span>
-          </div>
+          {/* Pill Badge: Ouvintes Online (Visible only to Administrator) */}
+          {isAdminUser && (
+            <div className="hidden sm:flex items-center gap-1.5 bg-zinc-950/80 border border-zinc-800/80 px-3 py-1.5 rounded-full text-[9px] font-black text-zinc-300 uppercase tracking-widest shadow-md">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              <span>{listenersCount} ouvintes online</span>
+            </div>
+          )}
         </div>
 
       </div>

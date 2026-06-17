@@ -248,6 +248,31 @@ def normalize_string(s):
 # MODO SCANNER: LEITURA E SINCRONIZAÇÃO DO SSD COM SUPABASE
 # ---------------------------------------------------------
 
+# Palavras-chave no caminho do arquivo ou diretório que farão o arquivo ser ignorado no catálogo
+PATH_BLACKLIST_KEYWORDS = [
+    'vinheta', 'comercial', 'propaganda', 'abertura', 'meme', 'piada', 
+    'locucao', 'locução', 'audio_gerado', 'tts', 'system volume information', 
+    '$recycle.bin', 'recycle.bin', '.git', '__pycache__', 'virtualdj', '.virtualdj'
+]
+
+def should_skip_path(filepath):
+    """Retorna True se o arquivo ou diretório conter palavras-chave a serem ignoradas ou for oculto."""
+    normalized_path = os.path.normpath(filepath).lower()
+    
+    # 1. Ignorar pastas ocultas (começando com ponto) exceto o próprio drive (ex: D:\.pasta -> ignorar)
+    parts = normalized_path.split(os.sep)
+    for part in parts:
+        # Se for uma pasta que começa com ponto, mas não o próprio drive raiz
+        if part.startswith('.') and part not in ('.', '..') and not part.endswith(':'):
+            return True
+            
+    # 2. Ignorar baseado em palavras-chave na lista negra
+    for keyword in PATH_BLACKLIST_KEYWORDS:
+        if keyword in normalized_path:
+            return True
+            
+    return False
+
 def scan_ssd_and_sync():
     """Varre as pastas locais do SSD e sincroniza o catálogo com o Supabase."""
     if not MUSIC_DIRECTORIES:
@@ -257,6 +282,7 @@ def scan_ssd_and_sync():
     logger.info("Iniciando varredura das pastas locais no SSD...")
     local_tracks = []
     scanned_count = 0
+    skipped_count = 0
 
     for directory in MUSIC_DIRECTORIES:
         if not os.path.exists(directory):
@@ -268,6 +294,11 @@ def scan_ssd_and_sync():
             for file in files:
                 if file.lower().endswith(SUPPORTED_EXTENSIONS):
                     filepath = os.path.abspath(os.path.join(root, file))
+                    
+                    if should_skip_path(filepath):
+                        skipped_count += 1
+                        continue
+                        
                     scanned_count += 1
                     
                     try:
@@ -294,7 +325,7 @@ def scan_ssd_and_sync():
         logger.info(f"Enviando lote final de {len(local_tracks)} músicas para o Supabase...")
         sync_batch_to_supabase(local_tracks)
 
-    logger.info(f"Varredura concluída! {scanned_count} arquivos encontrados.")
+    logger.info(f"Varredura concluída! {scanned_count} arquivos encontrados (e {skipped_count} ignorados/blacklist).")
     
     # Limpeza: Remover do catálogo do Supabase músicas que foram deletadas localmente
     clean_deleted_files_from_catalog()

@@ -172,13 +172,6 @@ export default function Home() {
                   Assistindo agora: <span className="text-white font-semibold">{status.tv_stream_title}</span>
                 </p>
               </div>
-
-              <div className="flex items-center gap-4 text-xs font-semibold bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-full self-start">
-                <div className="flex items-center gap-1.5 text-red-400">
-                  <Users className="w-4 h-4 animate-pulse" />
-                  <span>{status.tv_viewers_count} assistindo</span>
-                </div>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
