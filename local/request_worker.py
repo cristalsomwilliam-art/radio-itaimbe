@@ -212,6 +212,26 @@ def read_id3v1_tags(filepath):
         logger.debug(f"Erro ao ler tag ID3v1 de {filepath}: {e}")
     return None
 
+def get_audio_duration(filepath):
+    """Retorna a duração em segundos do arquivo de áudio usando mutagen com instalação automatizada."""
+    try:
+        try:
+            from mutagen import File
+        except (ImportError, ModuleNotFoundError):
+            logger.info("mutagen não está instalado. Instalando mutagen via pip...")
+            import subprocess
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "mutagen"])
+            import importlib
+            importlib.invalidate_caches()
+            from mutagen import File
+        
+        audio = File(filepath)
+        if audio is not None and audio.info is not None:
+            return audio.info.length
+    except Exception as e:
+        logger.warning(f"Erro ao obter duração para {filepath}: {e}")
+    return 0
+
 def extract_media_metadata(filepath):
     """Extrai Artista e Título do arquivo de mídia com fallback para o nome do arquivo."""
     filename = os.path.basename(filepath)
@@ -832,6 +852,20 @@ def process_single_request(request):
             "status_message": "Não encontramos o arquivo desta música no SSD do repertório."
         })
         return
+
+    # 3b. Verificar duração da música (limite de 7 minutos = 420 segundos)
+    try:
+        duration_seconds = get_audio_duration(resolved_path)
+        if duration_seconds > 420:
+            duration_minutes = duration_seconds / 60
+            logger.warning(f"Pedido #{req_id} recusado: Música '{song_title}' é muito longa ({duration_minutes:.2f} minutos).")
+            supabase_request(f"music_requests?id=eq.{req_id}", method="PATCH", body={
+                "status": "error",
+                "status_message": f"Esta música é muito longa ({int(duration_minutes)}m{int(duration_seconds % 60)}s). O limite para pedidos é de 7 minutos."
+            })
+            return
+    except Exception as e_dur:
+        logger.error(f"Erro ao verificar duração do áudio: {e_dur}")
 
     # --- NOVO: GERAR LOCUÇÃO INTELIGENTE (IA) E TTS ---
     locucao_text = None
