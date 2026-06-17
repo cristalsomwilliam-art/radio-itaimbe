@@ -322,8 +322,8 @@ export default function TvPlayer({ streamUrl, showOverlay = true }: TvPlayerProp
 
       {/* Overlay de Marca D'água Opcional */}
       {showOverlay && !isLoading && (
-        <div className={`absolute left-4 z-10 flex items-center gap-2 bg-black/55 backdrop-blur-md px-3 py-1.5 rounded-full border border-zinc-700/30 transition-all duration-300 ${
-          showControls ? "bottom-16" : "bottom-4"
+        <div className={`absolute top-4 z-10 flex items-center gap-2 bg-black/55 backdrop-blur-md px-3 py-1.5 rounded-full border border-zinc-700/30 transition-all duration-300 ${
+          isPlaying && isMuted ? "right-36" : "right-4"
         }`}>
           <Tv className="w-4 h-4 text-accent-400 animate-pulse" />
           <span className="text-xs font-bold text-white tracking-wider">TV ITAIMBÉ</span>
