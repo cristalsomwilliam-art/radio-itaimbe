@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Music, Play, MessageCircle, Trash2, LogIn, Loader2, X } from "lucide-react";
+import { Music, Play, MessageCircle, Trash2, LogIn, Loader2, X, User, MapPin } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface MusicRequest {
@@ -939,111 +939,135 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
                 </button>
               </div>
             ) : currentUser || isGuest ? (
-              <form onSubmit={handleRequestSubmit} className="space-y-4">
+              <form onSubmit={handleRequestSubmit} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">
+                  <label className="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-wide flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-[#e81e4d]" />
                     {isGuest ? "Seu Nome (Obrigatório)" : "Seu Nome (Autenticado)"}
                   </label>
+                  <span className="text-[11px] sm:text-xs text-zinc-400 block leading-tight">
+                    {isGuest ? "Escreva o seu nome para o locutor mandar o abraço no ar." : "Identificado com a sua conta do site."}
+                  </span>
                   <input
                     type="text"
                     required
                     readOnly={!isGuest}
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder={isGuest ? "Digite seu nome" : "Nome do perfil"}
-                    className={`w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors ${
-                      !isGuest ? "text-zinc-450 cursor-not-allowed bg-zinc-900/50" : ""
+                    placeholder={isGuest ? "Digite seu nome completo" : "Nome do perfil"}
+                    className={`w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#e81e4d] focus:ring-2 focus:ring-[#e81e4d]/25 transition-all ${
+                      !isGuest ? "text-zinc-450 cursor-not-allowed bg-zinc-900/50 border-zinc-800" : ""
                     }`}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Sua Cidade (Obrigatório)</label>
+                  <label className="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-wide flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-[#e81e4d]" />
+                    Sua Cidade (Obrigatório)
+                  </label>
+                  <span className="text-[11px] sm:text-xs text-zinc-400 block leading-tight">
+                    De onde você está nos ouvindo? Exemplo: Cambará do Sul.
+                  </span>
                   <input
                     type="text"
                     required
                     value={formCity}
                     onChange={(e) => setFormCity(e.target.value)}
-                    placeholder="Digite sua cidade (ex: Cambará do Sul)"
-                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors"
+                    placeholder="Ex: Cambará do Sul - RS"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#e81e4d] focus:ring-2 focus:ring-[#e81e4d]/25 transition-all"
                   />
-                </div>
-
-                <div className="space-y-1.5 relative">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Música & Artista</label>
-                  <input
-                    type="text"
-                    required
-                    value={formSong}
-                    onChange={(e) => {
-                      setFormSong(e.target.value);
-                      setSelectedFilePath(null);
-                    }}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    placeholder="Ex: Imagine - John Lennon"
-                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors pr-10"
-                  />
-                  {isSearching && (
-                    <div className="absolute right-3 top-[34px] flex items-center">
-                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#e81e4d]/20 border-t-[#e81e4d] animate-spin"></span>
-                    </div>
-                  )}
-                  {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[10000] max-h-48 overflow-y-auto animate-in fade-in duration-100">
-                      {suggestions.map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setFormSong(`${sug.title} - ${sug.artist}`);
-                            setSelectedFilePath(sug.file_path);
-                            setShowSuggestions(false);
-                          }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-b-0 flex flex-col transition-colors"
-                        >
-                          <span className="font-bold text-white text-[11px]">{sug.title}</span>
-                          <span className="text-[9px] text-zinc-500 mt-0.5">{sug.artist}</span>
-                        </button>
-                      ))}
-                      <div className="px-4 py-2 bg-zinc-900/50 text-[8px] text-zinc-550 font-bold uppercase tracking-wider border-t border-white/5 text-center">
-                        Música verificada no SSD da Rádio
-                      </div>
-                    </div>
-                  )}
-                  {showSuggestions && suggestions.length === 0 && formSong.trim().length >= 2 && !isSearching && (
-                    <div className="absolute left-0 right-0 top-[65px] bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-3 z-[10000] animate-in fade-in duration-100 text-[10px] text-zinc-400">
-                      <p className="font-semibold text-zinc-300">Nenhum resultado exato no catálogo.</p>
-                      <p className="text-[9px] text-zinc-550 mt-1 leading-normal">
-                        Você pode enviar assim mesmo! Nosso robô tentará encontrar o arquivo aproximado no SSD.
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Recado / Mensagem (Opcional)</label>
+                  <label className="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-wide flex items-center gap-1.5">
+                    <Music className="w-4 h-4 text-[#e81e4d]" />
+                    Música & Artista
+                  </label>
+                  <span className="text-[11px] sm:text-xs text-zinc-400 block leading-tight">
+                    Qual música você quer ouvir? Escreva a música e o cantor.
+                  </span>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={formSong}
+                      onChange={(e) => {
+                        setFormSong(e.target.value);
+                        setSelectedFilePath(null);
+                      }}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="Ex: Telefone Mudo - Trio Parada Dura"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#e81e4d] focus:ring-2 focus:ring-[#e81e4d]/25 transition-all pr-10"
+                    />
+                    {isSearching && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                        <span className="w-4 h-4 rounded-full border-2 border-[#e81e4d]/20 border-t-[#e81e4d] animate-spin"></span>
+                      </div>
+                    )}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-2 bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[10000] max-h-48 overflow-y-auto animate-in fade-in duration-100">
+                        {suggestions.map((sug, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setFormSong(`${sug.title} - ${sug.artist}`);
+                              setSelectedFilePath(sug.file_path);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 last:border-b-0 flex flex-col transition-colors"
+                          >
+                            <span className="font-bold text-white text-xs sm:text-sm">{sug.title}</span>
+                            <span className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">{sug.artist}</span>
+                          </button>
+                        ))}
+                        <div className="px-4 py-2 bg-zinc-900/50 text-[9px] text-zinc-450 font-bold uppercase tracking-wider border-t border-white/5 text-center">
+                          Música verificada no SSD da Rádio
+                        </div>
+                      </div>
+                    )}
+                    {showSuggestions && suggestions.length === 0 && formSong.trim().length >= 2 && !isSearching && (
+                      <div className="absolute left-0 right-0 top-full mt-2 bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-3.5 z-[10000] animate-in fade-in duration-100 text-xs text-zinc-300">
+                        <p className="font-bold text-zinc-150">Nenhum resultado exato no catálogo.</p>
+                        <p className="text-[10px] text-zinc-400 mt-1 leading-normal">
+                          Você pode enviar assim mesmo! Nosso robô tentará encontrar o arquivo aproximado no SSD.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-wide flex items-center gap-1.5">
+                    <MessageCircle className="w-4 h-4 text-[#e81e4d]" />
+                    Recado / Mensagem (Opcional)
+                  </label>
+                  <span className="text-[11px] sm:text-xs text-zinc-400 block leading-tight">
+                    Mande um abraço, recado ou ofereça a música para alguém especial.
+                  </span>
                   <textarea
                     value={formMessage}
                     onChange={(e) => setFormMessage(e.target.value)}
-                    placeholder="Mande um abraço para alguém especial..."
+                    placeholder="Escreva sua mensagem aqui..."
                     rows={3}
                     maxLength={250}
-                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-pink-500/50 transition-colors resize-none"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#e81e4d] focus:ring-2 focus:ring-[#e81e4d]/25 transition-all resize-none"
                   />
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-3 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98"
+                    className="flex-1 py-3.5 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-zinc-300 hover:text-white font-bold text-sm rounded-xl uppercase tracking-wider transition-colors active:scale-98"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none ${isSubmitting ? "" : "animate-play-pulse"}`}
+                    className={`flex-1 py-3.5 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-sm rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none ${isSubmitting ? "" : "animate-play-pulse"}`}
                   >
                     {isSubmitting ? "Confirmando..." : "Confirmar"}
                   </button>
