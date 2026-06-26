@@ -43,11 +43,19 @@ function formatCooldownTime(seconds: number): string {
 function isDoubleMeaningName(name: string): boolean {
   if (!name) return false;
 
-  const normalized = name
+  // 1. Normalizar o texto removendo acentos, mantendo letras e espaços
+  let normalizedWithSpaces = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z]/g, "");
+    .replace(/[\u0300-\u036f]/g, "");
+
+  // Substitui qualquer caractere que não seja letra a-z ou espaço por espaço
+  normalizedWithSpaces = normalizedWithSpaces.replace(/[^a-z\s]/g, " ");
+  // Colapsa espaços múltiplos e remove das extremidades
+  normalizedWithSpaces = normalizedWithSpaces.replace(/\s+/g, " ").trim();
+
+  // 2. Texto sem espaços (usado para nomes de duplo sentido colados como caiopinto)
+  const normalizedNoSpaces = normalizedWithSpaces.replace(/\s+/g, "");
 
   const toPhonetic = (str: string) => {
     return str
@@ -65,7 +73,8 @@ function isDoubleMeaningName(name: string): boolean {
       .replace(/([a-z])\1+/g, "$1");
   };
 
-  const phonetic = toPhonetic(normalized);
+  const phoneticWithSpaces = toPhonetic(normalizedWithSpaces);
+  const phoneticNoSpaces = phoneticWithSpaces.replace(/\s+/g, "");
 
   const blacklist = [
     "kopokapika",
@@ -256,7 +265,6 @@ function isDoubleMeaningName(name: string): boolean {
     "caralinho",
     "caralhinho",
     "piroca",
-    "pika",
     "piroquinha",
     "cacete",
     "benga",
@@ -294,39 +302,38 @@ function isDoubleMeaningName(name: string): boolean {
     "mongol",
   ];
 
+  // 3. Verificar nomes de duplo sentido sem espaços (ex: caiopinto, sujirokesuma)
   if (
     blacklist.some(
-      (blocked) => normalized.includes(blocked) || phonetic.includes(toPhonetic(blocked))
+      (blocked) => normalizedNoSpaces.includes(blocked) || phoneticNoSpaces.includes(toPhonetic(blocked))
     )
   ) {
     return true;
   }
 
+  // 4. Verificar palavras-chave ofensivas isoladas usando limites de palavras (\b) para evitar falsos positivos
   if (
-    blacklistKeywords.some(
-      (keyword) => normalized.includes(keyword) || phonetic.includes(toPhonetic(keyword))
-    )
+    blacklistKeywords.some((keyword) => {
+      // Escapa caracteres especiais do regex e cria a busca por palavra inteira
+      const escapedKw = keyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const regex = new RegExp("\\b" + escapedKw + "\\b", "i");
+      return regex.test(normalizedWithSpaces) || regex.test(phoneticWithSpaces);
+    })
   ) {
     return true;
   }
 
-  const hasJacinto = normalized.includes("jacinto") || phonetic.includes("jacinto");
-  const hasRego = normalized.includes("rego") || phonetic.includes("rego");
-  const hasPinto = normalized.includes("pinto") || phonetic.includes("pinto");
-  const hasTejano =
-    normalized.includes("tejano") ||
-    normalized.includes("tejando") ||
-    phonetic.includes("tejano") ||
-    phonetic.includes("tejando");
-  const hasPaula = normalized.includes("paula") || phonetic.includes("paula");
-  const hasTomas = normalized.includes("tomas") || phonetic.includes("tomas");
-  const hasTurbando =
-    normalized.includes("turbando") ||
-    normalized.includes("turbano") ||
-    phonetic.includes("turbando") ||
-    phonetic.includes("turbano");
-  const hasCuca = normalized.includes("cuca") || phonetic.includes("cuca");
-  const hasBeludo = normalized.includes("beludo") || phonetic.includes("beludo");
+  // 5. Verificar combinações específicas de duplo sentido baseando-se em palavras inteiras
+  const words = normalizedWithSpaces.split(" ");
+  const hasJacinto = words.includes("jacinto");
+  const hasRego = words.includes("rego");
+  const hasPinto = words.includes("pinto");
+  const hasTejano = words.includes("tejano") || words.includes("tejando");
+  const hasPaula = words.includes("paula");
+  const hasTomas = words.includes("tomas");
+  const hasTurbando = words.includes("turbando") || words.includes("turbano");
+  const hasCuca = words.includes("cuca");
+  const hasBeludo = words.includes("beludo");
 
   if (hasJacinto && (hasRego || hasPinto)) return true;
   if (hasPaula && hasTejano) return true;
@@ -879,7 +886,7 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
               aria-haspopup="dialog"
               aria-expanded={isModalOpen}
               aria-label="Pedir música e mandar recado"
-              className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95"
+              className="bg-[#e81e4d] text-white hover:bg-pink-600 transition-all font-black text-[9px] px-5 py-2.5 rounded-full uppercase tracking-widest self-start flex items-center gap-1.5 shadow-lg shadow-black/20 mt-2 z-10 active:scale-95 animate-play-pulse"
             >
               <MessageCircle className="w-3.5 h-3.5 fill-current" />
               Pedir Música
@@ -1036,9 +1043,9 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+                    className={`flex-1 py-3 bg-[#e81e4d] hover:bg-pink-600 text-white font-black text-xs rounded-xl uppercase tracking-wider transition-colors active:scale-98 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none ${isSubmitting ? "" : "animate-play-pulse"}`}
                   >
-                    {isSubmitting ? "Enviando..." : "Pedir Música"}
+                    {isSubmitting ? "Confirmando..." : "Confirmar"}
                   </button>
                 </div>
               </form>

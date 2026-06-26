@@ -195,7 +195,7 @@ export default function AjudaPage() {
         },
         {
           title: "Enviar e Aguardar",
-          narration: "Por fim, clique no botão vermelho 'Pedir Música' no final da janela. Seu pedido aparecerá no mural do site. Agora é só aguardar um pouquinho que a sua música vai tocar e o locutor vai mandar a sua dedicatória ao vivo na rádio para todo mundo ouvir!",
+          narration: "Por fim, clique no botão vermelho 'Confirmar' no final da janela. Seu pedido aparecerá no mural do site. Agora é só aguardar um pouquinho que a sua música vai tocar e o locutor vai mandar a sua dedicatória ao vivo na rádio para todo mundo ouvir!",
           screenText: "PASSO 5: Envie o formulário, aguarde tocar e ouça o locutor ler o seu recado ao vivo na rádio!",
           actionHighlight: "Clique no botão vermelho para enviar. O locutor lerá seu recado ao vivo!",
           highlightType: "modal",
@@ -666,7 +666,7 @@ export default function AjudaPage() {
                       
                       {/* Botão de Pedido Destacado */}
                       <div className="relative pt-2">
-                        <button className="w-full bg-[#e81e4d] text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md">
+                        <button className="w-full bg-[#e81e4d] text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md animate-play-pulse">
                           Pedir Música
                         </button>
                         
@@ -706,8 +706,8 @@ export default function AjudaPage() {
 
                       {/* Botão de Enviar no Formulário */}
                       <div className="pt-1.5 relative">
-                        <button className="w-full bg-[#e81e4d] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider">
-                          ENVIAR PEDIDO
+                        <button className="w-full bg-[#e81e4d] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider animate-play-pulse">
+                          CONFIRMAR
                         </button>
                         
                         {/* Seta se destacando no envio */}
