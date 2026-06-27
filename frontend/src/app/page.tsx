@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio, ExternalLink, Volume2, VolumeX } from "lucide-react";
+import { Tv, Users, Music, ChevronRight, Share2, Play, Pause, MessageCircle, Star, Newspaper, Radio, ExternalLink, Volume2, VolumeX, Disc } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAudio } from "@/context/AudioContext";
 import TvPlayer from "@/components/TvPlayer";
@@ -173,7 +173,7 @@ export default function Home() {
                 </p>
                 {status.current_song && (
                   <div className="flex items-center gap-1.5 mt-2.5 bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 w-fit">
-                    <Music className="w-3.5 h-3.5 text-[#e81e4d] animate-pulse" />
+                    <Disc className="w-3.5 h-3.5 text-[#e81e4d] animate-spin" />
                     <span className="text-[11px] sm:text-xs text-zinc-300">
                       Música Atual:{" "}
                       <span className="text-white font-bold">
