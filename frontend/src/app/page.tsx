@@ -175,7 +175,7 @@ export default function Home() {
                   <div className="flex items-center gap-1.5 mt-2.5 bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 w-fit">
                     <Music className="w-3.5 h-3.5 text-[#e81e4d] animate-pulse" />
                     <span className="text-[11px] sm:text-xs text-zinc-300">
-                      Tocando no VirtualDJ:{" "}
+                      Música Atual:{" "}
                       <span className="text-white font-bold">
                         {status.current_song}{status.current_artist ? ` - ${status.current_artist}` : ""}
                       </span>
