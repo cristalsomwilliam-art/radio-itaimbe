@@ -28,7 +28,7 @@ export default function Footer() {
             {/* Redes Sociais */}
             <div className="flex items-center gap-3.5 pt-2">
               <a
-                href="https://www.instagram.com"
+                href="https://www.instagram.com/radioitaimbe/?hl=pt-br"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-[#e81e4d] hover:bg-white/10 hover:border-white/10 transition-all hover:scale-105 active:scale-95"
@@ -37,7 +37,7 @@ export default function Footer() {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="https://www.facebook.com"
+                href="https://www.facebook.com/R.Itaimbe879"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-blue-500 hover:bg-white/10 hover:border-white/10 transition-all hover:scale-105 active:scale-95"
@@ -46,11 +46,11 @@ export default function Footer() {
                 <Facebook className="w-4 h-4" />
               </a>
               <a
-                href="https://wa.me"
+                href="https://chat.whatsapp.com/FtE7lIlyrwX2EFM5J6Ib9E"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-green-500 hover:bg-white/10 hover:border-white/10 transition-all hover:scale-105 active:scale-95"
-                title="Fale conosco no WhatsApp"
+                title="Entre no Grupo do WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
