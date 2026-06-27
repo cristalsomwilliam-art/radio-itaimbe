@@ -664,13 +664,13 @@ def cleanup_played_locutions():
                 # Deletar da playlist do RadioBOSS (tenta action=delete e cmd=delete)
                 deleted_from_playlist = False
                 try:
-                    radioboss_request("delete", {"pos": idx})
+                    radioboss_request("delete", {"pos": idx - 1})
                     deleted_from_playlist = True
                 except Exception as e_action:
                     logger.warning(f"Falha ao deletar via action=delete na posição {idx} ({str(e_action)}). Tentando via comando do agendador...")
                     try:
                         # Tentar formato de comando do agendador: ?cmd=delete POS
-                        params = {"cmd": f"delete {idx}"}
+                        params = {"cmd": f"delete {idx - 1}"}
                         if RADIOBOSS_PASSWORD:
                             params['pass'] = RADIOBOSS_PASSWORD
                         query = urllib.parse.urlencode(params)
