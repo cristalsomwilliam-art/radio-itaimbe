@@ -38,7 +38,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-zinc-800/60 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-0 md:h-16 flex flex-col md:flex-row items-center justify-center md:justify-between gap-3 md:gap-0">
         
         {/* Logo (Mockup Style) */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -56,61 +56,66 @@ export default function Header() {
         </Link>
 
         {/* Menu de Navegação e Contador de Ouvintes */}
-        <div className="flex items-center gap-4">
-          <nav aria-label="Navegação principal" className="flex items-center gap-1 md:gap-2">
+        <div className="flex items-center gap-4 justify-center w-full md:w-auto">
+          <nav aria-label="Navegação principal" className="flex items-center gap-1 sm:gap-2">
             <Link
               href="/"
               aria-current={isHome ? "page" : undefined}
-              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
+              className={`relative flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 text-[11px] sm:text-xs md:text-sm font-bold transition-all ${
                 isHome ? "text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
               <Tv className="w-3.5 h-3.5 text-[#e81e4d]" />
               <span>Ao Vivo</span>
               {isHome && (
-                <span className="absolute bottom-[-16px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
+                <span className="absolute bottom-[-10px] md:bottom-[-16px] left-0 right-0 h-[2.5px] md:h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
               )}
             </Link>
             
             <Link
               href="/programacao"
               aria-current={isProgramacao ? "page" : undefined}
-              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
+              className={`relative flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 text-[11px] sm:text-xs md:text-sm font-bold transition-all ${
                 isProgramacao ? "text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
               <Calendar className="w-3.5 h-3.5 text-purple-400" />
-              <span>Programação</span>
+              <span>
+                <span className="hidden sm:inline">Programação</span>
+                <span className="sm:hidden">Grade</span>
+              </span>
               {isProgramacao && (
-                <span className="absolute bottom-[-16px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
+                <span className="absolute bottom-[-10px] md:bottom-[-16px] left-0 right-0 h-[2.5px] md:h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
               )}
             </Link>
 
             <Link
               href="/noticias"
               aria-current={isNoticias ? "page" : undefined}
-              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs md:text-sm font-bold transition-all ${
+              className={`relative flex items-center gap-1 px-1.5 sm:px-2.5 py-1.5 text-[11px] sm:text-xs md:text-sm font-bold transition-all ${
                 isNoticias ? "text-white" : "text-zinc-400 hover:text-white"
               }`}
             >
               <Newspaper className="w-3.5 h-3.5 text-blue-400" />
               <span>Notícias</span>
               {isNoticias && (
-                <span className="absolute bottom-[-16px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
+                <span className="absolute bottom-[-10px] md:bottom-[-16px] left-0 right-0 h-[2.5px] md:h-[3px] bg-gradient-to-r from-[#e81e4d] to-[#ff2d55] rounded-full"></span>
               )}
             </Link>
 
             <Link
               href="/ajuda"
               aria-current={isAjuda ? "page" : undefined}
-              className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs md:text-sm font-black rounded-full transition-all border ${
+              className={`relative flex items-center gap-1 px-1.5 sm:px-2.5 py-1 text-[11px] sm:text-xs md:text-sm font-black rounded-full transition-all border ${
                 isAjuda
                   ? "bg-[#e81e4d] text-white border-[#e81e4d] shadow-lg shadow-pink-500/25"
                   : "bg-white/5 hover:bg-[#e81e4d]/10 text-zinc-300 hover:text-[#e81e4d] border-white/5 hover:border-[#e81e4d]/30"
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5 text-[#e81e4d]" />
-              <span>Como Ouvir / Ajuda</span>
+              <span>
+                <span className="hidden sm:inline">Como Ouvir / </span>Ajuda
+              </span>
             </Link>
 
           </nav>

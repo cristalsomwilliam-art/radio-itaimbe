@@ -261,7 +261,7 @@ REGRAS DE FORMATAÇÃO DO TEXTO:
   4. Anúncio da música de forma empolgante integrada ao texto.
   5. Fechamento curto e gancho para a música (ex: "Aumenta o som!", "Curta aí!", "Solta o som, tchê!").
 
-LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como ```json. Não coloque texto fora do JSON.`;
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
 
 const weatherSystemInstruction = `Você é o locutor oficial da Rádio Itaimbé FM.
 Sua tarefa é criar um boletim meteorológico para Cambará do Sul, no Rio Grande do Sul.

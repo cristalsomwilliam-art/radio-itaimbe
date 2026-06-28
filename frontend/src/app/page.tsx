@@ -344,7 +344,7 @@ export default function Home() {
                         href={banners[currentBannerIndex].link || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`relative w-full max-w-[320px] h-14 md:h-[72px] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-md group flex-shrink-0 ${
+                        className={`relative w-full max-w-[280px] sm:max-w-[320px] h-14 md:h-[72px] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-500 shadow-md group ${
                           isBannerVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
                         }`}
                         title={banners[currentBannerIndex].title}
