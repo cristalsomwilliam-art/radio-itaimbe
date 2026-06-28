@@ -180,10 +180,10 @@ export default function AjudaPage() {
           highlightType: "mural",
         },
         {
-          title: "Opção Sem Login (Fácil)",
-          narration: "Se for o seu primeiro pedido hoje, o site perguntará como deseja se identificar por segurança. Você pode entrar usando Facebook ou Google. Mas se você achar muito complicado ou tiver dificuldades, clique no botão verde escrito 'Pedir como Visitante'. Ele permite que você peça sua música de forma rápida e sem precisar digitar nenhuma senha!",
-          screenText: "PASSO 3: Clique no botão verde 'Pedir como Visitante' para pedir sem precisar de login",
-          actionHighlight: "O botão verde 'Pedir como Visitante (Sem Login)' está destacado",
+          title: "Identificação da Conta",
+          narration: "Se for o seu primeiro pedido hoje, o site perguntará como deseja se identificar por segurança. Você pode entrar usando sua conta do Facebook ou do Google. É super seguro, rápido e ajuda a garantir a ordem no mural de pedidos!",
+          screenText: "PASSO 3: Clique no botão do Facebook ou Google para entrar no site",
+          actionHighlight: "Identifique-se usando sua rede social preferida",
           highlightType: "login",
         },
         {
@@ -969,43 +969,29 @@ export default function AjudaPage() {
                       <div className="w-10 h-10 rounded-full bg-[#e81e4d]/10 border border-[#e81e4d]/30 flex items-center justify-center mx-auto text-[#e81e4d] mb-0.5">
                         <HelpCircle className="w-5 h-5 animate-pulse" />
                       </div>
-                      <h4 className="text-xs font-black text-white uppercase tracking-wider">Identifique-se ou Entre sem Login</h4>
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider">Identifique-se com sua Rede Social</h4>
                       <p className="text-[9.5px] text-zinc-450 leading-relaxed max-w-[280px] mx-auto">
-                        Para enviar o seu pedido, entre com o Facebook, Google ou clique no botão verde para pedir sem login.
+                        Para enviar o seu pedido, entre usando o Facebook ou o Google.
                       </p>
                       
-                      <div className="grid grid-cols-1 gap-2 pt-1 relative">
+                      <div className="grid grid-cols-1 gap-2 pt-1 relative z-20">
                         {/* Botão Facebook */}
-                        <div className="bg-[#1877F2]/10 border border-[#1877F2]/20 text-[#1877F2] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 opacity-60">
+                        <div className="bg-[#1877F2]/10 border-2 border-yellow-400 text-[#1877F2] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5">
                           <span>🔵 Facebook</span>
                         </div>
 
                         {/* Botão Google */}
-                        <div className="bg-white/5 border border-white/10 text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5 opacity-60">
-                          <span>🔴 Google (Login do YouTube)</span>
+                        <div className="bg-white/5 border-2 border-yellow-400 text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5">
+                          <span>🔴 Google</span>
                         </div>
-
-                        {/* Divider */}
-                        <div className="relative flex py-0.5 items-center">
-                          <div className="flex-grow border-t border-white/5"></div>
-                          <span className="flex-shrink mx-2 text-[7px] text-zinc-600 font-bold uppercase tracking-wider">ou</span>
-                          <div className="flex-grow border-t border-white/5"></div>
-                        </div>
-
-                        {/* Botão Visitante com Destaque de Clique */}
-                        <div className="relative z-20">
-                          <div className="bg-emerald-500/10 border-2 border-yellow-400 text-emerald-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5">
-                            <span>🎵 Pedir como Visitante (Sem Login)</span>
-                          </div>
-                          
-                          {/* Círculo de Destaque */}
-                          <span className="absolute -inset-2.5 rounded-xl border-4 border-yellow-400 animate-ping opacity-75 pointer-events-none"></span>
-                          <div className="absolute top-8 left-2/3 text-yellow-400 text-2xl animate-bounce pointer-events-none">
-                            ☝️
-                          </div>
+                        
+                        {/* Círculo de Destaque */}
+                        <span className="absolute -inset-2.5 rounded-xl border-4 border-yellow-400 animate-ping opacity-75 pointer-events-none"></span>
+                        <div className="absolute top-16 left-2/3 text-yellow-400 text-2xl animate-bounce pointer-events-none">
+                          ☝️
                         </div>
                       </div>
-                      <span className="text-[8px] text-zinc-550 block pt-0.5 font-bold">* Rápido, seguro e não precisa digitar senhas!</span>
+                      <span className="text-[8px] text-zinc-550 block pt-0.5 font-bold">* Rápido, seguro e protege o mural contra spam!</span>
                     </div>
                   )}
 

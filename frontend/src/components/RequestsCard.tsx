@@ -632,8 +632,8 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
 
   const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser && !isGuest) {
-      showToast("Você precisa estar autenticado ou preencher os dados como visitante para pedir músicas.", "error");
+    if (!currentUser) {
+      showToast("Você precisa estar autenticado com sua rede social para pedir músicas.", "error");
       return;
     }
     if (!formName.trim() || !formSong.trim()) return;
@@ -1076,7 +1076,7 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
             ) : (
               <div className="space-y-4 py-2 text-center">
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Para pedir músicas e mandar recados no mural, identifique-se usando sua rede social ou clique abaixo para pedir sem login.
+                  Para pedir músicas e mandar recados no mural, identifique-se usando sua rede social.
                 </p>
 
                 <div className="grid grid-cols-1 gap-2 pt-1">
@@ -1099,35 +1099,7 @@ export default function RequestsCard({ mode }: RequestsCardProps) {
                     {loginLoading === "google" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogIn className="w-3.5 h-3.5" />}
                     <span>Google</span>
                   </button>
-
-                  <div className="relative flex py-1 items-center">
-                    <div className="flex-grow border-t border-white/5"></div>
-                    <span className="flex-shrink mx-3 text-[8px] text-zinc-650 font-bold uppercase tracking-wider">ou</span>
-                    <div className="flex-grow border-t border-white/5"></div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsGuest(true);
-                      setFormName("");
-                      setFormCity("");
-                    }}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all active:scale-98"
-                  >
-                    <Music className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Pedir como Visitante (Sem Login)</span>
-                  </button>
                 </div>
-
-                {loginAttempted && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 text-left mt-2 animate-in fade-in duration-200">
-                    <p className="text-[10px] text-amber-400 font-bold leading-normal">
-                      Teve dificuldades para entrar com a rede social? Não se preocupe! Você pode clicar no botão "Pedir como Visitante"
-                      acima para pedir sua música sem precisar de login.
-                    </p>
-                  </div>
-                )}
 
                 <p className="text-[9px] text-zinc-550 leading-normal mt-2 text-center">
                   * Nota: Ao logar com o Facebook, certifique-se de manter a permissão de <strong>E-mail</strong> ativa para que o cadastro
