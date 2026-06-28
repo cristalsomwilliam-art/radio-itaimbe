@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AudioProvider } from "@/context/AudioContext";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.radioitaimbe.com.br"),
@@ -32,11 +33,23 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.png",
     shortcut: "/favicon.ico",
-    apple: "/favicon.png",
+    apple: "/apple-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Rádio Itaimbé",
+    statusBarStyle: "black-translucent",
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -58,6 +71,9 @@ export default function RootLayout({
 
           {/* RODAPÉ DO SITE */}
           <Footer />
+
+          {/* BANNER E REGISTRO DO PWA */}
+          <PWAInstallBanner />
         </AudioProvider>
       </body>
     </html>
