@@ -1,8 +1,12 @@
 const { Client, GatewayIntentBits, ActivityType, SlashCommandBuilder, Routes } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection, VoiceConnectionStatus, generateDependencyReport } = require('@discordjs/voice');
 const { createClient } = require('@supabase/supabase-js');
 const { REST } = require('@discordjs/rest');
 require('dotenv').config();
+
+console.log('=== RELATÓRIO DE DEPENDÊNCIAS DE ÁUDIO ===');
+console.log(generateDependencyReport());
+console.log('===========================================\n');
 
 // Configura o caminho do FFmpeg estático para o bot rodar sem precisar instalar o FFmpeg no Windows
 try {
@@ -235,18 +239,32 @@ client.on('interactionCreate', async interaction => {
         existingConnection.destroy();
       }
 
-      console.log(`[Voz] Conectando ao canal "${voiceChannel.name}" (ID: ${voiceChannel.id}) no servidor "${guild.name}"`);
+      console.log(`[Voz] Iniciando conexão com o canal "${voiceChannel.name}" (ID: ${voiceChannel.id})`);
       currentConnection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: guild.id,
         adapterCreator: guild.voiceAdapterCreator,
       });
 
-      // Associa o player de áudio à conexão de voz do Discord
-      currentConnection.subscribe(player);
-      
-      // Inicia a reprodução do streaming
-      playRadio();
+      // Registrar listeners para diagnosticar e controlar o estado da conexão
+      currentConnection.on(VoiceConnectionStatus.Signalling, () => {
+        console.log('[Voz Status] Conectando... (Signalling)');
+      });
+      currentConnection.on(VoiceConnectionStatus.Connecting, () => {
+        console.log('[Voz Status] Estabelecendo conexão UDP... (Connecting)');
+      });
+      currentConnection.on(VoiceConnectionStatus.Ready, () => {
+        console.log('[Voz Status] Conexão estabelecida com sucesso e pronta! (Ready)');
+        // Associa o player apenas quando a conexão estiver pronta
+        currentConnection.subscribe(player);
+        playRadio();
+      });
+      currentConnection.on(VoiceConnectionStatus.Disconnected, () => {
+        console.warn('[Voz Status] Desconectado! (Disconnected)');
+      });
+      currentConnection.on('error', (error) => {
+        console.error('[Voz Status] Erro na conexão de voz:', error.message);
+      });
 
       await interaction.editReply(`📻 **Sintonizado!** Entrei no canal **${voiceChannel.name}** e comecei a transmitir a **Rádio Itaimbé 87.9 FM** ao vivo!`);
     } catch (err) {
