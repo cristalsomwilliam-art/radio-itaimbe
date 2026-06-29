@@ -62,6 +62,7 @@ MUSIC_DIRECTORIES_RAW = os.getenv("MUSIC_DIRECTORIES", "")
 LOOP_INTERVAL_SECONDS = int(os.getenv("LOOP_INTERVAL_SECONDS", "5"))
 TTS_VOICE = os.getenv("TTS_VOICE", "pt-BR-AntonioNeural")
 TTS_RATE = os.getenv("TTS_RATE", "-8%")
+TTS_PITCH = os.getenv("TTS_PITCH", "+0Hz")
 
 # Validar configurações obrigatórias
 if not SUPABASE_URL or not SUPABASE_KEY:
@@ -767,7 +768,7 @@ def speak_text(text, output_path):
         import asyncio
         
         async def amain():
-            communicate = edge_tts.Communicate(text, TTS_VOICE, rate=TTS_RATE)
+            communicate = edge_tts.Communicate(text, TTS_VOICE, rate=TTS_RATE, pitch=TTS_PITCH)
             await communicate.save(output_path)
             
         asyncio.run(amain())
@@ -782,7 +783,7 @@ def speak_text(text, output_path):
             import asyncio
             
             async def amain():
-                communicate = edge_tts.Communicate(text, TTS_VOICE, rate=TTS_RATE)
+                communicate = edge_tts.Communicate(text, TTS_VOICE, rate=TTS_RATE, pitch=TTS_PITCH)
                 await communicate.save(output_path)
                 
             asyncio.run(amain())
