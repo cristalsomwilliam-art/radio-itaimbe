@@ -1,7 +1,9 @@
 const { Client, GatewayIntentBits, ActivityType, SlashCommandBuilder, Routes } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection, VoiceConnectionStatus, generateDependencyReport } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection, VoiceConnectionStatus, generateDependencyReport, StreamType } = require('@discordjs/voice');
 const { createClient } = require('@supabase/supabase-js');
 const { REST } = require('@discordjs/rest');
+const http = require('http');
+const https = require('https');
 require('dotenv').config();
 
 console.log('=== RELATÓRIO DE DEPENDÊNCIAS DE ÁUDIO ===');
@@ -52,27 +54,79 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
 let reconnectTimeout = null;
 
+// Função auxiliar para conectar diretamente ao fluxo de áudio injetando os cabeçalhos anti-hotlink do Caster.fm
+function getAudioStream(urlStr, callback) {
+  try {
+    const parsedUrl = new URL(urlStr);
+    const clientHttp = parsedUrl.protocol === 'https:' ? https : http;
+    
+    const options = {
+      headers: {
+        'Referer': 'http://morcast.caster.fm/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    };
+
+    clientHttp.get(urlStr, options, (res) => {
+      // Tratar redirecionamento HTTP (ex: 301, 302)
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        getAudioStream(res.headers.location, callback);
+        return;
+      }
+      
+      if (res.statusCode !== 200) {
+        callback(new Error(`Servidor de streaming retornou status HTTP ${res.statusCode}`));
+        return;
+      }
+
+      console.log(`[Áudio] Conexão HTTP estabelecida. Tipo de conteúdo: ${res.headers['content-type']}`);
+      callback(null, res);
+    }).on('error', (err) => {
+      callback(err);
+    });
+  } catch (err) {
+    callback(err);
+  }
+}
+
 // Função para iniciar o stream de áudio
 function playRadio() {
-  try {
-    if (reconnectTimeout) {
-      clearTimeout(reconnectTimeout);
-      reconnectTimeout = null;
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+
+  // Se o stream URL for o do Cloudflare, podemos forçar a conexão direta ao Caster.fm para maior estabilidade
+  let url = process.env.STREAM_URL;
+  if (url.includes('stream.radioitaimbe.com.br')) {
+    console.log('[Áudio] Redirecionando fluxo local do Cloudflare diretamente para o servidor Caster.fm para evitar quedas.');
+    url = 'http://morcast.caster.fm:15366/BZRqL';
+  }
+
+  console.log(`[Áudio] Tentando conectar ao stream: ${url}`);
+
+  getAudioStream(url, (err, stream) => {
+    if (err) {
+      console.error('[Áudio] Erro ao conectar ao stream de áudio:', err.message);
+      handleAudioReconnect();
+      return;
     }
 
-    console.log(`[Áudio] Tentando conectar ao stream: ${process.env.STREAM_URL}`);
-    const resource = createAudioResource(process.env.STREAM_URL, {
-      inlineVolume: true
-    });
-    
-    // Volume inicial padrão: 50%
-    resource.volume.setVolume(0.5); 
-    player.play(resource);
-    reconnectAttempts = 0; // Reseta tentativas se conseguiu iniciar o player
-  } catch (error) {
-    console.error('[Áudio] Erro crítico ao criar/reproduzir recurso de áudio:', error.message);
-    handleAudioReconnect();
-  }
+    try {
+      const resource = createAudioResource(stream, {
+        inputType: StreamType.Arbitrary,
+        inlineVolume: true
+      });
+      
+      // Volume inicial padrão: 50%
+      resource.volume.setVolume(0.5); 
+      player.play(resource);
+      reconnectAttempts = 0; // Reseta tentativas se conseguiu iniciar o player
+    } catch (error) {
+      console.error('[Áudio] Erro crítico ao criar/reproduzir recurso de áudio:', error.message);
+      handleAudioReconnect();
+    }
+  });
 }
 
 // Rotina de auto-reconexão com backoff progressivo
