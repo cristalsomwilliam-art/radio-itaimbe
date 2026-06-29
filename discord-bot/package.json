@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@discordjs/voice": "^0.17.0",
+    "@snazzah/davey": "^0.1.12",
     "@supabase/supabase-js": "^2.43.4",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
