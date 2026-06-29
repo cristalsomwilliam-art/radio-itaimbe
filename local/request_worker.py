@@ -656,22 +656,37 @@ def cleanup_played_locutions():
         if not locucoes_to_delete:
             return
             
-        # Ordenar do maior índice para o menor para evitar que a remoção altere a posição das anteriores
+        # Ordenar do maior índice para o menor para evitar problemas de deslocamento iniciais
         locucoes_to_delete.sort(key=lambda x: x[0], reverse=True)
         
-        for idx, filepath in locucoes_to_delete:
-            logger.info(f"Removendo locução já reproduzida da playlist na posição {idx}: {filepath}")
+        for _, filepath in locucoes_to_delete:
+            # Buscar a playlist atualizada para saber a posição exata da locução agora,
+            # evitando deletar faixas erradas devido a deslocamentos (race condition).
+            current_tracks = get_playlist_tracks()
+            target_idx = None
+            norm_filepath = os.path.normpath(filepath).lower()
+            
+            for t in current_tracks:
+                if t.get("filename") and os.path.normpath(t.get("filename")).lower() == norm_filepath:
+                    target_idx = t.get("index")
+                    break
+            
+            if target_idx is None:
+                logger.warning(f"Locução {filepath} não foi encontrada na playlist ativa. Pulando deleção.")
+                continue
+                
+            logger.info(f"Removendo locução já reproduzida da playlist na posição atual {target_idx}: {filepath}")
             try:
                 # Deletar da playlist do RadioBOSS (tenta action=delete e cmd=delete)
                 deleted_from_playlist = False
                 try:
-                    radioboss_request("delete", {"pos": idx - 1})
+                    radioboss_request("delete", {"pos": target_idx - 1})
                     deleted_from_playlist = True
                 except Exception as e_action:
-                    logger.warning(f"Falha ao deletar via action=delete na posição {idx} ({str(e_action)}). Tentando via comando do agendador...")
+                    logger.warning(f"Falha ao deletar via action=delete na posição {target_idx} ({str(e_action)}). Tentando via comando do agendador...")
                     try:
                         # Tentar formato de comando do agendador: ?cmd=delete POS
-                        params = {"cmd": f"delete {idx - 1}"}
+                        params = {"cmd": f"delete {target_idx - 1}"}
                         if RADIOBOSS_PASSWORD:
                             params['pass'] = RADIOBOSS_PASSWORD
                         query = urllib.parse.urlencode(params)
@@ -681,10 +696,10 @@ def cleanup_played_locutions():
                             resp_str = response.read().decode('utf-8', errors='ignore').strip()
                             if resp_str and re.match(r'^E\d{3}', resp_str):
                                 raise ValueError(f"Erro da API no comando cmd=delete: {resp_str}")
-                            logger.info(f"Comando cmd=delete enviado com sucesso para a posição {idx}.")
+                            logger.info(f"Comando cmd=delete enviado com sucesso para a posição {target_idx}.")
                             deleted_from_playlist = True
                     except Exception as e_cmd:
-                        logger.error(f"Falha ao deletar via comando do agendador na posição {idx}: {str(e_cmd)}")
+                        logger.error(f"Falha ao deletar via comando do agendador na posição {target_idx}: {str(e_cmd)}")
 
                 if deleted_from_playlist:
                     # Aguardar um instante para o RadioBOSS processar a remoção
@@ -698,7 +713,7 @@ def cleanup_played_locutions():
                         except Exception as e_file:
                             logger.warning(f"Não foi possível remover o arquivo físico {filepath}: {str(e_file)}")
             except Exception as e_track:
-                logger.error(f"Erro no fluxo de remoção da faixa {filepath} na posição {idx} do RadioBOSS: {str(e_track)}")
+                logger.error(f"Erro no fluxo de remoção da faixa {filepath} na posição {target_idx} do RadioBOSS: {str(e_track)}")
                 
     except Exception as e:
         logger.error(f"Erro ao limpar locuções antigas da playlist: {str(e)}")
