@@ -7,14 +7,15 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@discordjs/voice": "^0.17.0",
+    "@discordjs/voice": "latest",
     "@snazzah/davey": "^0.1.12",
     "@supabase/supabase-js": "^2.43.4",
-    "discord.js": "^14.15.3",
+    "discord.js": "^14.16.2",
     "dotenv": "^16.4.5",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
     "opusscript": "^0.0.8",
+    "sodium-native": "^4.1.1",
     "tweetnacl": "^1.0.3"
   }
 }
