@@ -335,3 +335,14 @@ process.on('uncaughtException', error => {
 
 // Login no Discord
 client.login(process.env.DISCORD_TOKEN);
+
+// Servidor HTTP simples para manter o bot vivo no Render e passar no Health Check
+const http = require('http');
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('Rádio Itaimbé Discord Bot está online!\n');
+});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`[Web Server] Servidor de monitoramento iniciado na porta ${PORT}`);
+});
