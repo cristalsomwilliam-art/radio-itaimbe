@@ -4,6 +4,14 @@ const { createClient } = require('@supabase/supabase-js');
 const { REST } = require('@discordjs/rest');
 require('dotenv').config();
 
+// Configura o caminho do FFmpeg estático para o bot rodar sem precisar instalar o FFmpeg no Windows
+try {
+  process.env.FFMPEG_PATH = require('ffmpeg-static');
+  console.log('[FFmpeg] Usando binário estático local:', process.env.FFMPEG_PATH);
+} catch (err) {
+  console.error('[FFmpeg] Erro ao carregar ffmpeg-static:', err.message);
+}
+
 // Validação de variáveis de ambiente obrigatórias
 const requiredEnv = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'STREAM_URL'];
 const missingEnv = requiredEnv.filter(env => !process.env[env]);
