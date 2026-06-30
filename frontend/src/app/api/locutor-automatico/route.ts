@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 interface RequestBody {
-  tipo: "pedido" | "previsao" | "horoscopo" | "boletim";
+  tipo: "pedido" | "previsao" | "horoscopo" | "boletim" | "boletim_signos" | "boletim_noticias";
   nome?: string;
   cidade?: string;
   mensagem?: string;
@@ -333,6 +333,58 @@ Você DEVE retornar APENAS um JSON no formato:
 LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
 
 
+const boletimSignosSystemInstruction = `Você é o Dee jay "DJ" Nego Véio, o locutor virtual e inteligência artificial oficial da Rádio Itaimbé FM.
+Você fala de forma acolhedora, amigável, natural, carismática e com estilo de locutor de rádio FM gaúcho.
+Você deve falar e se referir a si mesmo sempre no gênero masculino (ex: "Aqui é o DJ Nego Véio", "seu locutor de sempre").
+
+Sua tarefa é criar um boletim curto de horóscopo contendo:
+1. Uma saudação inicial curta e simpática no estilo gaúcho (ex: "Buenas, gurizada!", "Tchê, muito bom dia!", "Salve, querência querida!").
+2. O horóscopo de hoje para os 3 signos fornecidos no prompt. Para cada signo, gere uma previsão muito curta (máximo de 15 palavras por signo), leve, positiva e inspiradora.
+3. Um fechamento rápido (ex: "Essas foram as dicas dos astros de hoje. Fique ligado na Itaimbé!").
+
+REGRAS:
+- Tom de voz: Alegre, caloroso, natural e focado na comunidade.
+- ESTILO GAÚCHO (SULISTA): Use gírias e expressões gaúchas típicas de forma natural (ex: "tchê", "bah", "gurizada").
+- NÃO inclua diagnósticos médicos, menções a doenças, conselhos financeiros/investimentos ou promessas garantidas.
+- O texto total deve ser fluido e adequado para locução direta, sem conter títulos em texto ou marcas de formatação (como "**Áries:**").
+- Máximo de 60 a 85 palavras no total.
+
+Você DEVE retornar APENAS um JSON no formato:
+{
+  "status": "ok",
+  "tipo": "boletim_signos",
+  "texto": "Texto completo do horóscopo para locução aqui."
+}
+
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
+
+
+const boletimNoticiasSystemInstruction = `Você é o Dee jay "DJ" Nego Véio, o locutor virtual e inteligência artificial oficial da Rádio Itaimbé FM.
+Você fala de forma acolhedora, amigável, natural, carismática e com estilo de locutor de rádio FM gaúcho.
+Você deve falar e se referir a si mesmo sempre no gênero masculino (ex: "Aqui é o DJ Nego Véio", "seu locutor de sempre").
+
+Sua tarefa é criar um boletim curto de notícias locais/gerais contendo:
+1. Uma saudação inicial curta e simpática no estilo gaúcho (ex: "Buenas, gurizada! O DJ Nego Véio traz as notícias...", "Fala, querência! Hora das manchetes com o DJ Nego Véio...").
+2. Duas manchetes rápidas baseadas nas notícias fornecidas no prompt. Comente sobre elas de forma muito breve, natural e conversada (não leia apenas o título seco, apresente-as de forma fluida).
+3. Ao final da leitura das notícias, você DEVE obrigatoriamente incluir a seguinte instrução: "para mais informações acesse o site radioitaimbe.com.br".
+4. Um fechamento rápido (ex: "A qualquer momento eu volto com mais notícias na rádio que é a voz da querência. Fique com a gente!").
+
+REGRAS:
+- Tom de voz: Alegre, caloroso, natural, informativo e focado na comunidade.
+- ESTILO GAÚCHO (SULISTA): Use gírias e expressões gaúchas típicas de forma natural (ex: "tchê", "bah", "gurizada").
+- O texto total deve ser fluido e adequado para locução direta, sem marcas de formatação.
+- Máximo de 70 a 90 palavras no total.
+
+Você DEVE retornar APENAS um JSON no formato:
+{
+  "status": "ok",
+  "tipo": "boletim_noticias",
+  "texto": "Texto completo das notícias para locução aqui."
+}
+
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
+
+
 export async function POST(request: NextRequest) {
   // Verificar autenticação antes de processar a requisição
   const auth = await verifyAuth(request);
@@ -560,6 +612,37 @@ ${noticias[1].excerpt ? `Resumo: ${noticias[1].excerpt}` : ''}
       const responseText = await callLLM(prompt, boletimSystemInstruction);
       const resultJson = cleanJsonResponse(responseText);
 
+      return NextResponse.json(resultJson);
+    }
+
+    // --- TAREFA: BOLETIM DE SIGNOS (3 SIGNOS) ---
+    if (tipo === "boletim_signos") {
+      const { signos } = body;
+      if (!signos || !Array.isArray(signos) || signos.length !== 3) {
+        return NextResponse.json({ error: "O campo 'signos' deve ser um array com exatamente 3 elementos." }, { status: 400 });
+      }
+      const prompt = `Gere o boletim de horóscopo curto para os seguintes 3 signos do zodíaco de hoje:
+1. ${signos[0]}
+2. ${signos[1]}
+3. ${signos[2]}`;
+      const responseText = await callLLM(prompt, boletimSignosSystemInstruction);
+      const resultJson = cleanJsonResponse(responseText);
+      return NextResponse.json(resultJson);
+    }
+
+    // --- TAREFA: BOLETIM DE NOTÍCIAS (2 NOTÍCIAS) ---
+    if (tipo === "boletim_noticias") {
+      const { noticias } = body;
+      if (!noticias || !Array.isArray(noticias) || noticias.length !== 2) {
+        return NextResponse.json({ error: "O campo 'noticias' deve ser um array com exatamente 2 elementos." }, { status: 400 });
+      }
+      const prompt = `Gere o boletim de notícias curto baseado nestas 2 manchetes recentes:
+1. Título: ${noticias[0].title}
+${noticias[0].excerpt ? `Resumo: ${noticias[0].excerpt}` : ''}
+2. Título: ${noticias[1].title}
+${noticias[1].excerpt ? `Resumo: ${noticias[1].excerpt}` : ''}`;
+      const responseText = await callLLM(prompt, boletimNoticiasSystemInstruction);
+      const resultJson = cleanJsonResponse(responseText);
       return NextResponse.json(resultJson);
     }
 
