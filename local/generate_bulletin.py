@@ -116,18 +116,39 @@ def check_and_run_bulletin(force=False):
     # 2. SELEÇÃO DAS NOTÍCIAS (Prioriza inéditas no dia)
     news_list = []
     try:
-        status, res_data = request_worker.supabase_request("news?select=id,title,excerpt&order=published_at.desc&limit=30")
-        if status == 200 and isinstance(res_data, list):
-            news_list = res_data
-        else:
-            logger.error(f"Erro ao carregar notícias do Supabase (status {status})")
-    except Exception as e_news:
-        logger.error(f"Falha na comunicação para obter notícias: {str(e_news)}")
+        base_api_url = os.getenv("LOCUTOR_API_URL", "https://www.radioitaimbe.com.br/api/locutor-automatico")
+        # Substitui a rota da API de locutor pela rota do news-feed
+        feed_base_url = base_api_url.replace("/locutor-automatico", "/news-feed")
         
+        for portal in ["estadao", "jovempan", "oeste"]:
+            try:
+                portal_url = f"{feed_base_url}?portal={portal}"
+                logger.info(f"Buscando feed do portal {portal}: {portal_url}")
+                req = urllib.request.Request(
+                    portal_url,
+                    headers={"User-Agent": "Mozilla/5.0"}
+                )
+                with urllib.request.urlopen(req, timeout=15) as res:
+                    data = json.loads(res.read().decode('utf-8'))
+                    items = data.get("items", [])
+                    for item in items:
+                        item["portal"] = portal
+                    news_list.extend(items)
+            except Exception as e_p:
+                logger.warning(f"Erro ao buscar feed do portal {portal}: {e_p}")
+    except Exception as e_news:
+        logger.error(f"Falha na comunicação para obter notícias do feed: {str(e_news)}")
+        
+    import hashlib
+    def get_news_hash(title_str):
+        if not title_str:
+            return ""
+        return hashlib.md5(title_str.encode('utf-8', errors='replace')).hexdigest()
+
     spoken_news = history.get("spoken_news_today", [])
-    available_news = [n for n in news_list if n.get("id") not in spoken_news]
+    available_news = [n for n in news_list if get_news_hash(n.get("title", "")) not in spoken_news]
     
-    logger.info(f"Total de notícias recentes: {len(news_list)}. Notícias inéditas hoje: {len(available_news)}")
+    logger.info(f"Total de notícias do site carregadas: {len(news_list)}. Notícias inéditas hoje: {len(available_news)}")
     
     selected_news = []
     if len(available_news) >= 2:
@@ -137,25 +158,25 @@ def check_and_run_bulletin(force=False):
         selected_news = list(available_news)
         history["spoken_news_today"] = []
         needed = 2 - len(selected_news)
-        remaining_pool = [n for n in news_list if n.get("id") not in [sn.get("id") for sn in selected_news]]
+        remaining_pool = [n for n in news_list if get_news_hash(n.get("title", "")) not in [get_news_hash(sn.get("title", "")) for sn in selected_news]]
         selected_news.extend(random.sample(remaining_pool, needed))
     else:
         # Se houver menos de 2 notícias cadastradas no total, usamos fallbacks
-        selected_news = news_list
+        selected_news = list(news_list)
         if len(selected_news) < 2:
-            logger.warning("Poucas notícias cadastradas no banco. Inserindo fallbacks locais.")
+            logger.warning("Poucas notícias carregadas do feed. Inserindo fallbacks locais.")
             fallbacks = [
-                {"id": "fallback-1", "title": "Programação de inverno especial na Rádio Itaimbé", "excerpt": "Fique ligado nos novos horários e programas musicais com o melhor do Sul."},
-                {"id": "fallback-2", "title": "Turismo em alta em Cambará do Sul", "excerpt": "Canyons registram grande movimento de visitantes nesta temporada."}
+                {"title": "Programação de inverno especial na Rádio Itaimbé", "excerpt": "Fique ligado nos novos horários e programas musicais com o melhor do Sul."},
+                {"title": "Turismo em alta em Cambará do Sul", "excerpt": "Canyons registram grande movimento de visitantes nesta temporada."}
             ]
             needed = 2 - len(selected_news)
             selected_news.extend(fallbacks[:needed])
             
     # Registrar no histórico
     for n in selected_news:
-        nid = n.get("id")
-        if nid not in history["spoken_news_today"]:
-            history["spoken_news_today"].append(nid)
+        nhash = get_news_hash(n.get("title", ""))
+        if nhash and nhash not in history["spoken_news_today"]:
+            history["spoken_news_today"].append(nhash)
             
     logger.info(f"Notícias selecionadas para este boletim: {[n.get('title') for n in selected_news]}")
     
