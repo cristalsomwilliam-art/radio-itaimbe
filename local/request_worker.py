@@ -759,6 +759,43 @@ def cleanup_orphaned_locution_files():
 
 def speak_text(text, output_path):
     """Gera áudio a partir do texto usando a biblioteca edge-tts (neural) ou fallback para gTTS."""
+    # 0. Tentar usar OpenAI TTS se a chave de API estiver configurada
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        try:
+            logger.info("Tentando gerar áudio via OpenAI TTS...")
+            api_url = "https://api.openai.com/v1/audio/speech"
+            model = os.getenv("OPENAI_TTS_MODEL", "tts-1-hd")
+            voice = os.getenv("OPENAI_TTS_VOICE", "onyx")
+            
+            payload = {
+                "model": model,
+                "input": text,
+                "voice": voice
+            }
+            req_payload = json.dumps(payload).encode('utf-8')
+            
+            req = urllib.request.Request(
+                api_url,
+                data=req_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {openai_key}",
+                    "User-Agent": "Mozilla/5.0"
+                },
+                method="POST"
+            )
+            
+            with urllib.request.urlopen(req, timeout=25) as response:
+                audio_data = response.read()
+                
+            with open(output_path, "wb") as f:
+                f.write(audio_data)
+                
+            logger.info(f"Áudio da locução gerado com sucesso via OpenAI TTS em: {output_path}")
+            return True
+        except Exception as e_openai:
+            logger.warning(f"Falha ao gerar áudio via OpenAI TTS: {str(e_openai)}. Utilizando fallback para Edge-TTS...")
     import subprocess
     import site
     import importlib
