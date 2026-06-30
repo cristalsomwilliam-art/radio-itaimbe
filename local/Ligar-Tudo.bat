@@ -15,6 +15,9 @@ start "Proxy de Audio - Radio Itaimbe" python stream_proxy.py
 echo [3/3] Iniciando Integrador RadioBOSS (Pedidos)...
 start "Integrador RadioBOSS - Radio Itaimbe" python request_worker.py
 
+echo [4/4] Iniciando o Bot do Discord...
+start "Bot do Discord - Radio Itaimbe" Iniciar-Bot-Discord.bat
+
 echo.
 echo ============================================
 echo   Todos os sistemas foram iniciados!

@@ -82,6 +82,9 @@ if %errorlevel% == 0 (
     echo [ERRO] O container de TV nao pode ser iniciado porque o Docker nao esta rodando.
 )
 
+echo [5/5] Iniciando o Bot do Discord...
+start "Bot do Discord - Radio Itaimbe" Iniciar-Bot-Discord.bat
+
 echo.
 echo ============================================
 echo   Radio e TV Ligadas com Sucesso!

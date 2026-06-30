@@ -53,6 +53,7 @@ let currentConnection = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
 let reconnectTimeout = null;
+const disconnectTimeouts = new Map();
 
 // Função auxiliar para conectar diretamente ao fluxo de áudio injetando os cabeçalhos anti-hotlink do Caster.fm
 function getAudioStream(urlStr, callback) {
@@ -330,6 +331,11 @@ client.on('interactionCreate', async interaction => {
   if (commandName === 'stop') {
     const activeConnection = getVoiceConnection(guild.id);
     if (activeConnection) {
+      // Limpa qualquer timeout de desconexão pendente para esta guilda
+      if (disconnectTimeouts.has(guild.id)) {
+        clearTimeout(disconnectTimeouts.get(guild.id));
+        disconnectTimeouts.delete(guild.id);
+      }
       activeConnection.destroy();
       player.stop();
       currentConnection = null;
@@ -374,6 +380,58 @@ client.on('interactionCreate', async interaction => {
         content: '❌ Não foi possível buscar o status da rádio no banco de dados neste momento. Tente novamente mais tarde.', 
         ephemeral: true 
       });
+    }
+  }
+});
+
+// Monitora se o canal de voz ficou vazio para auto-desconectar o bot após 30 segundos
+
+
+client.on('voiceStateUpdate', (oldState, newState) => {
+  const guildId = oldState.guild.id || newState.guild.id;
+  const connection = getVoiceConnection(guildId);
+  
+  if (!connection) return;
+
+  const botChannelId = connection.joinConfig.channelId;
+  if (!botChannelId) return;
+
+  const guild = oldState.guild || newState.guild;
+  const voiceChannel = guild.channels.cache.get(botChannelId);
+  if (!voiceChannel) return;
+
+  // Filtra apenas membros humanos (que não são bots)
+  const humanCount = voiceChannel.members.filter(member => !member.user.bot).size;
+
+  if (humanCount === 0) {
+    // Canal ficou vazio! Inicia o timer de 30 segundos se não houver um rodando
+    if (!disconnectTimeouts.has(guildId)) {
+      console.log(`[Auto-Desconectar] Canal de voz "${voiceChannel.name}" está vazio. Iniciando timer de 30 segundos para sair...`);
+      
+      const timeout = setTimeout(() => {
+        const currentChannel = guild.channels.cache.get(botChannelId);
+        if (currentChannel) {
+          const currentHumans = currentChannel.members.filter(member => !member.user.bot).size;
+          if (currentHumans === 0) {
+            console.log(`[Auto-Desconectar] Desconectando do canal "${currentChannel.name}" por inatividade.`);
+            connection.destroy();
+            player.stop();
+            if (currentConnection === connection) {
+              currentConnection = null;
+            }
+          }
+        }
+        disconnectTimeouts.delete(guildId);
+      }, 30000); // 30 segundos de tolerância
+
+      disconnectTimeouts.set(guildId, timeout);
+    }
+  } else {
+    // Alguém entrou! Se houver um timer ativo, cancela
+    if (disconnectTimeouts.has(guildId)) {
+      console.log(`[Auto-Desconectar] Usuário detectado no canal "${voiceChannel.name}". Cancelando timer de saída.`);
+      clearTimeout(disconnectTimeouts.get(guildId));
+      disconnectTimeouts.delete(guildId);
     }
   }
 });
