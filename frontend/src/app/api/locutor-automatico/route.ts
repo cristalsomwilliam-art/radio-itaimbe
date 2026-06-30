@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 interface RequestBody {
-  tipo: "pedido" | "previsao" | "horoscopo";
+  tipo: "pedido" | "previsao" | "horoscopo" | "boletim";
   nome?: string;
   cidade?: string;
   mensagem?: string;
   musica?: string;
   artista?: string;
   grupo?: number;
+  signos?: string[];
+  noticias?: { title: string; excerpt?: string }[];
+  ordem_blocos?: string[];
 }
 
 // Mapeamento de códigos de clima WMO para condições em português
@@ -301,6 +304,35 @@ REGRAS:
 LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
 
 
+const boletimSystemInstruction = `Você é o Dee jay "DJ" Nego Véio, o locutor virtual e inteligência artificial oficial da Rádio Itaimbé FM.
+Você fala de forma acolhedora, amigável, natural, carismática e com estilo de locutor de rádio FM gaúcho.
+Você deve falar e se referir a si mesmo sempre no gênero masculino (ex: "Aqui é o DJ Nego Véio", "seu locutor de sempre").
+
+Sua tarefa é criar um boletim completo para a rádio contendo:
+1. Uma saudação inicial curta e simpática no estilo gaúcho (ex: "Buenas, gurizada!", "Salve, querência querida!", "Tchê, muito bom dia a todos!").
+2. Previsão do tempo para Cambará do Sul/RS com os dados fornecidos.
+3. Horóscopo para os 3 signos informados, gerando uma previsão muito curta (máximo de 15 palavras por signo), leve, positiva e inspiradora para cada um.
+4. Duas manchetes rápidas de notícias locais/regionais retiradas do site. Comente sobre elas de forma muito breve e natural, sem apenas ler o título seco, apresentando como novidades. E ATENÇÃO: ao final da leitura das duas notícias, você DEVE obrigatoriamente incluir a seguinte instrução: "para mais informações acesse o site radioitaimbe.com.br".
+5. Um fechamento rápido e alegre (ex: "E segue a programação da rádio que é pura emoção!", "Aumenta o som e vem com a gente!").
+
+REGRAS CRÍTICAS DE ESTRUTURA:
+- Você DEVE apresentar os blocos exatamente na ordem solicitada na mensagem do usuário (ex: se for pedido notícias primeiro, leia as notícias primeiro). Faça transições naturais e fluidas entre cada bloco.
+- Tom de voz: Alegre, caloroso, natural, dinâmico e focado na comunidade local.
+- ESTILO GAÚCHO (SULISTA): Use gírias e expressões gaúchas típicas de forma natural (ex: "tchê", "bah", "gurizada", "querência").
+- NÃO inclua diagnósticos médicos, menções a doenças, conselhos financeiros/investimentos ou promessas garantidas nas previsões dos signos.
+- O texto total deve ser fluido e adequado para locução direta, sem conter títulos em texto ou marcas de formatação (como "**Previsão do Tempo:**", "**Notícias:**", etc.). Deve ser um texto corrido que o sintetizador de voz consiga ler perfeitamente.
+- Máximo de 130 a 160 palavras no total para todo o boletim.
+
+Você DEVE retornar APENAS um JSON no formato:
+{
+  "status": "ok",
+  "tipo": "boletim",
+  "texto": "Texto completo do boletim para locução aqui."
+}
+
+LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \`\`\`json. Não coloque texto fora do JSON.`;
+
+
 export async function POST(request: NextRequest) {
   // Verificar autenticação antes de processar a requisição
   const auth = await verifyAuth(request);
@@ -448,6 +480,84 @@ LEMBRE-SE: Retorne APENAS o JSON válido. Não coloque marcas de markdown como \
       }
 
       const responseText = await callLLM(prompt, instruction);
+      const resultJson = cleanJsonResponse(responseText);
+
+      return NextResponse.json(resultJson);
+    }
+
+    // --- TAREFA: BOLETIM COMPLETO (TEMPO, SIGNOS, NOTÍCIAS) ---
+    if (tipo === "boletim") {
+      const { signos, noticias, ordem_blocos } = body;
+
+      if (!signos || !Array.isArray(signos) || signos.length !== 3) {
+        return NextResponse.json({ error: "O campo 'signos' deve ser um array com exatamente 3 elementos." }, { status: 400 });
+      }
+      if (!noticias || !Array.isArray(noticias) || noticias.length !== 2) {
+        return NextResponse.json({ error: "O campo 'noticias' deve ser um array com exatamente 2 elementos." }, { status: 400 });
+      }
+      if (!ordem_blocos || !Array.isArray(ordem_blocos) || ordem_blocos.length !== 3) {
+        return NextResponse.json({ error: "O campo 'ordem_blocos' deve ser um array com exatamente 3 elementos." }, { status: 400 });
+      }
+
+      let weatherData = {
+        min: 6,
+        max: 14,
+        condition: "instabilidade climática",
+        rainProbability: 40,
+        source: "fallback de inverno"
+      };
+
+      try {
+        // Coordenadas de Cambará do Sul/RS
+        const lat = -29.0494;
+        const lon = -50.1472;
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America/Sao_Paulo&forecast_days=1`;
+        
+        const weatherRes = await fetch(weatherUrl, { next: { revalidate: 1800 } }); // Cache de 30 minutos
+        if (weatherRes.ok) {
+          const apiJson = await weatherRes.json();
+          if (apiJson && apiJson.daily) {
+            weatherData = {
+              min: Math.round(apiJson.daily.temperature_2m_min[0]),
+              max: Math.round(apiJson.daily.temperature_2m_max[0]),
+              condition: getWeatherCondition(apiJson.current?.weather_code ?? apiJson.daily.weather_code?.[0] ?? 0),
+              rainProbability: apiJson.daily.precipitation_probability_max?.[0] ?? 0,
+              source: "open-meteo"
+            };
+          }
+        }
+      } catch (err) {
+        console.error("Falha ao coletar dados meteorológicos reais:", err);
+      }
+
+      const prompt = `Gere o boletim completo da rádio com os seguintes dados:
+
+Apresente os blocos EXATAMENTE nesta ordem definida pelo sorteio:
+1º: ${ordem_blocos[0]}
+2º: ${ordem_blocos[1]}
+3º: ${ordem_blocos[2]}
+
+Dados de cada bloco:
+
+Bloco da Previsão do Tempo (Cambará do Sul):
+- Temperatura Mínima: ${weatherData.min}°C
+- Temperatura Máxima: ${weatherData.max}°C
+- Condição: ${weatherData.condition}
+- Probabilidade de Chuva: ${weatherData.rainProbability}%
+
+Bloco do Horóscopo (previsões de no máximo 15 palavras por signo):
+1. Signo: ${signos[0]}
+2. Signo: ${signos[1]}
+3. Signo: ${signos[2]}
+
+Bloco das Notícias (comentar de forma breve e natural):
+1. Título: ${noticias[0].title}
+${noticias[0].excerpt ? `Resumo: ${noticias[0].excerpt}` : ''}
+2. Título: ${noticias[1].title}
+${noticias[1].excerpt ? `Resumo: ${noticias[1].excerpt}` : ''}
+`;
+
+      const responseText = await callLLM(prompt, boletimSystemInstruction);
       const resultJson = cleanJsonResponse(responseText);
 
       return NextResponse.json(resultJson);

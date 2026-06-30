@@ -21,3 +21,8 @@ local/temp/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Backups and temporary local radio files
+*.bak
+local/bulletin_history.json
+local/locucoes/

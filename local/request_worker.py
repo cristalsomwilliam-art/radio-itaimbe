@@ -1059,6 +1059,13 @@ def run_worker_loop():
             # Limpar locuções antigas da playlist e do SSD
             cleanup_played_locutions()
             cleanup_orphaned_locution_files()
+
+            # Processar boletim automático de previsão, signos e notícias
+            try:
+                from generate_bulletin import check_and_run_bulletin
+                check_and_run_bulletin()
+            except Exception as e_bulletin:
+                logger.error(f"Erro ao processar boletim automático: {str(e_bulletin)}")
         except KeyboardInterrupt:
             logger.info("Encerrando monitor de pedidos...")
             break
