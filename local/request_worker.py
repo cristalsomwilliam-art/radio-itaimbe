@@ -649,7 +649,8 @@ def cleanup_played_locutions():
             norm_filename = os.path.basename(filename).lower()
             
             # Verificar se é um arquivo de locução temporária
-            if norm_filename.startswith("locucao_") and norm_filename.endswith(".mp3"):
+            is_temp_file = any(norm_filename.startswith(pfx) for pfx in ["locucao_", "tempo_", "signos_", "noticias_"])
+            if is_temp_file and norm_filename.endswith(".mp3"):
                 if idx < current_idx:
                     locucoes_to_delete.append((idx, filename))
                     
@@ -736,7 +737,8 @@ def cleanup_orphaned_locution_files():
 
         # Listar todos os arquivos da pasta
         for filename in os.listdir(locucoes_dir):
-            if filename.startswith("locucao_") and filename.endswith(".mp3"):
+            is_temp_file = any(filename.startswith(pfx) for pfx in ["locucao_", "tempo_", "signos_", "noticias_"])
+            if is_temp_file and filename.endswith(".mp3"):
                 filepath = os.path.join(locucoes_dir, filename)
                 norm_filepath = os.path.normpath(filepath).lower()
 
